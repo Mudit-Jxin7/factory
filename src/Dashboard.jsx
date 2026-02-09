@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from './AuthContext'
 import jsPDF from 'jspdf'
 import './App.css'
 
@@ -7,7 +8,13 @@ const API_URL = 'http://localhost:3001/api'
 
 function Dashboard() {
   const navigate = useNavigate()
+  const { logout } = useAuth()
   const [saving, setSaving] = useState(false)
+
+  const handleLogout = () => {
+    logout()
+    navigate('/login')
+  }
   
   // Lot Information State
   const [lotNumber, setLotNumber] = useState('')
@@ -493,6 +500,10 @@ function Dashboard() {
           <button className="btn btn-primary" onClick={exportToPDF}>
             <span className="btn-icon">📄</span>
             Save as PDF
+          </button>
+          <button className="btn btn-logout" onClick={handleLogout}>
+            <span className="btn-icon">🚪</span>
+            Logout
           </button>
         </div>
       </div>

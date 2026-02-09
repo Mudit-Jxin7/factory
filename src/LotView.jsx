@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { useAuth } from './AuthContext'
 import './App.css'
 
 const API_URL = 'http://localhost:3001/api'
@@ -7,9 +8,15 @@ const API_URL = 'http://localhost:3001/api'
 function LotView() {
   const { lotNumber } = useParams()
   const navigate = useNavigate()
+  const { logout } = useAuth()
   const [lot, setLot] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+
+  const handleLogout = () => {
+    logout()
+    navigate('/login')
+  }
 
   useEffect(() => {
     fetchLot()
@@ -67,6 +74,10 @@ function LotView() {
         <div className="header-actions">
           <button className="btn btn-primary" onClick={() => navigate('/')}>
             ← Back to Dashboard
+          </button>
+          <button className="btn btn-logout" onClick={handleLogout}>
+            <span className="btn-icon">🚪</span>
+            Logout
           </button>
         </div>
       </div>
