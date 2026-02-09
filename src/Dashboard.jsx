@@ -120,6 +120,12 @@ function Dashboard() {
           return
         }
       }
+    } else if (field === 'color' || field === 'shade' || field === 'tbd2' || field === 'tbd3') {
+      // For text fields (color, shade, tbd2, tbd3), allow any text input
+      newData[index] = {
+        ...newData[index],
+        [field]: value,
+      }
     } else {
       newData[index] = {
         ...newData[index],

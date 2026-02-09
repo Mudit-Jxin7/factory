@@ -9,7 +9,14 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: [
+    process.env.FRONTEND_URL || 'http://localhost:5173',
+    'https://*.vercel.app',
+    'https://*.netlify.app'
+  ],
+  credentials: true
+}));
 app.use(express.json());
 
 // MongoDB connection
