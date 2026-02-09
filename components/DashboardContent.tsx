@@ -549,16 +549,16 @@ export default function DashboardContent() {
                 onChange={(e) => {
                   const value = e.target.value
                   if (value === '' || /^[0-9]+$/.test(value)) {
-                    setTukda({ ...tukda, count: value === '' ? '' : value })
+                    setTukda({ ...tukda, count: value === '' ? 0 : Number(value) })
                   }
                 }}
                 onBlur={(e) => {
                   const value = e.target.value
                   const numValue = Number(value)
                   if (value === '' || isNaN(numValue) || numValue < 0) {
-                    setTukda({ ...tukda, count: '0' })
+                    setTukda({ ...tukda, count: 0 })
                   } else {
-                    setTukda({ ...tukda, count: Math.floor(numValue).toString() })
+                    setTukda({ ...tukda, count: Math.floor(numValue) })
                   }
                 }}
                 inputMode="numeric"
