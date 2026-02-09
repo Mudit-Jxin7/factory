@@ -1,10 +1,9 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from './AuthContext'
+import { lotsAPI } from './api/api'
 import jsPDF from 'jspdf'
 import './App.css'
-
-const API_URL = 'http://localhost:3001/api'
 
 function Dashboard() {
   const navigate = useNavigate()
@@ -226,15 +225,7 @@ function Dashboard() {
         average,
       }
 
-      const response = await fetch(`${API_URL}/lots`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(lotData),
-      })
-
-      const result = await response.json()
+      const result = await lotsAPI.saveLot(lotData)
 
       if (result.success) {
         alert('Lot saved successfully!')

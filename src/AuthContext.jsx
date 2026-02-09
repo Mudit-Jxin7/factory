@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react'
+import { AUTH_CREDENTIALS } from './config/auth'
 
 const AuthContext = createContext(null)
 
@@ -24,27 +25,13 @@ export const AuthProvider = ({ children }) => {
   }, [])
 
   const login = async (username, password) => {
-    try {
-      // Fetch credentials from backend (which reads from .env)
-      const response = await fetch('http://localhost:3001/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username, password }),
-      })
-
-      const result = await response.json()
-
-      if (result.success) {
-        setIsAuthenticated(true)
-        localStorage.setItem('isAuthenticated', 'true')
-        return { success: true }
-      } else {
-        return { success: false, error: result.error || 'Invalid credentials' }
-      }
-    } catch (error) {
-      return { success: false, error: 'Login failed: ' + error.message }
+    // Frontend-only authentication
+    if (username === AUTH_CREDENTIALS.username && password === AUTH_CREDENTIALS.password) {
+      setIsAuthenticated(true)
+      localStorage.setItem('isAuthenticated', 'true')
+      return { success: true }
+    } else {
+      return { success: false, error: 'Invalid username or password' }
     }
   }
 

@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from './AuthContext'
+import { lotsAPI } from './api/api'
 import './App.css'
-
-const API_URL = 'http://localhost:3001/api'
 
 function LotView() {
   const { lotNumber } = useParams()
@@ -25,8 +24,7 @@ function LotView() {
   const fetchLot = async () => {
     try {
       setLoading(true)
-      const response = await fetch(`${API_URL}/lots/${lotNumber}`)
-      const result = await response.json()
+      const result = await lotsAPI.getLotByNumber(lotNumber)
 
       if (result.success) {
         setLot(result.lot)

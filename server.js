@@ -27,24 +27,7 @@ MongoClient.connect(MONGODB_URI)
   });
 
 // API Routes
-
-// Login endpoint
-app.post('/api/auth/login', async (req, res) => {
-  try {
-    const { username, password } = req.body
-    const expectedUsername = process.env.LOGIN_USERNAME || 'admin'
-    const expectedPassword = process.env.LOGIN_PASSWORD || 'admin123'
-
-    if (username === expectedUsername && password === expectedPassword) {
-      res.json({ success: true, message: 'Login successful' })
-    } else {
-      res.status(401).json({ success: false, error: 'Invalid username or password' })
-    }
-  } catch (error) {
-    console.error('Error during login:', error)
-    res.status(500).json({ success: false, error: error.message })
-  }
-})
+// Note: Authentication is handled in frontend only
 
 // Save a lot
 app.post('/api/lots', async (req, res) => {
