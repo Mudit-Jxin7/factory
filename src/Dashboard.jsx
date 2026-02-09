@@ -177,6 +177,11 @@ function Dashboard() {
     return productionData.reduce((sum, row) => sum + (Number(row.pieces) || 0), 0)
   }, [productionData])
 
+  // Calculate total pieces with tukda
+  const totalPiecesWithTukda = useMemo(() => {
+    return totalPieces + (Number(tukda.count) || 0)
+  }, [totalPieces, tukda.count])
+
   // Calculate average
   const average = useMemo(() => {
     const denominator = totalPieces + (Number(tukda.count) || 0)
@@ -243,6 +248,7 @@ function Dashboard() {
         tukda,
         totalMeter,
         totalPieces,
+        totalPiecesWithTukda,
         average,
       }
 
@@ -629,6 +635,13 @@ function Dashboard() {
               <div className="summary-content">
                 <div className="summary-label">Total Pieces</div>
                 <div className="summary-value">{totalPieces.toFixed(2)}</div>
+              </div>
+            </div>
+            <div className="summary-card">
+              <div className="summary-icon">📊</div>
+              <div className="summary-content">
+                <div className="summary-label">Grand Total Pieces</div>
+                <div className="summary-value">{totalPiecesWithTukda.toFixed(2)}</div>
               </div>
             </div>
             <div className="summary-card">

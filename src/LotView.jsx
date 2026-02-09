@@ -214,6 +214,15 @@ function LotView() {
               </div>
             </div>
             <div className="summary-card">
+              <div className="summary-icon">📊</div>
+              <div className="summary-content">
+                <div className="summary-label">Grand Total Pieces</div>
+                <div className="summary-value">
+                  {Number(lot.totalPiecesWithTukda || (lot.totalPieces || 0) + (lot.tukda?.count || 0)).toFixed(2)}
+                </div>
+              </div>
+            </div>
+            <div className="summary-card">
               <div className="summary-icon">🧮</div>
               <div className="summary-content">
                 <div className="summary-label">Average</div>
