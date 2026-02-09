@@ -149,6 +149,10 @@ function LotView() {
                   <th>Meter</th>
                   <th>Layer</th>
                   <th>Pieces</th>
+                  <th>Color</th>
+                  <th>Shade</th>
+                  <th>TBD2</th>
+                  <th>TBD3</th>
                 </tr>
               </thead>
               <tbody>
@@ -161,11 +165,15 @@ function LotView() {
                       <td className="pieces-cell">
                         {Number(row.pieces || 0).toFixed(2)}
                       </td>
+                      <td>{row.color || 'N/A'}</td>
+                      <td>{row.shade || 'N/A'}</td>
+                      <td>{row.tbd2 || 'N/A'}</td>
+                      <td>{row.tbd3 || 'N/A'}</td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="4" style={{ textAlign: 'center' }}>
+                    <td colSpan="8" style={{ textAlign: 'center' }}>
                       No production data available
                     </td>
                   </tr>

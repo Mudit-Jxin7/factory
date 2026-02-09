@@ -1,14 +1,17 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from './AuthContext'
 import { lotsAPI } from './api/api'
 import jsPDF from 'jspdf'
+import html2canvas from 'html2canvas'
 import './App.css'
 
 function Dashboard() {
   const navigate = useNavigate()
   const { logout } = useAuth()
   const [saving, setSaving] = useState(false)
+  const [generatingPDF, setGeneratingPDF] = useState(false)
+  const dashboardRef = useRef(null)
 
   const handleLogout = () => {
     logout()
@@ -42,6 +45,10 @@ function Dashboard() {
       meter: '', // Empty string for text input
       layer: '1', // Natural number minimum (as string for text input)
       pieces: 0,
+      color: '', // Color input
+      shade: '', // Shade input
+      tbd2: '', // TBD2 input
+      tbd3: '', // TBD3 input
     }
   ])
 
@@ -142,6 +149,10 @@ function Dashboard() {
         meter: '', // Empty string for text input
         layer: '1', // Default to 1 (natural number minimum, as string)
         pieces: 1 * sumOfRatios, // layer defaults to 1
+        color: '', // Color input
+        shade: '', // Shade input
+        tbd2: '', // TBD2 input
+        tbd3: '', // TBD3 input
       }
     ])
   }
@@ -218,6 +229,10 @@ function Dashboard() {
           ...row,
           meter: Number(row.meter) || 0,
           layer: Number(row.layer) || 1,
+          color: row.color || '',
+          shade: row.shade || '',
+          tbd2: row.tbd2 || '',
+          tbd3: row.tbd3 || '',
         })),
         tukda,
         totalMeter,
@@ -242,242 +257,99 @@ function Dashboard() {
     }
   }
 
-  // Export to PDF
-  const exportToPDF = () => {
-    const doc = new jsPDF('p', 'mm', 'a4')
-    const pageWidth = doc.internal.pageSize.getWidth()
-    const pageHeight = doc.internal.pageSize.getHeight()
-    let yPos = 15
-    const margin = 14
-    const cardPadding = 5
+  // Export to PDF - captures the exact page as rendered
+  const exportToPDF = async () => {
+    if (!dashboardRef.current) return
+
+    setGeneratingPDF(true)
     
-    // Helper function to draw colored card
-    const drawCard = (x, y, width, height, title, color = [255, 255, 255]) => {
-      // Card background
-      doc.setFillColor(color[0], color[1], color[2])
-      doc.roundedRect(x, y, width, height, 3, 3, 'F')
-      
-      // Card border
-      doc.setDrawColor(200, 200, 200)
-      doc.setLineWidth(0.5)
-      doc.roundedRect(x, y, width, height, 3, 3)
-      
-      // Title background
-      if (title) {
-        doc.setFillColor(59, 130, 246) // Blue header
-        doc.roundedRect(x, y, width, 8, 3, 3, 'F')
-        // Draw white rectangle to cover bottom rounded corners
-        doc.setFillColor(color[0], color[1], color[2])
-        doc.rect(x, y + 5, width, 3, 'F')
-        doc.setTextColor(255, 255, 255)
-        doc.setFontSize(12)
-        doc.setFont(undefined, 'bold')
-        doc.text(title, x + cardPadding, y + 5.5)
-        doc.setTextColor(0, 0, 0)
-        doc.setFont(undefined, 'normal')
-        y += 10
+    try {
+      // Hide action buttons temporarily
+      const headerActions = dashboardRef.current.querySelector('.header-actions')
+      const originalDisplay = headerActions?.style.display
+      if (headerActions) {
+        headerActions.style.display = 'none'
       }
-      
-      return y
-    }
-    
-    // Helper function to add new page if needed
-    const checkNewPage = (requiredHeight) => {
-      if (yPos + requiredHeight > pageHeight - 20) {
-        doc.addPage()
-        yPos = 15
-        return true
-      }
-      return false
-    }
-    
-    // Header with gradient-like effect
-    doc.setFillColor(59, 130, 246) // Blue
-    doc.rect(0, 0, pageWidth, 25, 'F')
-    doc.setTextColor(255, 255, 255)
-    doc.setFontSize(20)
-    doc.setFont(undefined, 'bold')
-    doc.text('Lot Production Dashboard', pageWidth / 2, 15, { align: 'center' })
-    doc.setFontSize(10)
-    doc.setFont(undefined, 'normal')
-    doc.text('Production Data Report', pageWidth / 2, 22, { align: 'center' })
-    doc.setTextColor(0, 0, 0)
-    yPos = 30
-    
-    // Lot Information Card
-    checkNewPage(50)
-    const lotCardY = yPos
-    yPos = drawCard(margin, yPos, pageWidth - 2 * margin, 50, 'Lot Information', [255, 255, 255])
-    
-    doc.setFontSize(10)
-    const lotInfo = [
-      { label: 'Lot Number', value: lotNumber || 'N/A' },
-      { label: 'Date', value: date || 'N/A' },
-      { label: 'Fabric', value: fabric || 'N/A' },
-      { label: 'Pattern', value: pattern || 'N/A' },
-      { label: 'Brand', value: brand || 'N/A' }
-    ]
-    
-    let xOffset = margin + cardPadding
-    const colWidth = (pageWidth - 2 * margin - 2 * cardPadding) / 2
-    lotInfo.forEach((item, index) => {
-      const col = index % 2
-      const row = Math.floor(index / 2)
-      const x = xOffset + col * colWidth
-      const y = yPos + row * 8
-      
-      doc.setTextColor(100, 100, 100)
-      doc.setFontSize(9)
-      doc.text(item.label + ':', x, y)
-      doc.setTextColor(0, 0, 0)
-      doc.setFontSize(10)
-      doc.text(item.value, x + 35, y)
-    })
-    yPos = lotCardY + 50 + 10
-    
-    // Ratios Card
-    checkNewPage(60)
-    const ratiosCardY = yPos
-    yPos = drawCard(margin, yPos, pageWidth - 2 * margin, 60, 'Ratios', [255, 255, 255])
-    
-    doc.setFontSize(9)
-    const ratioEntries = Object.entries(ratios)
-    const ratiosPerRow = 3
-    const ratioBoxWidth = (pageWidth - 2 * margin - 2 * cardPadding) / ratiosPerRow
-    
-    ratioEntries.forEach(([key, value], index) => {
-      const col = index % ratiosPerRow
-      const row = Math.floor(index / ratiosPerRow)
-      const x = margin + cardPadding + col * ratioBoxWidth
-      const y = yPos + row * 7
-      
-      // Ratio box with light blue background
-      doc.setFillColor(240, 248, 255)
-      doc.roundedRect(x, y - 4, ratioBoxWidth - 5, 6, 2, 2, 'F')
-      
-      doc.setTextColor(0, 0, 0)
-      doc.setFont(undefined, 'bold')
-      doc.text(key.toUpperCase(), x + 2, y)
-      doc.setFont(undefined, 'normal')
-      doc.setTextColor(59, 130, 246)
-      doc.text(value.toString(), x + ratioBoxWidth - 15, y)
-    })
-    
-    // Sum of ratios
-    const sumOfRatiosValue = Object.values(ratios).reduce((sum, val) => sum + (Number(val) || 0), 0)
-    yPos = ratiosCardY + 60 - 8
-    doc.setFillColor(249, 250, 251)
-    doc.roundedRect(margin + cardPadding, yPos, pageWidth - 2 * margin - 2 * cardPadding, 6, 2, 2, 'F')
-    doc.setTextColor(0, 0, 0)
-    doc.setFont(undefined, 'bold')
-    doc.text(`Sum of Ratios: ${sumOfRatiosValue.toFixed(2)}`, pageWidth / 2, yPos + 4, { align: 'center' })
-    doc.setFont(undefined, 'normal')
-    yPos = ratiosCardY + 60 + 10
-    
-    // Production Data Table Card
-    checkNewPage(40 + productionData.length * 6)
-    const tableCardY = yPos
-    const tableHeight = 15 + productionData.length * 6
-    yPos = drawCard(margin, yPos, pageWidth - 2 * margin, tableHeight, 'Production Data', [255, 255, 255])
-    
-    // Table header with blue background
-    doc.setFillColor(59, 130, 246)
-    doc.rect(margin + cardPadding, yPos - 2, pageWidth - 2 * margin - 2 * cardPadding, 6, 'F')
-    doc.setTextColor(255, 255, 255)
-    doc.setFontSize(9)
-    doc.setFont(undefined, 'bold')
-    
-    const colWidths = [20, 40, 30, 40]
-    const headers = ['S.No', 'Meter', 'Layer', 'Pieces']
-    let x = margin + cardPadding + 5
-    headers.forEach((header, i) => {
-      doc.text(header, x, yPos + 4)
-      x += colWidths[i]
-    })
-    
-    doc.setTextColor(0, 0, 0)
-    doc.setFont(undefined, 'normal')
-    yPos += 6
-    
-    // Table rows with alternating colors
-    productionData.forEach((row, index) => {
-      if (index % 2 === 0) {
-        doc.setFillColor(249, 250, 251)
-        doc.rect(margin + cardPadding, yPos - 3, pageWidth - 2 * margin - 2 * cardPadding, 5, 'F')
-      }
-      
-      x = margin + cardPadding + 5
-      const rowData = [
-        row.serialNumber.toString(),
-        (Number(row.meter) || 0).toString(),
-        (Number(row.layer) || 1).toString(),
-        Number(row.pieces || 0).toFixed(2)
-      ]
-      
-      rowData.forEach((data, i) => {
-        doc.text(data, x, yPos + 2)
-        x += colWidths[i]
+
+      // Capture the dashboard as canvas
+      const canvas = await html2canvas(dashboardRef.current, {
+        scale: 2, // Higher quality
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#f5f5f5',
+        windowWidth: dashboardRef.current.scrollWidth,
+        windowHeight: dashboardRef.current.scrollHeight,
       })
-      yPos += 5
-    })
-    yPos = tableCardY + tableHeight + 10
-    
-    // Summary & Calculations Card
-    checkNewPage(50)
-    const summaryCardY = yPos
-    yPos = drawCard(margin, yPos, pageWidth - 2 * margin, 50, 'Summary & Calculations', [255, 255, 255])
-    
-    // Summary items in grid
-    const summaryItems = [
-      { label: '# Tukda', value: `${tukda.count} (Size: ${tukda.size})`, color: [255, 255, 255] },
-      { label: 'Total Meter', value: totalMeter.toFixed(2), color: [240, 248, 255], icon: '📏' },
-      { label: 'Total Pieces', value: totalPieces.toFixed(2), color: [240, 248, 255], icon: '📄' },
-      { label: 'Average', value: average.toFixed(4), color: [220, 252, 231], icon: '🧮' }
-    ]
-    
-    const summaryColWidth = (pageWidth - 2 * margin - 2 * cardPadding - 10) / 2
-    summaryItems.forEach((item, index) => {
-      const col = index % 2
-      const row = Math.floor(index / 2)
-      const x = margin + cardPadding + col * (summaryColWidth + 10)
-      const y = yPos + row * 20
-      
-      // Summary card background
-      doc.setFillColor(item.color[0], item.color[1], item.color[2])
-      doc.roundedRect(x, y, summaryColWidth, 18, 3, 3, 'F')
-      doc.setDrawColor(200, 200, 200)
-      doc.roundedRect(x, y, summaryColWidth, 18, 3, 3)
-      
-      // Icon and text
-      if (item.icon) {
-        doc.setFontSize(14)
-        doc.text(item.icon, x + 5, y + 8)
+
+      // Restore buttons
+      if (headerActions) {
+        headerActions.style.display = originalDisplay || ''
       }
+
+      const imgData = canvas.toDataURL('image/png')
+      const imgWidth = canvas.width
+      const imgHeight = canvas.height
+
+      // Calculate PDF dimensions
+      const pdf = new jsPDF('p', 'mm', 'a4')
+      const pdfWidth = pdf.internal.pageSize.getWidth()
+      const pdfHeight = pdf.internal.pageSize.getHeight()
       
-      doc.setTextColor(100, 100, 100)
-      doc.setFontSize(8)
-      doc.text(item.label.toUpperCase(), x + (item.icon ? 12 : 5), y + 5)
-      doc.setTextColor(0, 0, 0)
-      doc.setFontSize(14)
-      doc.setFont(undefined, 'bold')
-      const textColor = item.label === 'Average' ? [16, 185, 129] : [0, 0, 0] // Green for average
-      doc.setTextColor(textColor[0], textColor[1], textColor[2])
-      doc.text(item.value, x + (item.icon ? 12 : 5), y + 12)
-      doc.setTextColor(0, 0, 0)
-      doc.setFont(undefined, 'normal')
-    })
-    
-    // Footer
-    doc.setFontSize(8)
-    doc.setTextColor(150, 150, 150)
-    doc.text(`Generated on ${new Date().toLocaleString()}`, pageWidth / 2, pageHeight - 10, { align: 'center' })
-    
-    // Save PDF
-    doc.save(`Lot_${lotNumber || 'Production'}_${date || 'Report'}.pdf`)
+      // Calculate aspect ratio and fit to page width
+      const ratio = imgWidth / imgHeight
+      const pageWidth = pdfWidth - 20 // 10mm margin on each side
+      const pageHeight = pdfHeight - 20
+      
+      let finalWidth = pageWidth
+      let finalHeight = finalWidth / ratio
+
+      const marginX = (pdfWidth - finalWidth) / 2
+      let positionY = 10
+
+      // If content fits on one page
+      if (finalHeight <= pageHeight) {
+        pdf.addImage(imgData, 'PNG', marginX, positionY, finalWidth, finalHeight)
+      } else {
+        // Content is taller than one page - split across multiple pages
+        const totalPages = Math.ceil(finalHeight / pageHeight)
+        let sourceY = 0
+
+        for (let i = 0; i < totalPages; i++) {
+          if (i > 0) {
+            pdf.addPage()
+            positionY = 10
+          }
+
+          const remainingHeight = finalHeight - (i * pageHeight)
+          const currentPageHeight = Math.min(pageHeight, remainingHeight)
+          const sourceHeight = (currentPageHeight / finalHeight) * imgHeight
+
+          // Create a canvas for this page section
+          const pageCanvas = document.createElement('canvas')
+          pageCanvas.width = imgWidth
+          pageCanvas.height = sourceHeight
+          const ctx = pageCanvas.getContext('2d')
+          ctx.drawImage(canvas, 0, sourceY, imgWidth, sourceHeight, 0, 0, imgWidth, sourceHeight)
+
+          const pageImgData = pageCanvas.toDataURL('image/png')
+          pdf.addImage(pageImgData, 'PNG', marginX, positionY, finalWidth, currentPageHeight)
+
+          sourceY += sourceHeight
+        }
+      }
+
+      // Save PDF
+      pdf.save(`Lot_${lotNumber || 'Production'}_${date || 'Report'}.pdf`)
+    } catch (error) {
+      console.error('Error generating PDF:', error)
+      alert('Error generating PDF: ' + error.message)
+    } finally {
+      setGeneratingPDF(false)
+    }
   }
 
   return (
-    <div className="dashboard-container">
+    <div className="dashboard-container" ref={dashboardRef}>
       <div className="dashboard-header">
         <div className="header-title">
           <h1>Lot Production Dashboard</h1>
@@ -488,9 +360,9 @@ function Dashboard() {
             <span className="btn-icon">💾</span>
             {saving ? 'Saving...' : 'Save Lot'}
           </button>
-          <button className="btn btn-primary" onClick={exportToPDF}>
+          <button className="btn btn-primary" onClick={exportToPDF} disabled={generatingPDF}>
             <span className="btn-icon">📄</span>
-            Save as PDF
+            {generatingPDF ? 'Generating PDF...' : 'Save as PDF'}
           </button>
           <button className="btn btn-logout" onClick={handleLogout}>
             <span className="btn-icon">🚪</span>
@@ -590,6 +462,10 @@ function Dashboard() {
                   <th>Meter</th>
                   <th>Layer</th>
                   <th>Pieces</th>
+                  <th>Color</th>
+                  <th>Shade</th>
+                  <th>TBD2</th>
+                  <th>TBD3</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -639,6 +515,42 @@ function Dashboard() {
                       />
                     </td>
                     <td className="pieces-cell">{row.pieces.toFixed(2)}</td>
+                    <td>
+                      <input
+                        type="text"
+                        value={row.color || ''}
+                        onChange={(e) => updateProductionData(index, 'color', e.target.value)}
+                        placeholder="Enter color"
+                        className="color-input"
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="text"
+                        value={row.shade || ''}
+                        onChange={(e) => updateProductionData(index, 'shade', e.target.value)}
+                        placeholder="Enter shade"
+                        className="tbd-input"
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="text"
+                        value={row.tbd2 || ''}
+                        onChange={(e) => updateProductionData(index, 'tbd2', e.target.value)}
+                        placeholder="TBD2"
+                        className="tbd-input"
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="text"
+                        value={row.tbd3 || ''}
+                        onChange={(e) => updateProductionData(index, 'tbd3', e.target.value)}
+                        placeholder="TBD3"
+                        className="tbd-input"
+                      />
+                    </td>
                     <td>
                       <button
                         className="btn-delete"
