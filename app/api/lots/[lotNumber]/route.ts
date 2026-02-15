@@ -117,10 +117,11 @@ export async function DELETE(
     
     const client = await clientPromise
     const db = client.db(DB_NAME)
-    const collection = db.collection('lots')
+    const lotsCollection = db.collection('lots')
+    const jobCardsCollection = db.collection('jobcards')
     
     // Find the existing lot
-    const existingLot = await collection.findOne({ lotNumber })
+    const existingLot = await lotsCollection.findOne({ lotNumber })
     
     if (!existingLot) {
       return NextResponse.json(
@@ -129,8 +130,16 @@ export async function DELETE(
       )
     }
     
+    // Delete the associated job card first (if it exists)
+    try {
+      await jobCardsCollection.deleteOne({ lotNumber })
+    } catch (jobCardError) {
+      // Log error but don't fail the lot deletion if job card deletion fails
+      console.error('Error deleting associated job card:', jobCardError)
+    }
+    
     // Delete the lot
-    const result = await collection.deleteOne({ lotNumber })
+    const result = await lotsCollection.deleteOne({ lotNumber })
     
     if (result.deletedCount === 0) {
       return NextResponse.json(
@@ -142,7 +151,7 @@ export async function DELETE(
     return NextResponse.json({
       success: true,
       lotNumber,
-      message: 'Lot deleted successfully'
+      message: 'Lot and associated job card deleted successfully'
     })
   } catch (error: any) {
     console.error('Error deleting lot:', error)
