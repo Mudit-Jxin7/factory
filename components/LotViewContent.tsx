@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { lotsAPI, jobCardsAPI } from '@/lib/api'
 import NavigationBar from './NavigationBar'
+import { useToast } from './ToastProvider'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 import './dashboard.css'
@@ -14,6 +15,7 @@ interface LotViewContentProps {
 
 export default function LotViewContent({ lotNumber }: LotViewContentProps) {
   const router = useRouter()
+  const toast = useToast()
   const [lot, setLot] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -232,7 +234,7 @@ export default function LotViewContent({ lotNumber }: LotViewContentProps) {
       pdf.save(`Lot_${lot.lotNumber || 'Production'}_${lot.date || 'Report'}.pdf`)
     } catch (error: any) {
       console.error('Error generating PDF:', error)
-      alert('Error generating PDF: ' + error.message)
+      toast.showToast('Error generating PDF: ' + error.message, 'error')
     } finally {
       setGeneratingPDF(false)
     }
@@ -249,14 +251,14 @@ export default function LotViewContent({ lotNumber }: LotViewContentProps) {
     try {
       const result = await lotsAPI.deleteLot(lot.lotNumber)
       if (result.success) {
-        alert('Lot deleted successfully!')
+        toast.showToast('Lot deleted successfully!', 'success')
         router.push('/lots')
       } else {
-        alert('Error deleting lot: ' + result.error)
+        toast.showToast('Error deleting lot: ' + result.error, 'error')
       }
     } catch (error: any) {
       console.error('Error deleting lot:', error)
-      alert('Error deleting lot: ' + error.message)
+      toast.showToast('Error deleting lot: ' + error.message, 'error')
     } finally {
       setDeleting(false)
     }

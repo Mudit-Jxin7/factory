@@ -617,6 +617,17 @@ body {
   animation: slideUp 0.5s ease-out;
 }
 
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
 @keyframes slideUp {
   from {
     opacity: 0;

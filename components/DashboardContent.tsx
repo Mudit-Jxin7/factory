@@ -6,11 +6,13 @@ import { lotsAPI, jobCardsAPI, colorsAPI } from '@/lib/api'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 import NavigationBar from './NavigationBar'
+import { useToast } from './ToastProvider'
 import './dashboard.css'
 
 export default function DashboardContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const toast = useToast()
   const [saving, setSaving] = useState(false)
   const [generatingPDF, setGeneratingPDF] = useState(false)
   const [loadingLot, setLoadingLot] = useState(false)
@@ -124,11 +126,11 @@ export default function DashboardContent() {
         )
         setTukda(lot.tukda || { count: 0, size: '28' })
       } else {
-        alert('Error loading lot: ' + (result.error || 'Lot not found'))
+        toast.showToast('Error loading lot: ' + (result.error || 'Lot not found'), 'error')
       }
     } catch (error: any) {
       console.error('Error loading lot for edit:', error)
-      alert('Error loading lot: ' + error.message)
+      toast.showToast('Error loading lot: ' + error.message, 'error')
     } finally {
       setLoadingLot(false)
     }
@@ -276,7 +278,7 @@ export default function DashboardContent() {
 
   const saveLot = async () => {
     if (!lotNumber.trim()) {
-      alert('Please enter a lot number')
+      toast.showToast('Please enter a lot number', 'warning')
       return
     }
 
@@ -354,28 +356,25 @@ export default function DashboardContent() {
 
       if (result.success) {
         const isNewLot = !editLotNumber || decodeURIComponent(editLotNumber) !== lotNumber
-        const successMessage = editLotNumber ? 'Lot updated successfully!' : 'Lot saved successfully!'
+        const successMessage = isNewLot ? 'Lot saved successfully!' : 'Lot updated successfully!'
         
-        // Show toast/confirmation asking if user wants to edit job card
+        // Show success toast
+        toast.showToast(successMessage, 'success')
+        
+        // Navigate based on whether it's a new lot or update
         if (isNewLot) {
-          // For new lots, ask if they want to edit the job card
-          const editJobCard = confirm(`${successMessage}\n\nWould you like to edit the job card now?`)
-          if (editJobCard) {
-            router.push(`/jobcard/${encodeURIComponent(lotNumber)}?edit=true`)
-          } else {
-            router.push(`/lot/${lotNumber}`)
-          }
+          // For new lots, navigate to job card edit page
+          router.push(`/jobcard/${encodeURIComponent(lotNumber)}?edit=true`)
         } else {
-          // For updates, just show success and go to lot view
-          alert(successMessage)
+          // For updates, navigate to lot view
           router.push(`/lot/${lotNumber}`)
         }
       } else {
-        alert('Error saving lot: ' + result.error)
+        toast.showToast('Error saving lot: ' + result.error, 'error')
       }
     } catch (error: any) {
       console.error('Error saving lot:', error)
-      alert('Error saving lot: ' + error.message)
+      toast.showToast('Error saving lot: ' + error.message, 'error')
     } finally {
       setSaving(false)
     }
@@ -503,7 +502,7 @@ export default function DashboardContent() {
       pdf.save(`Lot_${lotNumber || 'Production'}_${date || 'Report'}.pdf`)
     } catch (error: any) {
       console.error('Error generating PDF:', error)
-      alert('Error generating PDF: ' + error.message)
+      toast.showToast('Error generating PDF: ' + error.message, 'error')
     } finally {
       setGeneratingPDF(false)
     }

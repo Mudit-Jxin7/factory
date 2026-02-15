@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { jobCardsAPI, lotsAPI } from '@/lib/api'
 import NavigationBar from './NavigationBar'
+import { useToast } from './ToastProvider'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 import './dashboard.css'
@@ -16,6 +17,7 @@ interface JobCardContentProps {
 export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: initialIsEdit }: JobCardContentProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const toast = useToast()
   const isEditMode = initialIsEdit || searchParams?.get('edit') === 'true'
   
   // Decode lot number to handle URL-encoded spaces and special characters
@@ -194,7 +196,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
 
   const handleSave = async () => {
     if (!lotNumber.trim()) {
-      alert('Please enter a lot number')
+      toast.showToast('Please enter a lot number', 'warning')
       return
     }
 
@@ -217,14 +219,14 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
       const result = await jobCardsAPI.updateJobCard(lotNumber, jobCardData)
 
       if (result.success) {
-        alert('Job card updated successfully!')
+        toast.showToast('Job card updated successfully!', 'success')
         router.push(`/jobcard/${encodeURIComponent(lotNumber)}?edit=true`)
       } else {
-        alert('Error updating job card: ' + result.error)
+        toast.showToast('Error updating job card: ' + result.error, 'error')
       }
     } catch (error: any) {
       console.error('Error saving job card:', error)
-      alert('Error saving job card: ' + error.message)
+      toast.showToast('Error saving job card: ' + error.message, 'error')
     } finally {
       setSaving(false)
     }
@@ -353,7 +355,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
       pdf.save(`JobCard_${lotNumber || 'Production'}_${date || 'Report'}.pdf`)
     } catch (error: any) {
       console.error('Error generating PDF:', error)
-      alert('Error generating PDF: ' + error.message)
+      toast.showToast('Error generating PDF: ' + error.message, 'error')
     } finally {
       setGeneratingPDF(false)
     }

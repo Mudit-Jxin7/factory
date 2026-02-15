@@ -3,11 +3,13 @@
 import { useState, useEffect } from 'react'
 import { colorsAPI, workersAPI } from '@/lib/api'
 import NavigationBar from './NavigationBar'
+import { useToast } from './ToastProvider'
 import './dashboard.css'
 
 type TabType = 'colors' | 'workers'
 
 export default function DeveloperContent() {
+  const toast = useToast()
   const [activeTab, setActiveTab] = useState<TabType>('colors')
   
   // Colors state
@@ -52,11 +54,11 @@ export default function DeveloperContent() {
       if (result.success) {
         setColors(result.colors || [])
       } else {
-        alert('Error fetching colors: ' + result.error)
+        toast.showToast('Error fetching colors: ' + result.error, 'error')
       }
     } catch (error: any) {
       console.error('Error fetching colors:', error)
-      alert('Error fetching colors: ' + error.message)
+      toast.showToast('Error fetching colors: ' + error.message, 'error')
     } finally {
       setLoadingColors(false)
     }
@@ -64,7 +66,7 @@ export default function DeveloperContent() {
 
   const handleCreateColor = async () => {
     if (!newColorName.trim()) {
-      alert('Please enter a color name')
+      toast.showToast('Please enter a color name', 'warning')
       return
     }
 
@@ -73,13 +75,13 @@ export default function DeveloperContent() {
       if (result.success) {
         setNewColorName('')
         fetchColors()
-        alert('Color created successfully!')
+        toast.showToast('Color created successfully!', 'success')
       } else {
-        alert('Error creating color: ' + result.error)
+        toast.showToast('Error creating color: ' + result.error, 'error')
       }
     } catch (error: any) {
       console.error('Error creating color:', error)
-      alert('Error creating color: ' + error.message)
+      toast.showToast('Error creating color: ' + error.message, 'error')
     }
   }
 
@@ -90,7 +92,7 @@ export default function DeveloperContent() {
 
   const handleUpdateColor = async (id: string) => {
     if (!editColorName.trim()) {
-      alert('Please enter a color name')
+      toast.showToast('Please enter a color name', 'warning')
       return
     }
 
@@ -99,13 +101,13 @@ export default function DeveloperContent() {
       if (result.success) {
         setEditingColor(null)
         fetchColors()
-        alert('Color updated successfully!')
+        toast.showToast('Color updated successfully!', 'success')
       } else {
-        alert('Error updating color: ' + result.error)
+        toast.showToast('Error updating color: ' + result.error, 'error')
       }
     } catch (error: any) {
       console.error('Error updating color:', error)
-      alert('Error updating color: ' + error.message)
+      toast.showToast('Error updating color: ' + error.message, 'error')
     }
   }
 
@@ -119,13 +121,13 @@ export default function DeveloperContent() {
       const result = await colorsAPI.deleteColor(id)
       if (result.success) {
         fetchColors()
-        alert('Color deleted successfully!')
+        toast.showToast('Color deleted successfully!', 'success')
       } else {
-        alert('Error deleting color: ' + result.error)
+        toast.showToast('Error deleting color: ' + result.error, 'error')
       }
     } catch (error: any) {
       console.error('Error deleting color:', error)
-      alert('Error deleting color: ' + error.message)
+      toast.showToast('Error deleting color: ' + error.message, 'error')
     } finally {
       setDeletingColor(null)
     }
@@ -139,11 +141,11 @@ export default function DeveloperContent() {
       if (result.success) {
         setWorkers(result.workers || [])
       } else {
-        alert('Error fetching workers: ' + result.error)
+        toast.showToast('Error fetching workers: ' + result.error, 'error')
       }
     } catch (error: any) {
       console.error('Error fetching workers:', error)
-      alert('Error fetching workers: ' + error.message)
+      toast.showToast('Error fetching workers: ' + error.message, 'error')
     } finally {
       setLoadingWorkers(false)
     }
@@ -151,7 +153,7 @@ export default function DeveloperContent() {
 
   const handleCreateWorker = async () => {
     if (!newWorker.worker_full_name.trim()) {
-      alert('Please enter worker full name')
+      toast.showToast('Please enter worker full name', 'warning')
       return
     }
 
@@ -160,13 +162,13 @@ export default function DeveloperContent() {
       if (result.success) {
         setNewWorker({ worker_full_name: '', tbd1: '', tbd2: '', tbd3: '' })
         fetchWorkers()
-        alert('Worker created successfully!')
+        toast.showToast('Worker created successfully!', 'success')
       } else {
-        alert('Error creating worker: ' + result.error)
+        toast.showToast('Error creating worker: ' + result.error, 'error')
       }
     } catch (error: any) {
       console.error('Error creating worker:', error)
-      alert('Error creating worker: ' + error.message)
+      toast.showToast('Error creating worker: ' + error.message, 'error')
     }
   }
 
@@ -182,7 +184,7 @@ export default function DeveloperContent() {
 
   const handleUpdateWorker = async (id: string) => {
     if (!editWorker.worker_full_name.trim()) {
-      alert('Please enter worker full name')
+      toast.showToast('Please enter worker full name', 'warning')
       return
     }
 
@@ -191,13 +193,13 @@ export default function DeveloperContent() {
       if (result.success) {
         setEditingWorker(null)
         fetchWorkers()
-        alert('Worker updated successfully!')
+        toast.showToast('Worker updated successfully!', 'success')
       } else {
-        alert('Error updating worker: ' + result.error)
+        toast.showToast('Error updating worker: ' + result.error, 'error')
       }
     } catch (error: any) {
       console.error('Error updating worker:', error)
-      alert('Error updating worker: ' + error.message)
+      toast.showToast('Error updating worker: ' + error.message, 'error')
     }
   }
 
@@ -211,13 +213,13 @@ export default function DeveloperContent() {
       const result = await workersAPI.deleteWorker(id)
       if (result.success) {
         fetchWorkers()
-        alert('Worker deleted successfully!')
+        toast.showToast('Worker deleted successfully!', 'success')
       } else {
-        alert('Error deleting worker: ' + result.error)
+        toast.showToast('Error deleting worker: ' + result.error, 'error')
       }
     } catch (error: any) {
       console.error('Error deleting worker:', error)
-      alert('Error deleting worker: ' + error.message)
+      toast.showToast('Error deleting worker: ' + error.message, 'error')
     } finally {
       setDeletingWorker(null)
     }

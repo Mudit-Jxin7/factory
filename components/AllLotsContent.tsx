@@ -4,10 +4,12 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { lotsAPI, jobCardsAPI } from '@/lib/api'
 import NavigationBar from './NavigationBar'
+import { useToast } from './ToastProvider'
 import './dashboard.css'
 
 export default function AllLotsContent() {
   const router = useRouter()
+  const toast = useToast()
   const [allLots, setAllLots] = useState<any[]>([])
   const [loadingLots, setLoadingLots] = useState(true)
   const [deletingLot, setDeletingLot] = useState<string | null>(null)
@@ -86,11 +88,11 @@ export default function AllLotsContent() {
       if (result.success) {
         setAllLots(result.lots || [])
       } else {
-        alert('Error fetching lots: ' + result.error)
+        toast.showToast('Error fetching lots: ' + result.error, 'error')
       }
     } catch (error: any) {
       console.error('Error fetching lots:', error)
-      alert('Error fetching lots: ' + error.message)
+      toast.showToast('Error fetching lots: ' + error.message, 'error')
     } finally {
       setLoadingLots(false)
     }
@@ -110,15 +112,15 @@ export default function AllLotsContent() {
     try {
       const result = await lotsAPI.deleteLot(lotNumber)
       if (result.success) {
-        alert('Lot deleted successfully!')
+        toast.showToast('Lot deleted successfully!', 'success')
         // Refresh the list
         fetchAllLots()
       } else {
-        alert('Error deleting lot: ' + result.error)
+        toast.showToast('Error deleting lot: ' + result.error, 'error')
       }
     } catch (error: any) {
       console.error('Error deleting lot:', error)
-      alert('Error deleting lot: ' + error.message)
+      toast.showToast('Error deleting lot: ' + error.message, 'error')
     } finally {
       setDeletingLot(null)
     }

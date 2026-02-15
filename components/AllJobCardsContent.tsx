@@ -4,10 +4,12 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { jobCardsAPI } from '@/lib/api'
 import NavigationBar from './NavigationBar'
+import { useToast } from './ToastProvider'
 import './dashboard.css'
 
 export default function AllJobCardsContent() {
   const router = useRouter()
+  const toast = useToast()
   const [allJobCards, setAllJobCards] = useState<any[]>([])
   const [loadingJobCards, setLoadingJobCards] = useState(true)
   const [deletingJobCard, setDeletingJobCard] = useState<string | null>(null)
@@ -23,11 +25,11 @@ export default function AllJobCardsContent() {
       if (result.success) {
         setAllJobCards(result.jobCards || [])
       } else {
-        alert('Error fetching job cards: ' + result.error)
+        toast.showToast('Error fetching job cards: ' + result.error, 'error')
       }
     } catch (error: any) {
       console.error('Error fetching job cards:', error)
-      alert('Error fetching job cards: ' + error.message)
+      toast.showToast('Error fetching job cards: ' + error.message, 'error')
     } finally {
       setLoadingJobCards(false)
     }
@@ -47,14 +49,14 @@ export default function AllJobCardsContent() {
     try {
       const result = await jobCardsAPI.deleteJobCard(lotNumber)
       if (result.success) {
-        alert('Job card deleted successfully!')
+        toast.showToast('Job card deleted successfully!', 'success')
         fetchAllJobCards()
       } else {
-        alert('Error deleting job card: ' + result.error)
+        toast.showToast('Error deleting job card: ' + result.error, 'error')
       }
     } catch (error: any) {
       console.error('Error deleting job card:', error)
-      alert('Error deleting job card: ' + error.message)
+      toast.showToast('Error deleting job card: ' + error.message, 'error')
     } finally {
       setDeletingJobCard(null)
     }
