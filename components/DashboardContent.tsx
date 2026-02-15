@@ -203,7 +203,13 @@ export default function DashboardContent() {
   }
 
   const deleteRow = (index: number) => {
-    setProductionData(productionData.filter((_, i) => i !== index))
+    const newData = productionData.filter((_, i) => i !== index)
+    // Renumber serial numbers sequentially starting from 1
+    const renumberedData = newData.map((row, idx) => ({
+      ...row,
+      serialNumber: idx + 1
+    }))
+    setProductionData(renumberedData)
   }
 
   const totalMeter = useMemo(() => {
@@ -323,7 +329,7 @@ export default function DashboardContent() {
         scale: 2,
         useCORS: true,
         logging: false,
-        backgroundColor: '#f5f5f5',
+        backgroundColor: '#f8f9fa',
         windowWidth: dashboardRef.current.scrollWidth,
         windowHeight: dashboardRef.current.scrollHeight,
       })
@@ -620,7 +626,7 @@ export default function DashboardContent() {
 
         <div className="card">
           <h2>Summary & Calculations</h2>
-          <div className="summary-grid">
+          <div className="tukda-inputs">
             <div className="form-group">
               <label># Tukda</label>
               <input
@@ -660,6 +666,8 @@ export default function DashboardContent() {
                 ))}
               </select>
             </div>
+          </div>
+          <div className="summary-cards-row">
             <div className="summary-card">
               <div className="summary-icon">📏</div>
               <div className="summary-content">

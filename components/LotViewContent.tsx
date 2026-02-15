@@ -111,7 +111,6 @@ export default function LotViewContent({ lotNumber }: LotViewContentProps) {
             className="btn btn-logout" 
             onClick={handleDeleteLot}
             disabled={deleting}
-            style={{ backgroundColor: '#dc3545', borderColor: '#dc3545' }}
           >
             <span className="btn-icon">🗑️</span>
             {deleting ? 'Deleting...' : 'Delete Lot'}
@@ -216,7 +215,7 @@ export default function LotViewContent({ lotNumber }: LotViewContentProps) {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={8} style={{ textAlign: 'center' }}>
+                    <td colSpan={8} style={{ textAlign: 'center', color: '#6c757d', padding: '40px' }}>
                       No production data available
                     </td>
                   </tr>

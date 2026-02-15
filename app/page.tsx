@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import '@/components/dashboard.css'
 
 export default function Home() {
   const router = useRouter()
@@ -24,8 +25,10 @@ export default function Home() {
   }, [router, mounted])
 
   return (
-    <div className="flex items-center justify-center min-h-screen">
-      <p>Loading...</p>
+    <div className="dashboard-container">
+      <div className="loading-container">
+        <p>Loading...</p>
+      </div>
     </div>
   )
 }

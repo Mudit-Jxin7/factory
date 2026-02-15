@@ -103,50 +103,45 @@ export default function AllLotsContent() {
                 </button>
               </div>
               <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <table className="production-table" style={{ width: '100%' }}>
                   <thead>
-                    <tr style={{ backgroundColor: '#f5f5f5', borderBottom: '2px solid #ddd' }}>
-                      <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #ddd' }}>Lot Number</th>
-                      <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #ddd' }}>Date</th>
-                      <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #ddd' }}>Fabric</th>
-                      <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #ddd' }}>Pattern</th>
-                      <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #ddd' }}>Brand</th>
-                      <th style={{ padding: '12px', textAlign: 'center', borderBottom: '1px solid #ddd' }}>Actions</th>
+                    <tr>
+                      <th>Lot Number</th>
+                      <th>Date</th>
+                      <th>Fabric</th>
+                      <th>Pattern</th>
+                      <th>Brand</th>
+                      <th style={{ textAlign: 'center' }}>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {allLots.length === 0 ? (
                       <tr>
-                        <td colSpan={6} style={{ padding: '20px', textAlign: 'center', color: '#666' }}>
+                        <td colSpan={6} style={{ padding: '40px', textAlign: 'center', color: '#6c757d', fontSize: '16px' }}>
                           No lots found
                         </td>
                       </tr>
                     ) : (
                       allLots.map((lot: any) => (
-                        <tr 
-                          key={lot._id || lot.lotNumber} 
-                          style={{ borderBottom: '1px solid #eee', cursor: 'pointer' }}
-                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f9f9f9'}
-                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                        >
-                          <td style={{ padding: '12px', fontWeight: '500' }}>{lot.lotNumber || '-'}</td>
-                          <td style={{ padding: '12px' }}>{lot.date || '-'}</td>
-                          <td style={{ padding: '12px' }}>{lot.fabric || '-'}</td>
-                          <td style={{ padding: '12px' }}>{lot.pattern || '-'}</td>
-                          <td style={{ padding: '12px' }}>{lot.brand || '-'}</td>
-                          <td style={{ padding: '12px', textAlign: 'center' }}>
-                            <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', alignItems: 'center' }}>
+                        <tr key={lot._id || lot.lotNumber}>
+                          <td style={{ fontWeight: '600', color: '#1a1a1a' }}>{lot.lotNumber || '-'}</td>
+                          <td>{lot.date || '-'}</td>
+                          <td>{lot.fabric || '-'}</td>
+                          <td>{lot.pattern || '-'}</td>
+                          <td>{lot.brand || '-'}</td>
+                          <td style={{ textAlign: 'center' }}>
+                            <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
                               <button
                                 className="btn btn-secondary"
                                 onClick={() => handleViewLot(lot.lotNumber)}
-                                style={{ padding: '6px 12px', fontSize: '14px' }}
+                                style={{ padding: '8px 16px', fontSize: '12px' }}
                               >
                                 View
                               </button>
                               <button
                                 className="btn btn-primary"
                                 onClick={() => router.push(`/dashboard?edit=${encodeURIComponent(lot.lotNumber)}`)}
-                                style={{ padding: '6px 12px', fontSize: '14px' }}
+                                style={{ padding: '8px 16px', fontSize: '12px' }}
                               >
                                 Edit
                               </button>
@@ -154,7 +149,7 @@ export default function AllLotsContent() {
                                 className="btn btn-logout"
                                 onClick={() => handleDeleteLot(lot.lotNumber)}
                                 disabled={deletingLot === lot.lotNumber}
-                                style={{ padding: '6px 12px', fontSize: '14px', backgroundColor: '#dc3545', borderColor: '#dc3545' }}
+                                style={{ padding: '8px 16px', fontSize: '12px' }}
                               >
                                 {deletingLot === lot.lotNumber ? 'Deleting...' : 'Delete'}
                               </button>
