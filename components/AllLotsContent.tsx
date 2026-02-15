@@ -52,6 +52,8 @@ export default function AllLotsContent() {
         lotNumber: lotData.lotNumber,
         date: lotData.date || new Date().toISOString().split('T')[0],
         brand: lotData.brand || '',
+        worker: '',
+        rate: '',
         ratios: lotData.ratios || {
           r28: 0, r30: 0, r32: 0, r34: 0, r36: 0,
           r38: 0, r40: 0, r42: 0, r44: 0,

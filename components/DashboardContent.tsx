@@ -325,6 +325,8 @@ export default function DashboardContent() {
               lotNumber,
               date,
               brand,
+              worker: '',
+              rate: '',
               ratios,
               productionData: productionData.map(row => ({
                 serialNumber: row.serialNumber,

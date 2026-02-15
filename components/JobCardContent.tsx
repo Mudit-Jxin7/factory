@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { jobCardsAPI, lotsAPI } from '@/lib/api'
+import { jobCardsAPI, lotsAPI, workersAPI } from '@/lib/api'
 import NavigationBar from './NavigationBar'
 import { useToast } from './ToastProvider'
 import jsPDF from 'jspdf'
@@ -25,6 +25,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
   const [lotNumber, setLotNumber] = useState(decodedLotNumber)
   const [date, setDate] = useState(new Date().toISOString().split('T')[0])
   const [brand, setBrand] = useState('')
+  const [workers, setWorkers] = useState<any[]>([])
   const [ratios, setRatios] = useState({
     r28: 0, r30: 0, r32: 0, r34: 0, r36: 0,
     r38: 0, r40: 0, r42: 0, r44: 0,
@@ -36,6 +37,9 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
       pieces: 0,
       color: '',
       shade: '',
+      worker: '',
+      date: '',
+      rate: '',
       front: '',
       back: '',
       zip: '',
@@ -61,6 +65,22 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
   const sumOfRatios = useMemo(() => {
     return Object.values(ratios).reduce((sum, val) => sum + (Number(val) || 0), 0)
   }, [ratios])
+
+  // Fetch workers on mount
+  useEffect(() => {
+    fetchWorkers()
+  }, [])
+
+  const fetchWorkers = async () => {
+    try {
+      const result = await workersAPI.getAllWorkers()
+      if (result.success) {
+        setWorkers(result.workers || [])
+      }
+    } catch (error) {
+      console.error('Error fetching workers:', error)
+    }
+  }
 
   useEffect(() => {
     if (lotNumber) {
@@ -112,6 +132,9 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
             pieces: Number(row.pieces || 0),
             color: row.color || '',
             shade: row.shade || '',
+            worker: row.worker || '',
+            date: row.date || '',
+            rate: row.rate || '',
             front: '',
             back: '',
             zip: '',
@@ -168,6 +191,9 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
         pieces: 0,
         color: '',
         shade: '',
+        worker: '',
+        date: '',
+        rate: '',
         front: '',
         back: '',
         zip: '',
@@ -211,6 +237,9 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
           ...row,
           layer: Number(row.layer) || 1,
           pieces: Number(row.pieces) || 0,
+          worker: row.worker || '',
+          date: row.date || '',
+          rate: row.rate || '',
         })),
         flyWidth,
         tbdFields,
@@ -427,15 +456,6 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
               />
             </div>
             <div className="form-group">
-              <label>Date</label>
-              <input
-                type="date"
-                value={date}
-                disabled
-                style={{ background: '#f8f9fa', cursor: 'not-allowed' }}
-              />
-            </div>
-            <div className="form-group">
               <label>Brand</label>
               <input
                 type="text"
@@ -478,21 +498,24 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
             <table className="production-table">
               <thead>
                 <tr>
-                  <th>S.No</th>
+                  <th style={{ width: '40px', minWidth: '40px' }}>S.No</th>
                   <th>Layer</th>
                   <th>Pieces</th>
                   <th>Color</th>
                   <th>Shade</th>
+                  <th style={{ width: '200px', minWidth: '200px' }}>Worker</th>
+                  <th style={{ width: '130px', minWidth: '130px' }}>Date</th>
+                  <th style={{ width: '120px', minWidth: '120px' }}>Rate</th>
                   <th>Front</th>
                   <th>Back</th>
                   <th>Zip</th>
-                  <th>Thread</th>
+                  <th style={{ width: '80px', minWidth: '80px' }}>Thread</th>
                 </tr>
               </thead>
               <tbody>
                 {productionData.map((row, index) => (
                   <tr key={index}>
-                    <td>{row.serialNumber}</td>
+                    <td style={{ width: '40px', minWidth: '40px', textAlign: 'center' }}>{row.serialNumber}</td>
                     <td>
                       <input
                         type="text"
@@ -531,6 +554,45 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
                         placeholder="Enter shade"
                       />
                     </td>
+                    <td style={{ width: '200px', minWidth: '200px' }}>
+                      <select
+                        value={row.worker || ''}
+                        onChange={(e) => updateProductionData(index, 'worker', e.target.value)}
+                        disabled={!isEditMode}
+                        className="tbd-input"
+                        style={!isEditMode ? { background: '#f8f9fa', cursor: 'not-allowed' } : { width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px' }}
+                      >
+                        <option value="">Select worker</option>
+                        {workers.map((w: any) => (
+                          <option key={w._id} value={w._id}>
+                            {w.worker_id} - {w.worker_full_name}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+                    <td style={{ width: '130px', minWidth: '130px' }}>
+                      <input
+                        type="date"
+                        value={row.date || ''}
+                        onChange={(e) => updateProductionData(index, 'date', e.target.value)}
+                        disabled={!isEditMode}
+                        className="tbd-input"
+                        style={!isEditMode ? { background: '#f8f9fa', cursor: 'not-allowed' } : { width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px' }}
+                      />
+                    </td>
+                    <td style={{ width: '120px', minWidth: '120px' }}>
+                      <input
+                        type="number"
+                        value={row.rate || ''}
+                        onChange={(e) => updateProductionData(index, 'rate', e.target.value)}
+                        disabled={!isEditMode}
+                        className="tbd-input"
+                        style={!isEditMode ? { background: '#f8f9fa', cursor: 'not-allowed' } : { width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px' }}
+                        placeholder="Rate"
+                        step="0.01"
+                        min="0"
+                      />
+                    </td>
                     <td>
                       <input
                         type="text"
@@ -564,14 +626,14 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
                         placeholder="Zip"
                       />
                     </td>
-                    <td>
+                    <td style={{ width: '80px', minWidth: '80px' }}>
                       <input
                         type="text"
                         value={row.thread}
                         onChange={(e) => updateProductionData(index, 'thread', e.target.value)}
                         disabled={!isEditMode}
                         className="tbd-input"
-                        style={!isEditMode ? { background: '#f8f9fa', cursor: 'not-allowed' } : {}}
+                        style={!isEditMode ? { background: '#f8f9fa', cursor: 'not-allowed' } : { width: '100%' }}
                         placeholder="Thread"
                       />
                     </td>
