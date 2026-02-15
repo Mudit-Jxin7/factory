@@ -78,7 +78,11 @@ export default function LotViewContent({ lotNumber }: LotViewContentProps) {
           <p>View saved lot production data</p>
         </div>
         <div className="header-actions">
-          <button className="btn btn-primary" onClick={() => router.push('/dashboard')}>
+          <button className="btn btn-primary" onClick={() => router.push(`/dashboard?edit=${encodeURIComponent(lot.lotNumber)}`)}>
+            <span className="btn-icon">✏️</span>
+            Edit Lot
+          </button>
+          <button className="btn btn-secondary" onClick={() => router.push('/dashboard')}>
             ← Back to Dashboard
           </button>
           <button className="btn btn-logout" onClick={handleLogout}>

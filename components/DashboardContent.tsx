@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useMemo, useRef } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useMemo, useRef, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { lotsAPI } from '@/lib/api'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
@@ -9,8 +9,10 @@ import './dashboard.css'
 
 export default function DashboardContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [saving, setSaving] = useState(false)
   const [generatingPDF, setGeneratingPDF] = useState(false)
+  const [loadingLot, setLoadingLot] = useState(false)
   const dashboardRef = useRef<HTMLDivElement>(null)
 
   const handleLogout = () => {
@@ -59,6 +61,60 @@ export default function DashboardContent() {
   })
   
   const tukdaSizes = ['28', '30', '32', '34', '36', '38', '40', '42', '44']
+
+  // Load lot data for editing
+  useEffect(() => {
+    const editLotNumber = searchParams?.get('edit')
+    if (editLotNumber) {
+      loadLotForEdit(editLotNumber)
+    }
+  }, [searchParams])
+
+  const loadLotForEdit = async (lotNumberParam: string) => {
+    setLoadingLot(true)
+    try {
+      const decodedLotNumber = decodeURIComponent(lotNumberParam)
+      const result = await lotsAPI.getLotByNumber(decodedLotNumber)
+      
+      if (result.success && result.lot) {
+        const lot = result.lot
+        setLotNumber(lot.lotNumber || '')
+        setDate(lot.date || new Date().toISOString().split('T')[0])
+        setFabric(lot.fabric || '')
+        setPattern(lot.pattern || '')
+        setBrand(lot.brand || '')
+        setRatios(lot.ratios || {
+          r28: 0, r30: 0, r32: 0, r34: 0, r36: 0,
+          r38: 0, r40: 0, r42: 0, r44: 0,
+        })
+        setProductionData(lot.productionData && lot.productionData.length > 0 
+          ? lot.productionData.map((row: any) => ({
+              ...row,
+              meter: String(row.meter || ''),
+              layer: String(row.layer || '1'),
+            }))
+          : [{
+              serialNumber: 1,
+              meter: '',
+              layer: '1',
+              pieces: 0,
+              color: '',
+              shade: '',
+              tbd2: '',
+              tbd3: '',
+            }]
+        )
+        setTukda(lot.tukda || { count: 0, size: '28' })
+      } else {
+        alert('Error loading lot: ' + (result.error || 'Lot not found'))
+      }
+    } catch (error: any) {
+      console.error('Error loading lot for edit:', error)
+      alert('Error loading lot: ' + error.message)
+    } finally {
+      setLoadingLot(false)
+    }
+  }
 
   const sumOfRatios = useMemo(() => {
     return Object.values(ratios).reduce((sum, val) => sum + (Number(val) || 0), 0)
@@ -225,10 +281,20 @@ export default function DashboardContent() {
         average,
       }
 
-      const result = await lotsAPI.saveLot(lotData)
+      // Check if we're editing an existing lot
+      const editLotNumber = searchParams?.get('edit')
+      let result
+      
+      if (editLotNumber && decodeURIComponent(editLotNumber) === lotNumber) {
+        // Update existing lot
+        result = await lotsAPI.updateLot(lotNumber, lotData)
+      } else {
+        // Create new lot
+        result = await lotsAPI.saveLot(lotData)
+      }
 
       if (result.success) {
-        alert('Lot saved successfully!')
+        alert(editLotNumber ? 'Lot updated successfully!' : 'Lot saved successfully!')
         router.push(`/lot/${lotNumber}`)
       } else {
         alert('Error saving lot: ' + result.error)
@@ -324,17 +390,31 @@ export default function DashboardContent() {
     }
   }
 
+  if (loadingLot) {
+    return (
+      <div className="dashboard-container">
+        <div className="loading-container">
+          <p>Loading lot data for editing...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="dashboard-container" ref={dashboardRef}>
       <div className="dashboard-header">
         <div className="header-title">
-          <h1>Lot Production Dashboard</h1>
-          <p>Track and manage production data</p>
+          <h1>{searchParams?.get('edit') ? 'Edit Lot' : 'Lot Production Dashboard'}</h1>
+          <p>{searchParams?.get('edit') ? 'Edit existing lot production data' : 'Track and manage production data'}</p>
         </div>
         <div className="header-actions">
-          <button className="btn btn-primary" onClick={saveLot} disabled={saving}>
+          <button className="btn btn-secondary" onClick={() => router.push('/lots')}>
+            <span className="btn-icon">📋</span>
+            View All Lots
+          </button>
+          <button className="btn btn-primary" onClick={saveLot} disabled={saving || loadingLot}>
             <span className="btn-icon">💾</span>
-            {saving ? 'Saving...' : 'Save Lot'}
+            {loadingLot ? 'Loading...' : saving ? 'Saving...' : searchParams?.get('edit') ? 'Update Lot' : 'Save Lot'}
           </button>
           <button className="btn btn-primary" onClick={exportToPDF} disabled={generatingPDF}>
             <span className="btn-icon">📄</span>

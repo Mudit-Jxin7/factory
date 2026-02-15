@@ -59,6 +59,27 @@ export const lotsAPI = {
       return { success: false, error: error.message }
     }
   },
+
+  /**
+   * Update an existing lot by lot number
+   */
+  updateLot: async (lotNumber: string, lotData: any) => {
+    try {
+      const encodedLotNumber = encodeURIComponent(lotNumber)
+      const response = await fetch(`${API_BASE_URL}/lots/${encodedLotNumber}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(lotData),
+      })
+
+      const result = await response.json()
+      return result
+    } catch (error: any) {
+      return { success: false, error: error.message }
+    }
+  },
 }
 
 export default lotsAPI
