@@ -1,11 +1,9 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { lotsAPI, jobCardsAPI } from '@/lib/api'
 import NavigationBar from './NavigationBar'
-import jsPDF from 'jspdf'
-import html2canvas from 'html2canvas'
 import './dashboard.css'
 
 export default function AllLotsContent() {
@@ -13,8 +11,6 @@ export default function AllLotsContent() {
   const [allLots, setAllLots] = useState<any[]>([])
   const [loadingLots, setLoadingLots] = useState(true)
   const [deletingLot, setDeletingLot] = useState<string | null>(null)
-  const [generatingPDF, setGeneratingPDF] = useState(false)
-  const allLotsRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     fetchAllLots()
@@ -126,172 +122,16 @@ export default function AllLotsContent() {
     }
   }
 
-  const exportToPDF = async () => {
-    if (!allLotsRef.current) return
-
-    setGeneratingPDF(true)
-    
-    try {
-      // Hide navigation bar temporarily
-      const navBar = document.querySelector('.main-navbar') as HTMLElement
-      const originalDisplay = navBar?.style.display
-      if (navBar) {
-        navBar.style.display = 'none'
-      }
-
-      // Clone the element for PDF generation
-      const clone = allLotsRef.current.cloneNode(true) as HTMLElement
-      clone.style.position = 'absolute'
-      clone.style.left = '-9999px'
-      clone.style.top = '0'
-      document.body.appendChild(clone)
-
-      // Hide header actions in PDF
-      const headerActions = clone.querySelector('.header-actions') as HTMLElement
-      if (headerActions) {
-        headerActions.style.display = 'none'
-      }
-      
-      // Hide action buttons column in PDF
-      const actionHeaders = clone.querySelectorAll('th')
-      actionHeaders.forEach((th) => {
-        if (th.textContent?.trim() === 'Actions') {
-          (th as HTMLElement).style.display = 'none'
-        }
-      })
-      const rows = clone.querySelectorAll('tbody tr')
-      rows.forEach((row) => {
-        const cells = row.querySelectorAll('td')
-        if (cells.length > 0) {
-          // Hide the last cell (Actions column)
-          (cells[cells.length - 1] as HTMLElement).style.display = 'none'
-        }
-      })
-
-      // Replace all inputs with divs showing their values (empty if no value)
-      const inputs = clone.querySelectorAll('input, textarea, select')
-      inputs.forEach((input) => {
-        const htmlInput = input as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-        const element = input as HTMLElement
-        const computedStyle = window.getComputedStyle(element)
-        
-        // Get the actual value (empty string if empty, no placeholder)
-        const value = htmlInput.value || ''
-        
-        // Create a div to replace the input
-        const div = document.createElement('div')
-        div.textContent = value // Empty string if no value
-        div.style.cssText = computedStyle.cssText
-        div.style.display = 'inline-block'
-        div.style.width = computedStyle.width
-        div.style.height = computedStyle.height
-        div.style.padding = computedStyle.padding
-        div.style.border = computedStyle.border
-        div.style.borderRadius = computedStyle.borderRadius
-        div.style.backgroundColor = computedStyle.backgroundColor
-        div.style.color = computedStyle.color
-        div.style.fontSize = computedStyle.fontSize
-        div.style.fontFamily = computedStyle.fontFamily
-        div.style.lineHeight = computedStyle.lineHeight
-        div.style.minHeight = computedStyle.minHeight
-        div.style.boxSizing = 'border-box'
-        
-        // Replace input with div
-        element.parentNode?.replaceChild(div, element)
-      })
-
-      // Wait for DOM to update
-      await new Promise(resolve => setTimeout(resolve, 50))
-
-      const canvas = await html2canvas(clone, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#f8f9fa',
-        windowWidth: clone.scrollWidth,
-        windowHeight: clone.scrollHeight,
-      })
-
-      // Remove clone
-      document.body.removeChild(clone)
-
-      if (navBar) {
-        navBar.style.display = originalDisplay || ''
-      }
-
-      const imgData = canvas.toDataURL('image/png')
-      const imgWidth = canvas.width
-      const imgHeight = canvas.height
-
-      const pdf = new jsPDF('p', 'mm', 'a4')
-      const pdfWidth = pdf.internal.pageSize.getWidth()
-      const pdfHeight = pdf.internal.pageSize.getHeight()
-      
-      const ratio = imgWidth / imgHeight
-      const pageWidth = pdfWidth - 20
-      const pageHeight = pdfHeight - 20
-      
-      let finalWidth = pageWidth
-      let finalHeight = finalWidth / ratio
-
-      const marginX = (pdfWidth - finalWidth) / 2
-      let positionY = 10
-
-      if (finalHeight <= pageHeight) {
-        pdf.addImage(imgData, 'PNG', marginX, positionY, finalWidth, finalHeight)
-      } else {
-        const totalPages = Math.ceil(finalHeight / pageHeight)
-        let sourceY = 0
-
-        for (let i = 0; i < totalPages; i++) {
-          if (i > 0) {
-            pdf.addPage()
-            positionY = 10
-          }
-
-          const remainingHeight = finalHeight - (i * pageHeight)
-          const currentPageHeight = Math.min(pageHeight, remainingHeight)
-          const sourceHeight = (currentPageHeight / finalHeight) * imgHeight
-
-          const pageCanvas = document.createElement('canvas')
-          pageCanvas.width = imgWidth
-          pageCanvas.height = sourceHeight
-          const ctx = pageCanvas.getContext('2d')
-          if (ctx) {
-            ctx.drawImage(canvas, 0, sourceY, imgWidth, sourceHeight, 0, 0, imgWidth, sourceHeight)
-          }
-
-          const pageImgData = pageCanvas.toDataURL('image/png')
-          pdf.addImage(pageImgData, 'PNG', marginX, positionY, finalWidth, currentPageHeight)
-
-          sourceY += sourceHeight
-        }
-      }
-
-      pdf.save(`AllLots_${new Date().toISOString().split('T')[0]}.pdf`)
-    } catch (error: any) {
-      console.error('Error generating PDF:', error)
-      alert('Error generating PDF: ' + error.message)
-    } finally {
-      setGeneratingPDF(false)
-    }
-  }
-
-
   return (
     <>
       <NavigationBar />
-      <div className="dashboard-container" ref={allLotsRef}>
+      <div className="dashboard-container">
         <div className="dashboard-header">
           <div className="header-title">
             <h1>All Lots</h1>
             <p>View and manage all production lots</p>
           </div>
           <div className="header-actions">
-            <button className="btn btn-primary" onClick={exportToPDF} disabled={generatingPDF}>
-              <span className="btn-icon">📄</span>
-              {generatingPDF ? 'Generating PDF...' : 'Save as PDF'}
-            </button>
             <button className="btn btn-secondary" onClick={fetchAllLots}>
               <span className="btn-icon">🔄</span>
               Refresh
