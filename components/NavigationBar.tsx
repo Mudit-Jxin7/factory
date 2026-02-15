@@ -49,6 +49,13 @@ export default function NavigationBar() {
             <span className="navbar-link-icon">📄</span>
             Job Cards
           </button>
+          <button
+            className={`navbar-link ${isActive('/developer') ? 'active' : ''}`}
+            onClick={() => router.push('/developer')}
+          >
+            <span className="navbar-link-icon">⚙️</span>
+            Developer
+          </button>
         </div>
 
         <div className="navbar-actions">

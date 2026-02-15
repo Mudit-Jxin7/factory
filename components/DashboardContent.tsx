@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { lotsAPI, jobCardsAPI } from '@/lib/api'
+import { lotsAPI, jobCardsAPI, colorsAPI } from '@/lib/api'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 import NavigationBar from './NavigationBar'
@@ -15,6 +15,7 @@ export default function DashboardContent() {
   const [generatingPDF, setGeneratingPDF] = useState(false)
   const [loadingLot, setLoadingLot] = useState(false)
   const dashboardRef = useRef<HTMLDivElement>(null)
+  const [colors, setColors] = useState<any[]>([])
 
   const handleLogout = () => {
     localStorage.removeItem('isAuthenticated')
@@ -63,6 +64,11 @@ export default function DashboardContent() {
   
   const tukdaSizes = ['28', '30', '32', '34', '36', '38', '40', '42', '44']
 
+  // Load colors on mount
+  useEffect(() => {
+    fetchColors()
+  }, [])
+
   // Load lot data for editing
   useEffect(() => {
     const editLotNumber = searchParams?.get('edit')
@@ -70,6 +76,17 @@ export default function DashboardContent() {
       loadLotForEdit(editLotNumber)
     }
   }, [searchParams])
+
+  const fetchColors = async () => {
+    try {
+      const result = await colorsAPI.getAllColors()
+      if (result.success) {
+        setColors(result.colors || [])
+      }
+    } catch (error) {
+      console.error('Error fetching colors:', error)
+    }
+  }
 
   const loadLotForEdit = async (lotNumberParam: string) => {
     setLoadingLot(true)
@@ -666,13 +683,19 @@ export default function DashboardContent() {
                     </td>
                     <td className="pieces-cell">{row.pieces.toFixed(2)}</td>
                     <td>
-                      <input
-                        type="text"
+                      <select
                         value={row.color || ''}
                         onChange={(e) => updateProductionData(index, 'color', e.target.value)}
-                        placeholder="Enter color"
                         className="color-input"
-                      />
+                        style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }}
+                      >
+                        <option value="">Select color</option>
+                        {colors.map((color: any) => (
+                          <option key={color._id} value={color.name}>
+                            {color.name}
+                          </option>
+                        ))}
+                      </select>
                     </td>
                     <td>
                       <input

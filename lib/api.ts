@@ -192,4 +192,118 @@ export const jobCardsAPI = {
   },
 }
 
+// Colors API
+export const colorsAPI = {
+  getAllColors: async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/colors`)
+      const result = await response.json()
+      return result
+    } catch (error: any) {
+      return { success: false, error: error.message }
+    }
+  },
+
+  createColor: async (colorData: any) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/colors`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(colorData),
+      })
+      const result = await response.json()
+      return result
+    } catch (error: any) {
+      return { success: false, error: error.message }
+    }
+  },
+
+  updateColor: async (id: string, colorData: any) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/colors/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(colorData),
+      })
+      const result = await response.json()
+      return result
+    } catch (error: any) {
+      return { success: false, error: error.message }
+    }
+  },
+
+  deleteColor: async (id: string) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/colors/${id}`, {
+        method: 'DELETE',
+      })
+      const result = await response.json()
+      return result
+    } catch (error: any) {
+      return { success: false, error: error.message }
+    }
+  },
+}
+
+// Workers API
+export const workersAPI = {
+  getAllWorkers: async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/workers`)
+      const result = await response.json()
+      return result
+    } catch (error: any) {
+      return { success: false, error: error.message }
+    }
+  },
+
+  createWorker: async (workerData: any) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/workers`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(workerData),
+      })
+      const result = await response.json()
+      return result
+    } catch (error: any) {
+      return { success: false, error: error.message }
+    }
+  },
+
+  updateWorker: async (id: string, workerData: any) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/workers/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(workerData),
+      })
+      const result = await response.json()
+      return result
+    } catch (error: any) {
+      return { success: false, error: error.message }
+    }
+  },
+
+  deleteWorker: async (id: string) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/workers/${id}`, {
+        method: 'DELETE',
+      })
+      const result = await response.json()
+      return result
+    } catch (error: any) {
+      return { success: false, error: error.message }
+    }
+  },
+}
+
 export default lotsAPI
