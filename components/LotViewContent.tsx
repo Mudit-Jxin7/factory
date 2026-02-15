@@ -14,6 +14,7 @@ export default function LotViewContent({ lotNumber }: LotViewContentProps) {
   const [lot, setLot] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     fetchLot()
@@ -44,6 +45,30 @@ export default function LotViewContent({ lotNumber }: LotViewContentProps) {
   const handleLogout = () => {
     localStorage.removeItem('isAuthenticated')
     router.push('/login')
+  }
+
+  const handleDeleteLot = async () => {
+    if (!lot) return
+    
+    if (!confirm(`Are you sure you want to delete lot "${lot.lotNumber}"? This action cannot be undone.`)) {
+      return
+    }
+
+    setDeleting(true)
+    try {
+      const result = await lotsAPI.deleteLot(lot.lotNumber)
+      if (result.success) {
+        alert('Lot deleted successfully!')
+        router.push('/lots')
+      } else {
+        alert('Error deleting lot: ' + result.error)
+      }
+    } catch (error: any) {
+      console.error('Error deleting lot:', error)
+      alert('Error deleting lot: ' + error.message)
+    } finally {
+      setDeleting(false)
+    }
   }
 
   if (loading) {
@@ -81,6 +106,15 @@ export default function LotViewContent({ lotNumber }: LotViewContentProps) {
           <button className="btn btn-primary" onClick={() => router.push(`/dashboard?edit=${encodeURIComponent(lot.lotNumber)}`)}>
             <span className="btn-icon">✏️</span>
             Edit Lot
+          </button>
+          <button 
+            className="btn btn-logout" 
+            onClick={handleDeleteLot}
+            disabled={deleting}
+            style={{ backgroundColor: '#dc3545', borderColor: '#dc3545' }}
+          >
+            <span className="btn-icon">🗑️</span>
+            {deleting ? 'Deleting...' : 'Delete Lot'}
           </button>
           <button className="btn btn-secondary" onClick={() => router.push('/dashboard')}>
             ← Back to Dashboard

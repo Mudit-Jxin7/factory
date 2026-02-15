@@ -9,6 +9,7 @@ export default function AllLotsContent() {
   const router = useRouter()
   const [allLots, setAllLots] = useState<any[]>([])
   const [loadingLots, setLoadingLots] = useState(true)
+  const [deletingLot, setDeletingLot] = useState<string | null>(null)
 
   useEffect(() => {
     fetchAllLots()
@@ -42,6 +43,29 @@ export default function AllLotsContent() {
   const handleLogout = () => {
     localStorage.removeItem('isAuthenticated')
     router.push('/login')
+  }
+
+  const handleDeleteLot = async (lotNumber: string) => {
+    if (!confirm(`Are you sure you want to delete lot "${lotNumber}"? This action cannot be undone.`)) {
+      return
+    }
+
+    setDeletingLot(lotNumber)
+    try {
+      const result = await lotsAPI.deleteLot(lotNumber)
+      if (result.success) {
+        alert('Lot deleted successfully!')
+        // Refresh the list
+        fetchAllLots()
+      } else {
+        alert('Error deleting lot: ' + result.error)
+      }
+    } catch (error: any) {
+      console.error('Error deleting lot:', error)
+      alert('Error deleting lot: ' + error.message)
+    } finally {
+      setDeletingLot(null)
+    }
   }
 
   return (
@@ -125,6 +149,14 @@ export default function AllLotsContent() {
                                 style={{ padding: '6px 12px', fontSize: '14px' }}
                               >
                                 Edit
+                              </button>
+                              <button
+                                className="btn btn-logout"
+                                onClick={() => handleDeleteLot(lot.lotNumber)}
+                                disabled={deletingLot === lot.lotNumber}
+                                style={{ padding: '6px 12px', fontSize: '14px', backgroundColor: '#dc3545', borderColor: '#dc3545' }}
+                              >
+                                {deletingLot === lot.lotNumber ? 'Deleting...' : 'Delete'}
                               </button>
                             </div>
                           </td>

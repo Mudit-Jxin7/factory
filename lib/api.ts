@@ -80,6 +80,23 @@ export const lotsAPI = {
       return { success: false, error: error.message }
     }
   },
+
+  /**
+   * Delete a lot by lot number
+   */
+  deleteLot: async (lotNumber: string) => {
+    try {
+      const encodedLotNumber = encodeURIComponent(lotNumber)
+      const response = await fetch(`${API_BASE_URL}/lots/${encodedLotNumber}`, {
+        method: 'DELETE',
+      })
+
+      const result = await response.json()
+      return result
+    } catch (error: any) {
+      return { success: false, error: error.message }
+    }
+  },
 }
 
 export default lotsAPI

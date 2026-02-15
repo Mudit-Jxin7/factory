@@ -105,3 +105,50 @@ export async function PUT(
     )
   }
 }
+
+// DELETE a lot by lot number
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ lotNumber: string }> | { lotNumber: string } }
+) {
+  try {
+    const resolvedParams = 'then' in params ? await params : params
+    const lotNumber = decodeURIComponent(resolvedParams.lotNumber)
+    
+    const client = await clientPromise
+    const db = client.db(DB_NAME)
+    const collection = db.collection('lots')
+    
+    // Find the existing lot
+    const existingLot = await collection.findOne({ lotNumber })
+    
+    if (!existingLot) {
+      return NextResponse.json(
+        { success: false, error: 'Lot not found' },
+        { status: 404 }
+      )
+    }
+    
+    // Delete the lot
+    const result = await collection.deleteOne({ lotNumber })
+    
+    if (result.deletedCount === 0) {
+      return NextResponse.json(
+        { success: false, error: 'Lot not found' },
+        { status: 404 }
+      )
+    }
+    
+    return NextResponse.json({
+      success: true,
+      lotNumber,
+      message: 'Lot deleted successfully'
+    })
+  } catch (error: any) {
+    console.error('Error deleting lot:', error)
+    return NextResponse.json(
+      { success: false, error: error.message },
+      { status: 500 }
+    )
+  }
+}
