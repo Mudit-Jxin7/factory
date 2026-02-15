@@ -5,11 +5,13 @@ import { useRouter } from 'next/navigation'
 import { jobCardsAPI } from '@/lib/api'
 import NavigationBar from './NavigationBar'
 import { useToast } from './ToastProvider'
+import { useConfirm } from './ConfirmProvider'
 import './dashboard.css'
 
 export default function AllJobCardsContent() {
   const router = useRouter()
   const toast = useToast()
+  const { confirm: showConfirm } = useConfirm()
   const [allJobCards, setAllJobCards] = useState<any[]>([])
   const [loadingJobCards, setLoadingJobCards] = useState(true)
   const [deletingJobCard, setDeletingJobCard] = useState<string | null>(null)
@@ -41,7 +43,15 @@ export default function AllJobCardsContent() {
 
 
   const handleDeleteJobCard = async (lotNumber: string) => {
-    if (!confirm(`Are you sure you want to delete job card for lot "${lotNumber}"? This action cannot be undone.`)) {
+    const confirmed = await showConfirm({
+      title: 'Delete Job Card',
+      message: `Are you sure you want to delete job card for lot "${lotNumber}"? This action cannot be undone.`,
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      type: 'danger',
+    })
+
+    if (!confirmed) {
       return
     }
 

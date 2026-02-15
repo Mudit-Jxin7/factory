@@ -4,12 +4,14 @@ import { useState, useEffect } from 'react'
 import { colorsAPI, workersAPI } from '@/lib/api'
 import NavigationBar from './NavigationBar'
 import { useToast } from './ToastProvider'
+import { useConfirm } from './ConfirmProvider'
 import './dashboard.css'
 
 type TabType = 'colors' | 'workers'
 
 export default function DeveloperContent() {
   const toast = useToast()
+  const { confirm: showConfirm } = useConfirm()
   const [activeTab, setActiveTab] = useState<TabType>('colors')
   
   // Colors state
@@ -112,7 +114,15 @@ export default function DeveloperContent() {
   }
 
   const handleDeleteColor = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this color?')) {
+    const confirmed = await showConfirm({
+      title: 'Delete Color',
+      message: 'Are you sure you want to delete this color?',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      type: 'danger',
+    })
+
+    if (!confirmed) {
       return
     }
 
@@ -204,7 +214,15 @@ export default function DeveloperContent() {
   }
 
   const handleDeleteWorker = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this worker?')) {
+    const confirmed = await showConfirm({
+      title: 'Delete Worker',
+      message: 'Are you sure you want to delete this worker?',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      type: 'danger',
+    })
+
+    if (!confirmed) {
       return
     }
 

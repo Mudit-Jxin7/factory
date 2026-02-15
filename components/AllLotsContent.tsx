@@ -5,11 +5,13 @@ import { useRouter } from 'next/navigation'
 import { lotsAPI, jobCardsAPI } from '@/lib/api'
 import NavigationBar from './NavigationBar'
 import { useToast } from './ToastProvider'
+import { useConfirm } from './ConfirmProvider'
 import './dashboard.css'
 
 export default function AllLotsContent() {
   const router = useRouter()
   const toast = useToast()
+  const { confirm: showConfirm } = useConfirm()
   const [allLots, setAllLots] = useState<any[]>([])
   const [loadingLots, setLoadingLots] = useState(true)
   const [deletingLot, setDeletingLot] = useState<string | null>(null)
@@ -104,7 +106,15 @@ export default function AllLotsContent() {
 
 
   const handleDeleteLot = async (lotNumber: string) => {
-    if (!confirm(`Are you sure you want to delete lot "${lotNumber}"? This action cannot be undone.`)) {
+    const confirmed = await showConfirm({
+      title: 'Delete Lot',
+      message: `Are you sure you want to delete lot "${lotNumber}"? This action cannot be undone.`,
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      type: 'danger',
+    })
+
+    if (!confirmed) {
       return
     }
 
