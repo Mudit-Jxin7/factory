@@ -11,6 +11,8 @@ export default function AllLotsContent() {
   const [allLots, setAllLots] = useState<any[]>([])
   const [loadingLots, setLoadingLots] = useState(true)
   const [deletingLot, setDeletingLot] = useState<string | null>(null)
+  const [filterDate, setFilterDate] = useState<string>('')
+  const [filterLotNumber, setFilterLotNumber] = useState<string>('')
 
   useEffect(() => {
     fetchAllLots()
@@ -122,6 +124,19 @@ export default function AllLotsContent() {
     }
   }
 
+  // Filter lots based on date and lot number
+  const filteredLots = allLots.filter((lot: any) => {
+    const matchesDate = !filterDate || (lot.date && lot.date === filterDate)
+    const matchesLotNumber = !filterLotNumber || 
+      (lot.lotNumber && lot.lotNumber.toLowerCase().includes(filterLotNumber.toLowerCase()))
+    return matchesDate && matchesLotNumber
+  })
+
+  const clearFilters = () => {
+    setFilterDate('')
+    setFilterLotNumber('')
+  }
+
   return (
     <>
       <NavigationBar />
@@ -147,9 +162,59 @@ export default function AllLotsContent() {
             </div>
           ) : (
             <>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                <h2>All Lots ({allLots.length})</h2>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', flexWrap: 'wrap', gap: '15px' }}>
+                <h2>All Lots ({filteredLots.length} of {allLots.length})</h2>
               </div>
+              
+              {/* Filters */}
+              <div className="card" style={{ marginBottom: '20px', padding: '20px', background: '#fff9e6' }}>
+                <h3 style={{ marginTop: 0, marginBottom: '15px', fontSize: '16px', fontWeight: '600', color: '#1a1a1a' }}>Filters</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '15px', alignItems: 'end' }}>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label style={{ marginBottom: '8px', display: 'block', fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>Filter by Date</label>
+                    <input
+                      type="date"
+                      value={filterDate}
+                      onChange={(e) => setFilterDate(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '10px',
+                        border: '1px solid #ddd',
+                        borderRadius: '6px',
+                        fontSize: '14px',
+                        backgroundColor: '#fff'
+                      }}
+                    />
+                  </div>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label style={{ marginBottom: '8px', display: 'block', fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>Filter by Lot Number</label>
+                    <input
+                      type="text"
+                      value={filterLotNumber}
+                      onChange={(e) => setFilterLotNumber(e.target.value)}
+                      placeholder="Enter lot number..."
+                      style={{
+                        width: '100%',
+                        padding: '10px',
+                        border: '1px solid #ddd',
+                        borderRadius: '6px',
+                        fontSize: '14px',
+                        backgroundColor: '#fff'
+                      }}
+                    />
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'end' }}>
+                    <button
+                      className="btn btn-secondary"
+                      onClick={clearFilters}
+                      style={{ padding: '10px 20px', fontSize: '14px', whiteSpace: 'nowrap' }}
+                    >
+                      Clear Filters
+                    </button>
+                  </div>
+                </div>
+              </div>
+
               <div style={{ overflowX: 'auto' }}>
                 <table className="production-table" style={{ width: '100%' }}>
                   <thead>
@@ -163,14 +228,14 @@ export default function AllLotsContent() {
                     </tr>
                   </thead>
                   <tbody>
-                    {allLots.length === 0 ? (
+                    {filteredLots.length === 0 ? (
                       <tr>
                         <td colSpan={6} style={{ padding: '40px', textAlign: 'center', color: '#6c757d', fontSize: '16px' }}>
-                          No lots found
+                          {allLots.length === 0 ? 'No lots found' : 'No lots match the filters'}
                         </td>
                       </tr>
                     ) : (
-                      allLots.map((lot: any) => (
+                      filteredLots.map((lot: any) => (
                         <tr key={lot._id || lot.lotNumber}>
                           <td style={{ fontWeight: '600', color: '#1a1a1a' }}>{lot.lotNumber || '-'}</td>
                           <td>{lot.date || '-'}</td>
