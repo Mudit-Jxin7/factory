@@ -336,8 +336,23 @@ export default function DashboardContent() {
       }
 
       if (result.success) {
-        alert(editLotNumber ? 'Lot updated successfully!' : 'Lot saved successfully!')
-        router.push(`/lot/${lotNumber}`)
+        const isNewLot = !editLotNumber || decodeURIComponent(editLotNumber) !== lotNumber
+        const successMessage = editLotNumber ? 'Lot updated successfully!' : 'Lot saved successfully!'
+        
+        // Show toast/confirmation asking if user wants to edit job card
+        if (isNewLot) {
+          // For new lots, ask if they want to edit the job card
+          const editJobCard = confirm(`${successMessage}\n\nWould you like to edit the job card now?`)
+          if (editJobCard) {
+            router.push(`/jobcard/${encodeURIComponent(lotNumber)}`)
+          } else {
+            router.push(`/lot/${lotNumber}`)
+          }
+        } else {
+          // For updates, just show success and go to lot view
+          alert(successMessage)
+          router.push(`/lot/${lotNumber}`)
+        }
       } else {
         alert('Error saving lot: ' + result.error)
       }
