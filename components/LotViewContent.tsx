@@ -1,8 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { lotsAPI } from '@/lib/api'
+import { lotsAPI, jobCardsAPI } from '@/lib/api'
+import NavigationBar from './NavigationBar'
+import jsPDF from 'jspdf'
+import html2canvas from 'html2canvas'
 import './dashboard.css'
 
 interface LotViewContentProps {
@@ -15,10 +18,18 @@ export default function LotViewContent({ lotNumber }: LotViewContentProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [generatingPDF, setGeneratingPDF] = useState(false)
+  const lotViewRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     fetchLot()
   }, [lotNumber])
+
+  useEffect(() => {
+    if (lot) {
+      ensureJobCardExists()
+    }
+  }, [lot])
 
   const fetchLot = async () => {
     try {
@@ -42,9 +53,189 @@ export default function LotViewContent({ lotNumber }: LotViewContentProps) {
     }
   }
 
+  const ensureJobCardExists = async () => {
+    if (!lot) return
+    try {
+      const result = await jobCardsAPI.getJobCardByLotNumber(lot.lotNumber)
+      if (!result.success || !result.jobCard) {
+        // Job card doesn't exist, create it automatically
+        await createJobCardFromLot(lot)
+      }
+    } catch (error) {
+      // If check fails, try to create job card
+      await createJobCardFromLot(lot)
+    }
+  }
+
+  const createJobCardFromLot = async (lotData: any) => {
+    try {
+      const jobCardData = {
+        lotNumber: lotData.lotNumber,
+        date: lotData.date || new Date().toISOString().split('T')[0],
+        brand: lotData.brand || '',
+        ratios: lotData.ratios || {
+          r28: 0, r30: 0, r32: 0, r34: 0, r36: 0,
+          r38: 0, r40: 0, r42: 0, r44: 0,
+        },
+        productionData: (lotData.productionData || []).map((row: any, index: number) => ({
+          serialNumber: index + 1,
+          layer: Number(row.layer) || 1,
+          pieces: Number(row.pieces) || 0,
+          color: row.color || '',
+          shade: row.shade || '',
+          front: '',
+          back: '',
+          zip: '',
+          thread: '',
+        })),
+        flyWidth: '',
+        tbdFields: {
+          tbd1: '',
+          tbd2: '',
+          tbd3: '',
+          tbd4: '',
+          tbd5: '',
+        },
+      }
+
+      await jobCardsAPI.createJobCard(jobCardData)
+    } catch (error) {
+      console.error('Error auto-creating job card:', error)
+    }
+  }
+
   const handleLogout = () => {
     localStorage.removeItem('isAuthenticated')
     router.push('/login')
+  }
+
+  const exportToPDF = async () => {
+    if (!lotViewRef.current) return
+
+    setGeneratingPDF(true)
+    
+    try {
+      // Hide navigation bar temporarily
+      const navBar = document.querySelector('.main-navbar') as HTMLElement
+      const originalDisplay = navBar?.style.display
+      if (navBar) {
+        navBar.style.display = 'none'
+      }
+
+      // Clone the element for PDF generation
+      const clone = lotViewRef.current.cloneNode(true) as HTMLElement
+      clone.style.position = 'absolute'
+      clone.style.left = '-9999px'
+      clone.style.top = '0'
+      document.body.appendChild(clone)
+
+      // Replace all inputs with divs showing their values (empty if no value)
+      const inputs = clone.querySelectorAll('input, textarea, select')
+      inputs.forEach((input) => {
+        const htmlInput = input as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+        const element = input as HTMLElement
+        const computedStyle = window.getComputedStyle(element)
+        
+        // Get the actual value (empty string if empty, no placeholder)
+        const value = htmlInput.value || ''
+        
+        // Create a div to replace the input
+        const div = document.createElement('div')
+        div.textContent = value // Empty string if no value
+        div.style.cssText = computedStyle.cssText
+        div.style.display = 'inline-block'
+        div.style.width = computedStyle.width
+        div.style.height = computedStyle.height
+        div.style.padding = computedStyle.padding
+        div.style.border = computedStyle.border
+        div.style.borderRadius = computedStyle.borderRadius
+        div.style.backgroundColor = computedStyle.backgroundColor
+        div.style.color = computedStyle.color
+        div.style.fontSize = computedStyle.fontSize
+        div.style.fontFamily = computedStyle.fontFamily
+        div.style.lineHeight = computedStyle.lineHeight
+        div.style.minHeight = computedStyle.minHeight
+        div.style.boxSizing = 'border-box'
+        
+        // Replace input with div
+        element.parentNode?.replaceChild(div, element)
+      })
+
+      // Wait for DOM to update
+      await new Promise(resolve => setTimeout(resolve, 50))
+
+      const canvas = await html2canvas(clone, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#f8f9fa',
+        windowWidth: clone.scrollWidth,
+        windowHeight: clone.scrollHeight,
+      })
+
+      // Remove clone
+      document.body.removeChild(clone)
+
+      if (navBar) {
+        navBar.style.display = originalDisplay || ''
+      }
+
+      const imgData = canvas.toDataURL('image/png')
+      const imgWidth = canvas.width
+      const imgHeight = canvas.height
+
+      const pdf = new jsPDF('p', 'mm', 'a4')
+      const pdfWidth = pdf.internal.pageSize.getWidth()
+      const pdfHeight = pdf.internal.pageSize.getHeight()
+      
+      const ratio = imgWidth / imgHeight
+      const pageWidth = pdfWidth - 20
+      const pageHeight = pdfHeight - 20
+      
+      let finalWidth = pageWidth
+      let finalHeight = finalWidth / ratio
+
+      const marginX = (pdfWidth - finalWidth) / 2
+      let positionY = 10
+
+      if (finalHeight <= pageHeight) {
+        pdf.addImage(imgData, 'PNG', marginX, positionY, finalWidth, finalHeight)
+      } else {
+        const totalPages = Math.ceil(finalHeight / pageHeight)
+        let sourceY = 0
+
+        for (let i = 0; i < totalPages; i++) {
+          if (i > 0) {
+            pdf.addPage()
+            positionY = 10
+          }
+
+          const remainingHeight = finalHeight - (i * pageHeight)
+          const currentPageHeight = Math.min(pageHeight, remainingHeight)
+          const sourceHeight = (currentPageHeight / finalHeight) * imgHeight
+
+          const pageCanvas = document.createElement('canvas')
+          pageCanvas.width = imgWidth
+          pageCanvas.height = sourceHeight
+          const ctx = pageCanvas.getContext('2d')
+          if (ctx) {
+            ctx.drawImage(canvas, 0, sourceY, imgWidth, sourceHeight, 0, 0, imgWidth, sourceHeight)
+          }
+
+          const pageImgData = pageCanvas.toDataURL('image/png')
+          pdf.addImage(pageImgData, 'PNG', marginX, positionY, finalWidth, currentPageHeight)
+
+          sourceY += sourceHeight
+        }
+      }
+
+      pdf.save(`Lot_${lot.lotNumber || 'Production'}_${lot.date || 'Report'}.pdf`)
+    } catch (error: any) {
+      console.error('Error generating PDF:', error)
+      alert('Error generating PDF: ' + error.message)
+    } finally {
+      setGeneratingPDF(false)
+    }
   }
 
   const handleDeleteLot = async () => {
@@ -71,56 +262,54 @@ export default function LotViewContent({ lotNumber }: LotViewContentProps) {
     }
   }
 
+
   if (loading) {
     return (
-      <div className="dashboard-container">
-        <div className="loading-container">
-          <p>Loading lot data...</p>
+      <>
+        <NavigationBar />
+        <div className="dashboard-container">
+          <div className="loading-container">
+            <p>Loading lot data...</p>
+          </div>
         </div>
-      </div>
+      </>
     )
   }
 
   if (error || !lot) {
     return (
-      <div className="dashboard-container">
-        <div className="error-container">
-          <h2>Error</h2>
-          <p>{error || 'Lot not found'}</p>
-          <button className="btn btn-primary" onClick={() => router.push('/dashboard')}>
-            Back to Dashboard
-          </button>
+      <>
+        <NavigationBar />
+        <div className="dashboard-container">
+          <div className="error-container">
+            <h2>Error</h2>
+            <p>{error || 'Lot not found'}</p>
+            <button className="btn btn-primary" onClick={() => router.push('/dashboard')}>
+              Back to Dashboard
+            </button>
+          </div>
         </div>
-      </div>
+      </>
     )
   }
 
   return (
-    <div className="dashboard-container">
-      <div className="dashboard-header">
+    <>
+      <NavigationBar />
+      <div className="dashboard-container" ref={lotViewRef}>
+        <div className="dashboard-header">
         <div className="header-title">
           <h1>Lot Details: {lot.lotNumber}</h1>
           <p>View saved lot production data</p>
         </div>
         <div className="header-actions">
-          <button className="btn btn-primary" onClick={() => router.push(`/dashboard?edit=${encodeURIComponent(lot.lotNumber)}`)}>
-            <span className="btn-icon">✏️</span>
-            Edit Lot
-          </button>
-          <button 
-            className="btn btn-logout" 
-            onClick={handleDeleteLot}
-            disabled={deleting}
-          >
-            <span className="btn-icon">🗑️</span>
-            {deleting ? 'Deleting...' : 'Delete Lot'}
+          <button className="btn btn-primary" onClick={exportToPDF} disabled={generatingPDF}>
+            <span className="btn-icon">📄</span>
+            {generatingPDF ? 'Generating PDF...' : 'Save as PDF'}
           </button>
           <button className="btn btn-secondary" onClick={() => router.push('/dashboard')}>
-            ← Back to Dashboard
-          </button>
-          <button className="btn btn-logout" onClick={handleLogout}>
-            <span className="btn-icon">🚪</span>
-            Logout
+            <span className="btn-icon">←</span>
+            Back to Dashboard
           </button>
         </div>
       </div>
@@ -275,6 +464,7 @@ export default function LotViewContent({ lotNumber }: LotViewContentProps) {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   )
 }

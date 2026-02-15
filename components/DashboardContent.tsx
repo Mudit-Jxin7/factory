@@ -2,9 +2,10 @@
 
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { lotsAPI } from '@/lib/api'
+import { lotsAPI, jobCardsAPI } from '@/lib/api'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
+import NavigationBar from './NavigationBar'
 import './dashboard.css'
 
 export default function DashboardContent() {
@@ -297,6 +298,41 @@ export default function DashboardContent() {
       } else {
         // Create new lot
         result = await lotsAPI.saveLot(lotData)
+        
+        // Auto-create job card when new lot is saved
+        if (result.success) {
+          try {
+            const jobCardData = {
+              lotNumber,
+              date,
+              brand,
+              ratios,
+              productionData: productionData.map(row => ({
+                serialNumber: row.serialNumber,
+                layer: Number(row.layer) || 1,
+                pieces: Number(row.pieces) || 0,
+                color: row.color || '',
+                shade: row.shade || '',
+                front: '',
+                back: '',
+                zip: '',
+                thread: '',
+              })),
+              flyWidth: '',
+              tbdFields: {
+                tbd1: '',
+                tbd2: '',
+                tbd3: '',
+                tbd4: '',
+                tbd5: '',
+              },
+            }
+            await jobCardsAPI.createJobCard(jobCardData)
+          } catch (error) {
+            console.error('Error auto-creating job card:', error)
+            // Don't fail the lot save if job card creation fails
+          }
+        }
       }
 
       if (result.success) {
@@ -325,14 +361,59 @@ export default function DashboardContent() {
         headerActions.style.display = 'none'
       }
 
-      const canvas = await html2canvas(dashboardRef.current, {
+      // Clone the element for PDF generation
+      const clone = dashboardRef.current.cloneNode(true) as HTMLElement
+      clone.style.position = 'absolute'
+      clone.style.left = '-9999px'
+      clone.style.top = '0'
+      document.body.appendChild(clone)
+
+      // Replace all inputs with divs showing their values (empty if no value)
+      const inputs = clone.querySelectorAll('input, textarea, select')
+      inputs.forEach((input) => {
+        const htmlInput = input as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+        const element = input as HTMLElement
+        const computedStyle = window.getComputedStyle(element)
+        
+        // Get the actual value (empty string if empty, no placeholder)
+        const value = htmlInput.value || ''
+        
+        // Create a div to replace the input
+        const div = document.createElement('div')
+        div.textContent = value // Empty string if no value
+        div.style.cssText = computedStyle.cssText
+        div.style.display = 'inline-block'
+        div.style.width = computedStyle.width
+        div.style.height = computedStyle.height
+        div.style.padding = computedStyle.padding
+        div.style.border = computedStyle.border
+        div.style.borderRadius = computedStyle.borderRadius
+        div.style.backgroundColor = computedStyle.backgroundColor
+        div.style.color = computedStyle.color
+        div.style.fontSize = computedStyle.fontSize
+        div.style.fontFamily = computedStyle.fontFamily
+        div.style.lineHeight = computedStyle.lineHeight
+        div.style.minHeight = computedStyle.minHeight
+        div.style.boxSizing = 'border-box'
+        
+        // Replace input with div
+        element.parentNode?.replaceChild(div, element)
+      })
+
+      // Wait for DOM to update
+      await new Promise(resolve => setTimeout(resolve, 50))
+
+      const canvas = await html2canvas(clone, {
         scale: 2,
         useCORS: true,
         logging: false,
         backgroundColor: '#f8f9fa',
-        windowWidth: dashboardRef.current.scrollWidth,
-        windowHeight: dashboardRef.current.scrollHeight,
+        windowWidth: clone.scrollWidth,
+        windowHeight: clone.scrollHeight,
       })
+
+      // Remove clone
+      document.body.removeChild(clone)
 
       if (headerActions) {
         headerActions.style.display = originalDisplay || ''
@@ -398,40 +479,37 @@ export default function DashboardContent() {
 
   if (loadingLot) {
     return (
-      <div className="dashboard-container">
-        <div className="loading-container">
-          <p>Loading lot data for editing...</p>
+      <>
+        <NavigationBar />
+        <div className="dashboard-container">
+          <div className="loading-container">
+            <p>Loading lot data for editing...</p>
+          </div>
         </div>
-      </div>
+      </>
     )
   }
 
   return (
-    <div className="dashboard-container" ref={dashboardRef}>
-      <div className="dashboard-header">
-        <div className="header-title">
-          <h1>{searchParams?.get('edit') ? 'Edit Lot' : 'Lot Production Dashboard'}</h1>
-          <p>{searchParams?.get('edit') ? 'Edit existing lot production data' : 'Track and manage production data'}</p>
+    <>
+      <NavigationBar />
+      <div className="dashboard-container" ref={dashboardRef}>
+        <div className="dashboard-header">
+          <div className="header-title">
+            <h1>{searchParams?.get('edit') ? 'Edit Lot' : 'Lot Production Dashboard'}</h1>
+            <p>{searchParams?.get('edit') ? 'Edit existing lot production data' : 'Track and manage production data'}</p>
+          </div>
+          <div className="header-actions">
+            <button className="btn btn-primary" onClick={saveLot} disabled={saving || loadingLot}>
+              <span className="btn-icon">💾</span>
+              {loadingLot ? 'Loading...' : saving ? 'Saving...' : searchParams?.get('edit') ? 'Update Lot' : 'Save Lot'}
+            </button>
+            <button className="btn btn-primary" onClick={exportToPDF} disabled={generatingPDF}>
+              <span className="btn-icon">📄</span>
+              {generatingPDF ? 'Generating PDF...' : 'Save as PDF'}
+            </button>
+          </div>
         </div>
-        <div className="header-actions">
-          <button className="btn btn-secondary" onClick={() => router.push('/lots')}>
-            <span className="btn-icon">📋</span>
-            View All Lots
-          </button>
-          <button className="btn btn-primary" onClick={saveLot} disabled={saving || loadingLot}>
-            <span className="btn-icon">💾</span>
-            {loadingLot ? 'Loading...' : saving ? 'Saving...' : searchParams?.get('edit') ? 'Update Lot' : 'Save Lot'}
-          </button>
-          <button className="btn btn-primary" onClick={exportToPDF} disabled={generatingPDF}>
-            <span className="btn-icon">📄</span>
-            {generatingPDF ? 'Generating PDF...' : 'Save as PDF'}
-          </button>
-          <button className="btn btn-logout" onClick={handleLogout}>
-            <span className="btn-icon">🚪</span>
-            Logout
-          </button>
-        </div>
-      </div>
 
       <div className="dashboard-content">
         <div className="card">
@@ -699,6 +777,7 @@ export default function DashboardContent() {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   )
 }

@@ -1,0 +1,641 @@
+'use client'
+
+import { useState, useEffect, useMemo, useRef } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { jobCardsAPI, lotsAPI } from '@/lib/api'
+import NavigationBar from './NavigationBar'
+import jsPDF from 'jspdf'
+import html2canvas from 'html2canvas'
+import './dashboard.css'
+
+interface JobCardContentProps {
+  lotNumber: string
+  isEdit?: boolean
+}
+
+export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: initialIsEdit }: JobCardContentProps) {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const isEditMode = initialIsEdit || searchParams?.get('edit') === 'true'
+  
+  const [lotNumber, setLotNumber] = useState(initialLotNumber || '')
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0])
+  const [brand, setBrand] = useState('')
+  const [ratios, setRatios] = useState({
+    r28: 0, r30: 0, r32: 0, r34: 0, r36: 0,
+    r38: 0, r40: 0, r42: 0, r44: 0,
+  })
+  const [productionData, setProductionData] = useState([
+    {
+      serialNumber: 1,
+      layer: '1',
+      pieces: 0,
+      color: '',
+      shade: '',
+      front: '',
+      back: '',
+      zip: '',
+      thread: '',
+    }
+  ])
+  const [flyWidth, setFlyWidth] = useState('')
+  const [tbdFields, setTbdFields] = useState({
+    tbd1: '',
+    tbd2: '',
+    tbd3: '',
+    tbd4: '',
+    tbd5: '',
+  })
+  
+  const [loading, setLoading] = useState(false)
+  const [loadingLot, setLoadingLot] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [generatingPDF, setGeneratingPDF] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const jobCardRef = useRef<HTMLDivElement>(null)
+
+  const sumOfRatios = useMemo(() => {
+    return Object.values(ratios).reduce((sum, val) => sum + (Number(val) || 0), 0)
+  }, [ratios])
+
+  useEffect(() => {
+    if (lotNumber) {
+      // Always try to load existing job card first
+      setLoading(true)
+      jobCardsAPI.getJobCardByLotNumber(lotNumber).then((result) => {
+        if (result.success && result.jobCard) {
+          // Job card exists, load it
+          const jobCard = result.jobCard
+          setDate(jobCard.date || '')
+          setBrand(jobCard.brand || '')
+          setRatios(jobCard.ratios || ratios)
+          setProductionData(jobCard.productionData || productionData)
+          setFlyWidth(jobCard.flyWidth || '')
+          setTbdFields(jobCard.tbdFields || tbdFields)
+          setLoading(false)
+        } else {
+          // No job card exists - show error, job cards can only be edited
+          setError('Job card not found for this lot number. Job cards are automatically created when a lot is saved.')
+          setLoading(false)
+        }
+      }).catch((error) => {
+        setError('Error loading job card: ' + error.message)
+        setLoading(false)
+      })
+    }
+  }, [lotNumber])
+
+  const loadLotData = async () => {
+    if (!lotNumber) return
+    
+    setLoadingLot(true)
+    try {
+      const result = await lotsAPI.getLotByNumber(lotNumber)
+      if (result.success && result.lot) {
+        const lot = result.lot
+        setDate(lot.date || new Date().toISOString().split('T')[0])
+        setBrand(lot.brand || '')
+        setRatios(lot.ratios || {
+          r28: 0, r30: 0, r32: 0, r34: 0, r36: 0,
+          r38: 0, r40: 0, r42: 0, r44: 0,
+        })
+        
+        // Prefill production data from lot
+        if (lot.productionData && lot.productionData.length > 0) {
+          const prefilledData = lot.productionData.map((row: any, index: number) => ({
+            serialNumber: index + 1,
+            layer: String(row.layer || '1'),
+            pieces: Number(row.pieces || 0),
+            color: row.color || '',
+            shade: row.shade || '',
+            front: '',
+            back: '',
+            zip: '',
+            thread: '',
+          }))
+          setProductionData(prefilledData)
+        }
+      } else {
+        setError('Lot not found. Please enter a valid lot number.')
+      }
+    } catch (error: any) {
+      console.error('Error loading lot:', error)
+      setError('Error loading lot: ' + error.message)
+    } finally {
+      setLoadingLot(false)
+    }
+  }
+
+  const loadJobCard = async () => {
+    if (!lotNumber) return
+    
+    setLoading(true)
+    try {
+      const result = await jobCardsAPI.getJobCardByLotNumber(lotNumber)
+      if (result.success && result.jobCard) {
+        const jobCard = result.jobCard
+        setDate(jobCard.date || '')
+        setBrand(jobCard.brand || '')
+        setRatios(jobCard.ratios || ratios)
+        setProductionData(jobCard.productionData || productionData)
+        setFlyWidth(jobCard.flyWidth || '')
+        setTbdFields(jobCard.tbdFields || tbdFields)
+      } else {
+        setError('Job card not found')
+      }
+    } catch (error: any) {
+      console.error('Error loading job card:', error)
+      setError('Error loading job card: ' + error.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const addRow = () => {
+    const newSerialNumber = productionData.length > 0
+      ? Math.max(...productionData.map(row => row.serialNumber)) + 1
+      : 1
+    
+    setProductionData([
+      ...productionData,
+      {
+        serialNumber: newSerialNumber,
+        layer: '1',
+        pieces: 0,
+        color: '',
+        shade: '',
+        front: '',
+        back: '',
+        zip: '',
+        thread: '',
+      }
+    ])
+  }
+
+  const deleteRow = (index: number) => {
+    const newData = productionData.filter((_, i) => i !== index)
+    const renumberedData = newData.map((row, idx) => ({
+      ...row,
+      serialNumber: idx + 1
+    }))
+    setProductionData(renumberedData)
+  }
+
+  const updateProductionData = (index: number, field: string, value: string) => {
+    const newData = [...productionData]
+    newData[index] = {
+      ...newData[index],
+      [field]: value
+    }
+    setProductionData(newData)
+  }
+
+  const handleSave = async () => {
+    if (!lotNumber.trim()) {
+      alert('Please enter a lot number')
+      return
+    }
+
+    setSaving(true)
+    try {
+      const jobCardData = {
+        lotNumber,
+        date,
+        brand,
+        ratios,
+        productionData: productionData.map(row => ({
+          ...row,
+          layer: Number(row.layer) || 1,
+          pieces: Number(row.pieces) || 0,
+        })),
+        flyWidth,
+        tbdFields,
+      }
+
+      const result = await jobCardsAPI.updateJobCard(lotNumber, jobCardData)
+
+      if (result.success) {
+        alert('Job card updated successfully!')
+        router.push(`/jobcard/${lotNumber}`)
+      } else {
+        alert('Error updating job card: ' + result.error)
+      }
+    } catch (error: any) {
+      console.error('Error saving job card:', error)
+      alert('Error saving job card: ' + error.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const exportToPDF = async () => {
+    if (!jobCardRef.current) return
+
+    setGeneratingPDF(true)
+    
+    try {
+      // Hide navigation bar temporarily
+      const navBar = document.querySelector('.main-navbar') as HTMLElement
+      const originalDisplay = navBar?.style.display
+      if (navBar) {
+        navBar.style.display = 'none'
+      }
+
+      // Clone the element for PDF generation
+      const clone = jobCardRef.current.cloneNode(true) as HTMLElement
+      clone.style.position = 'absolute'
+      clone.style.left = '-9999px'
+      clone.style.top = '0'
+      document.body.appendChild(clone)
+
+      // Replace all inputs with divs showing their values (empty if no value)
+      const inputs = clone.querySelectorAll('input, textarea, select')
+      inputs.forEach((input) => {
+        const htmlInput = input as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+        const element = input as HTMLElement
+        const computedStyle = window.getComputedStyle(element)
+        
+        // Get the actual value (empty string if empty, no placeholder)
+        const value = htmlInput.value || ''
+        
+        // Create a div to replace the input
+        const div = document.createElement('div')
+        div.textContent = value // Empty string if no value
+        div.style.cssText = computedStyle.cssText
+        div.style.display = 'inline-block'
+        div.style.width = computedStyle.width
+        div.style.height = computedStyle.height
+        div.style.padding = computedStyle.padding
+        div.style.border = computedStyle.border
+        div.style.borderRadius = computedStyle.borderRadius
+        div.style.backgroundColor = computedStyle.backgroundColor
+        div.style.color = computedStyle.color
+        div.style.fontSize = computedStyle.fontSize
+        div.style.fontFamily = computedStyle.fontFamily
+        div.style.lineHeight = computedStyle.lineHeight
+        div.style.minHeight = computedStyle.minHeight
+        div.style.boxSizing = 'border-box'
+        
+        // Replace input with div
+        element.parentNode?.replaceChild(div, element)
+      })
+
+      // Wait for DOM to update
+      await new Promise(resolve => setTimeout(resolve, 50))
+
+      const canvas = await html2canvas(clone, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#f8f9fa',
+        windowWidth: clone.scrollWidth,
+        windowHeight: clone.scrollHeight,
+      })
+
+      // Remove clone
+      document.body.removeChild(clone)
+
+      if (navBar) {
+        navBar.style.display = originalDisplay || ''
+      }
+
+      const imgData = canvas.toDataURL('image/png')
+      const imgWidth = canvas.width
+      const imgHeight = canvas.height
+
+      const pdf = new jsPDF('p', 'mm', 'a4')
+      const pdfWidth = pdf.internal.pageSize.getWidth()
+      const pdfHeight = pdf.internal.pageSize.getHeight()
+      
+      const ratio = imgWidth / imgHeight
+      const pageWidth = pdfWidth - 20
+      const pageHeight = pdfHeight - 20
+      
+      let finalWidth = pageWidth
+      let finalHeight = finalWidth / ratio
+
+      const marginX = (pdfWidth - finalWidth) / 2
+      let positionY = 10
+
+      if (finalHeight <= pageHeight) {
+        pdf.addImage(imgData, 'PNG', marginX, positionY, finalWidth, finalHeight)
+      } else {
+        const totalPages = Math.ceil(finalHeight / pageHeight)
+        let sourceY = 0
+
+        for (let i = 0; i < totalPages; i++) {
+          if (i > 0) {
+            pdf.addPage()
+            positionY = 10
+          }
+
+          const remainingHeight = finalHeight - (i * pageHeight)
+          const currentPageHeight = Math.min(pageHeight, remainingHeight)
+          const sourceHeight = (currentPageHeight / finalHeight) * imgHeight
+
+          const pageCanvas = document.createElement('canvas')
+          pageCanvas.width = imgWidth
+          pageCanvas.height = sourceHeight
+          const ctx = pageCanvas.getContext('2d')
+          if (ctx) {
+            ctx.drawImage(canvas, 0, sourceY, imgWidth, sourceHeight, 0, 0, imgWidth, sourceHeight)
+          }
+
+          const pageImgData = pageCanvas.toDataURL('image/png')
+          pdf.addImage(pageImgData, 'PNG', marginX, positionY, finalWidth, currentPageHeight)
+
+          sourceY += sourceHeight
+        }
+      }
+
+      pdf.save(`JobCard_${lotNumber || 'Production'}_${date || 'Report'}.pdf`)
+    } catch (error: any) {
+      console.error('Error generating PDF:', error)
+      alert('Error generating PDF: ' + error.message)
+    } finally {
+      setGeneratingPDF(false)
+    }
+  }
+
+  if (loading || loadingLot) {
+    return (
+      <>
+        <NavigationBar />
+        <div className="dashboard-container">
+          <div className="loading-container">
+            <p>Loading...</p>
+          </div>
+        </div>
+      </>
+    )
+  }
+
+  return (
+    <>
+      <NavigationBar />
+      <div className="dashboard-container" ref={jobCardRef}>
+        <div className="dashboard-header">
+        <div className="header-title">
+          <h1>Edit Job Card</h1>
+          <p>Edit job card details for lot {lotNumber}</p>
+        </div>
+        <div className="header-actions">
+          <button className="btn btn-primary" onClick={handleSave} disabled={saving || !lotNumber}>
+            <span className="btn-icon">💾</span>
+            {saving ? 'Saving...' : 'Update Job Card'}
+          </button>
+          <button className="btn btn-primary" onClick={exportToPDF} disabled={generatingPDF}>
+            <span className="btn-icon">📄</span>
+            {generatingPDF ? 'Generating PDF...' : 'Save as PDF'}
+          </button>
+          <button className="btn btn-secondary" onClick={() => router.push('/jobcards')}>
+            <span className="btn-icon">←</span>
+            Back to Job Cards
+          </button>
+        </div>
+      </div>
+
+      {error && (
+        <div className="card" style={{ marginBottom: '24px', background: '#fff5f5', border: '1px solid #ffe0e0' }}>
+          <p style={{ color: '#c92a2a', margin: 0 }}>{error}</p>
+        </div>
+      )}
+
+      <div className="dashboard-content">
+        <div className="card">
+          <h2>Job Card Information</h2>
+          <div className="form-grid">
+            <div className="form-group">
+              <label>Lot Number</label>
+              <input
+                type="text"
+                value={lotNumber}
+                disabled
+                style={{ background: '#f8f9fa', cursor: 'not-allowed' }}
+              />
+            </div>
+            <div className="form-group">
+              <label>Date</label>
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+              />
+            </div>
+            <div className="form-group">
+              <label>Brand</label>
+              <input
+                type="text"
+                value={brand}
+                onChange={(e) => setBrand(e.target.value)}
+                placeholder="Enter brand"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="card">
+          <h2>Ratios</h2>
+          <div className="ratios-grid">
+            {Object.keys(ratios).map((ratioKey) => (
+              <div key={ratioKey} className="form-group">
+                <label>{ratioKey.toUpperCase()}</label>
+                <input
+                  type="number"
+                  value={ratios[ratioKey as keyof typeof ratios]}
+                  onChange={(e) => setRatios({
+                    ...ratios,
+                    [ratioKey]: Number(e.target.value) || 0
+                  })}
+                  min="0"
+                  step="0.5"
+                />
+              </div>
+            ))}
+          </div>
+          <div className="ratios-summary">
+            <strong>Sum of Ratios: {sumOfRatios.toFixed(2)}</strong>
+          </div>
+        </div>
+
+        <div className="card">
+          <div className="card-header">
+            <h2>Production Data</h2>
+            <button className="btn btn-secondary" onClick={addRow}>
+              <span className="btn-icon">+</span>
+              Add Row
+            </button>
+          </div>
+          <div className="table-container">
+            <table className="production-table">
+              <thead>
+                <tr>
+                  <th>S.No</th>
+                  <th>Layer</th>
+                  <th>Pieces</th>
+                  <th>Color</th>
+                  <th>Shade</th>
+                  <th>Front</th>
+                  <th>Back</th>
+                  <th>Zip</th>
+                  <th>Thread</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {productionData.map((row, index) => (
+                  <tr key={index}>
+                    <td>{row.serialNumber}</td>
+                    <td>
+                      <input
+                        type="text"
+                        value={row.layer}
+                        onChange={(e) => updateProductionData(index, 'layer', e.target.value)}
+                        className="production-table input"
+                        style={{ width: '60px' }}
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="number"
+                        value={row.pieces}
+                        onChange={(e) => updateProductionData(index, 'pieces', e.target.value)}
+                        className="production-table input"
+                        style={{ width: '80px' }}
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="text"
+                        value={row.color}
+                        onChange={(e) => updateProductionData(index, 'color', e.target.value)}
+                        className="color-input"
+                        placeholder="Enter color"
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="text"
+                        value={row.shade}
+                        onChange={(e) => updateProductionData(index, 'shade', e.target.value)}
+                        className="color-input"
+                        placeholder="Enter shade"
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="text"
+                        value={row.front}
+                        onChange={(e) => updateProductionData(index, 'front', e.target.value)}
+                        className="tbd-input"
+                        placeholder="Front"
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="text"
+                        value={row.back}
+                        onChange={(e) => updateProductionData(index, 'back', e.target.value)}
+                        className="tbd-input"
+                        placeholder="Back"
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="text"
+                        value={row.zip}
+                        onChange={(e) => updateProductionData(index, 'zip', e.target.value)}
+                        className="tbd-input"
+                        placeholder="Zip"
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="text"
+                        value={row.thread}
+                        onChange={(e) => updateProductionData(index, 'thread', e.target.value)}
+                        className="tbd-input"
+                        placeholder="Thread"
+                      />
+                    </td>
+                    <td>
+                      <button
+                        className="btn-delete"
+                        onClick={() => deleteRow(index)}
+                        disabled={productionData.length === 1}
+                        title="Delete row"
+                      >
+                        🗑️
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="card">
+          <h2>Additional Information</h2>
+          <div className="form-grid">
+            <div className="form-group">
+              <label>Fly Width</label>
+              <input
+                type="text"
+                value={flyWidth}
+                onChange={(e) => setFlyWidth(e.target.value)}
+                placeholder="Enter fly width"
+              />
+            </div>
+            <div className="form-group">
+              <label>TBD 1</label>
+              <input
+                type="text"
+                value={tbdFields.tbd1}
+                onChange={(e) => setTbdFields({ ...tbdFields, tbd1: e.target.value })}
+                placeholder="TBD 1"
+              />
+            </div>
+            <div className="form-group">
+              <label>TBD 2</label>
+              <input
+                type="text"
+                value={tbdFields.tbd2}
+                onChange={(e) => setTbdFields({ ...tbdFields, tbd2: e.target.value })}
+                placeholder="TBD 2"
+              />
+            </div>
+            <div className="form-group">
+              <label>TBD 3</label>
+              <input
+                type="text"
+                value={tbdFields.tbd3}
+                onChange={(e) => setTbdFields({ ...tbdFields, tbd3: e.target.value })}
+                placeholder="TBD 3"
+              />
+            </div>
+            <div className="form-group">
+              <label>TBD 4</label>
+              <input
+                type="text"
+                value={tbdFields.tbd4}
+                onChange={(e) => setTbdFields({ ...tbdFields, tbd4: e.target.value })}
+                placeholder="TBD 4"
+              />
+            </div>
+            <div className="form-group">
+              <label>TBD 5</label>
+              <input
+                type="text"
+                value={tbdFields.tbd5}
+                onChange={(e) => setTbdFields({ ...tbdFields, tbd5: e.target.value })}
+                placeholder="TBD 5"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+      </div>
+    </>
+  )
+}
