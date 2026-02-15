@@ -260,7 +260,7 @@ export default function AllLotsContent() {
                               </button>
                               <button
                                 className="btn btn-secondary"
-                                onClick={() => router.push(`/jobcard/${encodeURIComponent(lot.lotNumber)}`)}
+                                onClick={() => router.push(`/jobcard/${encodeURIComponent(lot.lotNumber)}?edit=true`)}
                                 style={{ padding: '8px 16px', fontSize: '12px' }}
                               >
                                 Job Card

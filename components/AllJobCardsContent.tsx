@@ -34,7 +34,7 @@ export default function AllJobCardsContent() {
   }
 
   const handleViewJobCard = (lotNumber: string) => {
-    router.push(`/jobcard/${lotNumber}`)
+    router.push(`/jobcard/${encodeURIComponent(lotNumber)}`)
   }
 
 
@@ -122,7 +122,7 @@ export default function AllJobCardsContent() {
                               </button>
                               <button
                                 className="btn btn-primary"
-                                onClick={() => router.push(`/jobcard/${encodeURIComponent(jobCard.lotNumber)}`)}
+                                onClick={() => router.push(`/jobcard/${encodeURIComponent(jobCard.lotNumber)}?edit=true`)}
                                 style={{ padding: '8px 16px', fontSize: '12px' }}
                               >
                                 Edit

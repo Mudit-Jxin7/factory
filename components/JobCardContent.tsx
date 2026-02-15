@@ -218,7 +218,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
 
       if (result.success) {
         alert('Job card updated successfully!')
-        router.push(`/jobcard/${lotNumber}`)
+        router.push(`/jobcard/${encodeURIComponent(lotNumber)}?edit=true`)
       } else {
         alert('Error updating job card: ' + result.error)
       }
@@ -378,18 +378,26 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
       <div className="dashboard-container" ref={jobCardRef}>
         <div className="dashboard-header">
         <div className="header-title">
-          <h1>Edit Job Card</h1>
-          <p>Edit job card details for lot {lotNumber}</p>
+          <h1>{isEditMode ? 'Edit Job Card' : 'View Job Card'}</h1>
+          <p>{isEditMode ? 'Edit' : 'View'} job card details for lot {lotNumber}</p>
         </div>
         <div className="header-actions">
-          <button className="btn btn-primary" onClick={handleSave} disabled={saving || !lotNumber}>
-            <span className="btn-icon">💾</span>
-            {saving ? 'Saving...' : 'Update Job Card'}
-          </button>
+          {isEditMode && (
+            <button className="btn btn-primary" onClick={handleSave} disabled={saving || !lotNumber}>
+              <span className="btn-icon">💾</span>
+              {saving ? 'Saving...' : 'Update Job Card'}
+            </button>
+          )}
           <button className="btn btn-primary" onClick={exportToPDF} disabled={generatingPDF}>
             <span className="btn-icon">📄</span>
             {generatingPDF ? 'Generating PDF...' : 'Save as PDF'}
           </button>
+          {!isEditMode && (
+            <button className="btn btn-primary" onClick={() => router.push(`/jobcard/${encodeURIComponent(lotNumber)}?edit=true`)}>
+              <span className="btn-icon">✏️</span>
+              Edit Job Card
+            </button>
+          )}
           <button className="btn btn-secondary" onClick={() => router.push('/jobcards')}>
             <span className="btn-icon">←</span>
             Back to Job Cards
@@ -421,7 +429,8 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
               <input
                 type="date"
                 value={date}
-                onChange={(e) => setDate(e.target.value)}
+                disabled
+                style={{ background: '#f8f9fa', cursor: 'not-allowed' }}
               />
             </div>
             <div className="form-group">
@@ -429,7 +438,8 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
               <input
                 type="text"
                 value={brand}
-                onChange={(e) => setBrand(e.target.value)}
+                disabled
+                style={{ background: '#f8f9fa', cursor: 'not-allowed' }}
                 placeholder="Enter brand"
               />
             </div>
@@ -445,10 +455,8 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
                 <input
                   type="number"
                   value={ratios[ratioKey as keyof typeof ratios]}
-                  onChange={(e) => setRatios({
-                    ...ratios,
-                    [ratioKey]: Number(e.target.value) || 0
-                  })}
+                  disabled
+                  style={{ background: '#f8f9fa', cursor: 'not-allowed' }}
                   min="0"
                   step="0.5"
                 />
@@ -463,10 +471,6 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
         <div className="card">
           <div className="card-header">
             <h2>Production Data</h2>
-            <button className="btn btn-secondary" onClick={addRow}>
-              <span className="btn-icon">+</span>
-              Add Row
-            </button>
           </div>
           <div className="table-container">
             <table className="production-table">
@@ -481,7 +485,6 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
                   <th>Back</th>
                   <th>Zip</th>
                   <th>Thread</th>
-                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -492,26 +495,27 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
                       <input
                         type="text"
                         value={row.layer}
-                        onChange={(e) => updateProductionData(index, 'layer', e.target.value)}
+                        disabled
                         className="production-table input"
-                        style={{ width: '60px' }}
+                        style={{ width: '60px', background: '#f8f9fa', cursor: 'not-allowed' }}
                       />
                     </td>
                     <td>
                       <input
                         type="number"
                         value={row.pieces}
-                        onChange={(e) => updateProductionData(index, 'pieces', e.target.value)}
+                        disabled
                         className="production-table input"
-                        style={{ width: '80px' }}
+                        style={{ width: '80px', background: '#f8f9fa', cursor: 'not-allowed' }}
                       />
                     </td>
                     <td>
                       <input
                         type="text"
                         value={row.color}
-                        onChange={(e) => updateProductionData(index, 'color', e.target.value)}
+                        disabled
                         className="color-input"
+                        style={{ background: '#f8f9fa', cursor: 'not-allowed' }}
                         placeholder="Enter color"
                       />
                     </td>
@@ -519,8 +523,9 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
                       <input
                         type="text"
                         value={row.shade}
-                        onChange={(e) => updateProductionData(index, 'shade', e.target.value)}
+                        disabled
                         className="color-input"
+                        style={{ background: '#f8f9fa', cursor: 'not-allowed' }}
                         placeholder="Enter shade"
                       />
                     </td>
@@ -529,7 +534,9 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
                         type="text"
                         value={row.front}
                         onChange={(e) => updateProductionData(index, 'front', e.target.value)}
+                        disabled={!isEditMode}
                         className="tbd-input"
+                        style={!isEditMode ? { background: '#f8f9fa', cursor: 'not-allowed' } : {}}
                         placeholder="Front"
                       />
                     </td>
@@ -538,7 +545,9 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
                         type="text"
                         value={row.back}
                         onChange={(e) => updateProductionData(index, 'back', e.target.value)}
+                        disabled={!isEditMode}
                         className="tbd-input"
+                        style={!isEditMode ? { background: '#f8f9fa', cursor: 'not-allowed' } : {}}
                         placeholder="Back"
                       />
                     </td>
@@ -547,7 +556,9 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
                         type="text"
                         value={row.zip}
                         onChange={(e) => updateProductionData(index, 'zip', e.target.value)}
+                        disabled={!isEditMode}
                         className="tbd-input"
+                        style={!isEditMode ? { background: '#f8f9fa', cursor: 'not-allowed' } : {}}
                         placeholder="Zip"
                       />
                     </td>
@@ -556,19 +567,11 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
                         type="text"
                         value={row.thread}
                         onChange={(e) => updateProductionData(index, 'thread', e.target.value)}
+                        disabled={!isEditMode}
                         className="tbd-input"
+                        style={!isEditMode ? { background: '#f8f9fa', cursor: 'not-allowed' } : {}}
                         placeholder="Thread"
                       />
-                    </td>
-                    <td>
-                      <button
-                        className="btn-delete"
-                        onClick={() => deleteRow(index)}
-                        disabled={productionData.length === 1}
-                        title="Delete row"
-                      >
-                        🗑️
-                      </button>
                     </td>
                   </tr>
                 ))}
@@ -586,6 +589,8 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
                 type="text"
                 value={flyWidth}
                 onChange={(e) => setFlyWidth(e.target.value)}
+                disabled={!isEditMode}
+                style={!isEditMode ? { background: '#f8f9fa', cursor: 'not-allowed' } : {}}
                 placeholder="Enter fly width"
               />
             </div>
@@ -595,6 +600,8 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
                 type="text"
                 value={tbdFields.tbd1}
                 onChange={(e) => setTbdFields({ ...tbdFields, tbd1: e.target.value })}
+                disabled={!isEditMode}
+                style={!isEditMode ? { background: '#f8f9fa', cursor: 'not-allowed' } : {}}
                 placeholder="TBD 1"
               />
             </div>
@@ -604,6 +611,8 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
                 type="text"
                 value={tbdFields.tbd2}
                 onChange={(e) => setTbdFields({ ...tbdFields, tbd2: e.target.value })}
+                disabled={!isEditMode}
+                style={!isEditMode ? { background: '#f8f9fa', cursor: 'not-allowed' } : {}}
                 placeholder="TBD 2"
               />
             </div>
@@ -613,6 +622,8 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
                 type="text"
                 value={tbdFields.tbd3}
                 onChange={(e) => setTbdFields({ ...tbdFields, tbd3: e.target.value })}
+                disabled={!isEditMode}
+                style={!isEditMode ? { background: '#f8f9fa', cursor: 'not-allowed' } : {}}
                 placeholder="TBD 3"
               />
             </div>
@@ -622,6 +633,8 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
                 type="text"
                 value={tbdFields.tbd4}
                 onChange={(e) => setTbdFields({ ...tbdFields, tbd4: e.target.value })}
+                disabled={!isEditMode}
+                style={!isEditMode ? { background: '#f8f9fa', cursor: 'not-allowed' } : {}}
                 placeholder="TBD 4"
               />
             </div>
@@ -631,6 +644,8 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
                 type="text"
                 value={tbdFields.tbd5}
                 onChange={(e) => setTbdFields({ ...tbdFields, tbd5: e.target.value })}
+                disabled={!isEditMode}
+                style={!isEditMode ? { background: '#f8f9fa', cursor: 'not-allowed' } : {}}
                 placeholder="TBD 5"
               />
             </div>

@@ -344,7 +344,7 @@ export default function DashboardContent() {
           // For new lots, ask if they want to edit the job card
           const editJobCard = confirm(`${successMessage}\n\nWould you like to edit the job card now?`)
           if (editJobCard) {
-            router.push(`/jobcard/${encodeURIComponent(lotNumber)}`)
+            router.push(`/jobcard/${encodeURIComponent(lotNumber)}?edit=true`)
           } else {
             router.push(`/lot/${lotNumber}`)
           }
