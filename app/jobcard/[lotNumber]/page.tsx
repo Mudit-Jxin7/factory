@@ -7,7 +7,8 @@ import { useParams, useSearchParams } from 'next/navigation'
 export default function JobCardPage() {
   const params = useParams<{ lotNumber: string }>()
   const searchParams = useSearchParams()
-  const lotNumber = params?.lotNumber as string || ''
+  const rawLotNumber = params?.lotNumber as string || ''
+  const lotNumber = rawLotNumber ? decodeURIComponent(rawLotNumber) : ''
   const isEdit = searchParams?.get('edit') === 'true'
   
   return (

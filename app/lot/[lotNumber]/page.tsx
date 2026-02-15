@@ -6,7 +6,8 @@ import { useParams } from 'next/navigation'
 
 export default function LotViewPage() {
   const params = useParams<{ lotNumber: string }>()
-  const lotNumber = params?.lotNumber as string || ''
+  const rawLotNumber = params?.lotNumber as string || ''
+  const lotNumber = rawLotNumber ? decodeURIComponent(rawLotNumber) : ''
   
   return (
     <ProtectedRoute>

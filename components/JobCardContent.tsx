@@ -18,7 +18,9 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
   const searchParams = useSearchParams()
   const isEditMode = initialIsEdit || searchParams?.get('edit') === 'true'
   
-  const [lotNumber, setLotNumber] = useState(initialLotNumber || '')
+  // Decode lot number to handle URL-encoded spaces and special characters
+  const decodedLotNumber = initialLotNumber ? decodeURIComponent(initialLotNumber) : ''
+  const [lotNumber, setLotNumber] = useState(decodedLotNumber)
   const [date, setDate] = useState(new Date().toISOString().split('T')[0])
   const [brand, setBrand] = useState('')
   const [ratios, setRatios] = useState({
