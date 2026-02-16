@@ -3,6 +3,7 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { lotsAPI, jobCardsAPI, colorsAPI, brandsAPI, patternsAPI, fabricsAPI } from '@/lib/api'
+import { getColorForShade } from '@/lib/colorUtils'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 import NavigationBar from './NavigationBar'
@@ -208,7 +209,13 @@ export default function DashboardContent() {
           return
         }
       }
-    } else if (field === 'color' || field === 'shade' || field === 'zip_code' || field === 'thread_code') {
+    } else if (field === 'color') {
+      newData[index] = {
+        ...newData[index],
+        color: value,
+        shade: value,
+      }
+    } else if (field === 'zip_code' || field === 'thread_code') {
       newData[index] = {
         ...newData[index],
         [field]: value,
@@ -738,13 +745,22 @@ export default function DashboardContent() {
                       </select>
                     </td>
                     <td>
-                      <input
-                        type="text"
-                        value={row.shade || ''}
-                        onChange={(e) => updateProductionData(index, 'shade', e.target.value)}
-                        placeholder="Enter shade"
-                        className="tbd-input"
-                      />
+                      <div style={{ display: 'flex', alignItems: 'center', minHeight: '36px' }}>
+                        {row.color ? (
+                          <div
+                            title={row.color}
+                            style={{
+                              width: '24px',
+                              height: '24px',
+                              borderRadius: '4px',
+                              backgroundColor: getColorForShade(row.color),
+                              border: '1px solid #ccc',
+                            }}
+                          />
+                        ) : (
+                          <span style={{ fontSize: '14px', color: '#6c757d' }}>—</span>
+                        )}
+                      </div>
                     </td>
                     <td>
                       <input

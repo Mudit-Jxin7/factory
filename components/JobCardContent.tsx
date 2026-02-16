@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { jobCardsAPI, lotsAPI, workersAPI } from '@/lib/api'
+import { getColorForShade } from '@/lib/colorUtils'
 import NavigationBar from './NavigationBar'
 import { useToast } from './ToastProvider'
 import jsPDF from 'jspdf'
@@ -533,24 +534,25 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
                       />
                     </td>
                     <td>
-                      <input
-                        type="text"
-                        value={row.color}
-                        disabled
-                        className="color-input"
-                        style={{ background: '#f8f9fa', cursor: 'not-allowed' }}
-                        placeholder="Enter color"
-                      />
+                      <span style={{ fontSize: '14px', color: '#1a1a1a' }}>{row.color || '—'}</span>
                     </td>
                     <td>
-                      <input
-                        type="text"
-                        value={row.shade}
-                        disabled
-                        className="color-input"
-                        style={{ background: '#f8f9fa', cursor: 'not-allowed' }}
-                        placeholder="Enter shade"
-                      />
+                      <div style={{ display: 'flex', alignItems: 'center', minHeight: '36px' }}>
+                        {row.color ? (
+                          <div
+                            title={row.color}
+                            style={{
+                              width: '24px',
+                              height: '24px',
+                              borderRadius: '4px',
+                              backgroundColor: getColorForShade(row.color),
+                              border: '1px solid #ccc',
+                            }}
+                          />
+                        ) : (
+                          <span style={{ fontSize: '14px', color: '#6c757d' }}>—</span>
+                        )}
+                      </div>
                     </td>
                     <td style={{ width: '200px', minWidth: '200px' }}>
                       <select
