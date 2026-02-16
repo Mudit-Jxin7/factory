@@ -43,6 +43,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
       rate: '',
       front: '',
       back: '',
+      zip: '',
       zip_code: '',
       thread_code: '',
     }
@@ -139,6 +140,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
             rate: row.rate || '',
             front: '',
             back: '',
+            zip: '',
             zip_code: '',
             thread_code: '',
           }))
@@ -198,6 +200,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
         rate: '',
         front: '',
         back: '',
+        zip: '',
         zip_code: '',
         thread_code: '',
       }
@@ -510,6 +513,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
                   <th style={{ width: '120px', minWidth: '120px' }}>Rate</th>
                   <th>Front</th>
                   <th>Back</th>
+                  <th>Zip</th>
                   <th>Zip Code</th>
                   <th style={{ width: '80px', minWidth: '80px' }}>Thread Code</th>
                 </tr>
@@ -616,6 +620,17 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
                         className="tbd-input"
                         style={!isEditMode ? { background: '#f8f9fa', cursor: 'not-allowed' } : {}}
                         placeholder="Back"
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="text"
+                        value={row.zip ?? ''}
+                        onChange={(e) => updateProductionData(index, 'zip', e.target.value)}
+                        disabled={!isEditMode}
+                        className="tbd-input"
+                        style={!isEditMode ? { background: '#f8f9fa', cursor: 'not-allowed' } : {}}
+                        placeholder="Zip"
                       />
                     </td>
                     <td>
