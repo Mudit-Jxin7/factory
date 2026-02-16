@@ -97,7 +97,7 @@ export default function LotViewContent({ lotNumber }: LotViewContentProps) {
         flyWidth: '',
         additionalInfo: {
           belt: '',
-          botto: '',
+          bottom: '',
           pasting: '',
           bone: '',
           hala: '',

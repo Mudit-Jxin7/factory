@@ -72,7 +72,7 @@ export default function AllLotsContent() {
         flyWidth: '',
         additionalInfo: {
           belt: '',
-          botto: '',
+          bottom: '',
           pasting: '',
           bone: '',
           hala: '',

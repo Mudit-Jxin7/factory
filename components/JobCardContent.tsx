@@ -50,7 +50,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
   const [flyWidth, setFlyWidth] = useState('')
   const [additionalInfo, setAdditionalInfo] = useState({
     belt: '',
-    botto: '',
+    bottom: '',
     pasting: '',
     bone: '',
     hala: '',
@@ -97,7 +97,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
           setRatios(jobCard.ratios || ratios)
           setProductionData(jobCard.productionData || productionData)
           setFlyWidth(jobCard.flyWidth || '')
-          setAdditionalInfo(jobCard.additionalInfo || { belt: '', botto: '', pasting: '', bone: '', hala: '', ticketPocket: '' })
+          setAdditionalInfo(jobCard.additionalInfo || { belt: '', bottom: '', pasting: '', bone: '', hala: '', ticketPocket: '' })
           setLoading(false)
         } else {
           // No job card exists - show error, job cards can only be edited
@@ -168,7 +168,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
         setRatios(jobCard.ratios || ratios)
         setProductionData(jobCard.productionData || productionData)
         setFlyWidth(jobCard.flyWidth || '')
-        setAdditionalInfo(jobCard.additionalInfo || { belt: '', botto: '', pasting: '', bone: '', hala: '', ticketPocket: '' })
+        setAdditionalInfo(jobCard.additionalInfo || { belt: '', bottom: '', pasting: '', bone: '', hala: '', ticketPocket: '' })
       } else {
         setError('Job card not found')
       }
@@ -673,14 +673,14 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
               />
             </div>
             <div className="form-group">
-              <label>Botto</label>
+              <label>Bottom</label>
               <input
                 type="text"
-                value={additionalInfo.botto}
-                onChange={(e) => setAdditionalInfo({ ...additionalInfo, botto: e.target.value })}
+                value={additionalInfo.bottom}
+                onChange={(e) => setAdditionalInfo({ ...additionalInfo, bottom: e.target.value })}
                 disabled={!isEditMode}
                 style={!isEditMode ? { background: '#f8f9fa', cursor: 'not-allowed' } : {}}
-                placeholder="Botto"
+                placeholder="Bottom"
               />
             </div>
             <div className="form-group">

@@ -375,7 +375,7 @@ export default function DashboardContent() {
               flyWidth: '',
               additionalInfo: {
                 belt: '',
-                botto: '',
+                bottom: '',
                 pasting: '',
                 bone: '',
                 hala: '',
