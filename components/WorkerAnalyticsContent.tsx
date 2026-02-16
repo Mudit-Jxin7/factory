@@ -8,10 +8,13 @@ import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 import './dashboard.css'
 
+type SectionType = 'Front' | 'Back' | 'Zip'
+
 interface AnalyticsRow {
   worker_id: number
   worker_name: string
   worker_full_name: string
+  section: SectionType
   date: string
   rate: number
   lotNumber: string
@@ -64,9 +67,14 @@ export default function WorkerAnalyticsContent() {
     }
   }
 
-  // Process job cards to create analytics rows
+  // Process job cards to create analytics rows (from frontWorker, backWorker, zipWorker + date/rate)
   const analyticsData = useMemo(() => {
     const rows: AnalyticsRow[] = []
+    const sections: { key: SectionType; workerKey: string; dateKey: string; rateKey: string }[] = [
+      { key: 'Front', workerKey: 'frontWorker', dateKey: 'frontDate', rateKey: 'frontRate' },
+      { key: 'Back', workerKey: 'backWorker', dateKey: 'backDate', rateKey: 'backRate' },
+      { key: 'Zip', workerKey: 'zipWorker', dateKey: 'zipDate', rateKey: 'zipRate' },
+    ]
 
     jobCards.forEach((jobCard: any) => {
       if (!jobCard.productionData || !Array.isArray(jobCard.productionData)) {
@@ -74,30 +82,37 @@ export default function WorkerAnalyticsContent() {
       }
 
       jobCard.productionData.forEach((row: any) => {
-        if (!row.worker || !row.date || !row.rate) {
-          return
-        }
-
-        // Find worker details
-        const worker = workers.find((w: any) => w._id === row.worker)
-        if (!worker) {
-          return
-        }
-
         const pieces = Number(row.pieces) || 0
-        const rate = Number(row.rate) || 0
-        const total_amount = pieces * rate
+        const layer = Number(row.layer) || 0
 
-        rows.push({
-          worker_id: worker.worker_id,
-          worker_name: worker.worker_full_name,
-          worker_full_name: worker.worker_full_name,
-          date: row.date,
-          rate: rate,
-          lotNumber: jobCard.lotNumber,
-          layer: Number(row.layer) || 0,
-          pieces: pieces,
-          total_amount: total_amount,
+        sections.forEach(({ key, workerKey, dateKey, rateKey }) => {
+          const workerId = row[workerKey]
+          const date = row[dateKey]
+          const rateVal = row[rateKey]
+          if (!workerId || !date || rateVal === undefined || rateVal === null || rateVal === '') {
+            return
+          }
+
+          const worker = workers.find((w: any) => w._id === workerId)
+          if (!worker) {
+            return
+          }
+
+          const rate = Number(rateVal) || 0
+          const total_amount = pieces * rate
+
+          rows.push({
+            worker_id: worker.worker_id,
+            worker_name: worker.worker_full_name,
+            worker_full_name: worker.worker_full_name,
+            section: key,
+            date: String(date).split('T')[0],
+            rate: rate,
+            lotNumber: jobCard.lotNumber || '',
+            layer: layer,
+            pieces: pieces,
+            total_amount: total_amount,
+          })
         })
       })
     })
@@ -293,6 +308,7 @@ export default function WorkerAnalyticsContent() {
       const headers = [
         'Worker ID',
         'Worker Name',
+        'Front / Back / Zip',
         'Date',
         'Rate',
         'Lot Number',
@@ -304,6 +320,7 @@ export default function WorkerAnalyticsContent() {
       const rows = filteredData.map((row) => [
         row.worker_id.toString(),
         row.worker_full_name,
+        row.section,
         row.date,
         row.rate.toString(),
         row.lotNumber,
@@ -316,6 +333,7 @@ export default function WorkerAnalyticsContent() {
       rows.push([
         '',
         'TOTAL',
+        '',
         '',
         '',
         '',
@@ -478,6 +496,7 @@ export default function WorkerAnalyticsContent() {
                           <tr>
                             <th>Worker ID</th>
                             <th>Worker Name</th>
+                            <th>Front / Back / Zip</th>
                             <th>Date</th>
                             <th>Rate</th>
                             <th>Lot Number</th>
@@ -491,6 +510,7 @@ export default function WorkerAnalyticsContent() {
                             <tr key={index}>
                               <td style={{ fontWeight: '600', color: '#1a1a1a' }}>{row.worker_id}</td>
                               <td>{row.worker_full_name}</td>
+                              <td>{row.section}</td>
                               <td>{row.date}</td>
                               <td>{row.rate.toFixed(2)}</td>
                               <td style={{ fontWeight: '600', color: '#1a1a1a' }}>{row.lotNumber}</td>
@@ -503,7 +523,7 @@ export default function WorkerAnalyticsContent() {
                           ))}
                           {/* Totals Row */}
                           <tr style={{ backgroundColor: '#fff9e6', fontWeight: '600' }}>
-                            <td colSpan={6} style={{ textAlign: 'right', padding: '12px' }}>
+                            <td colSpan={7} style={{ textAlign: 'right', padding: '12px' }}>
                               TOTAL:
                             </td>
                             <td style={{ padding: '12px' }}>{totals.totalPieces.toFixed(2)}</td>
