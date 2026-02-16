@@ -56,8 +56,8 @@ export default function DashboardContent() {
       pieces: 0,
       color: '',
       shade: '',
-      tbd2: '',
-      tbd3: '',
+      zip_code: '',
+      thread_code: '',
     }
   ])
 
@@ -146,8 +146,8 @@ export default function DashboardContent() {
               pieces: 0,
               color: '',
               shade: '',
-              tbd2: '',
-              tbd3: '',
+              zip_code: '',
+              thread_code: '',
             }]
         )
         setTukda(lot.tukda || { count: 0, size: '28' })
@@ -208,7 +208,7 @@ export default function DashboardContent() {
           return
         }
       }
-    } else if (field === 'color' || field === 'shade' || field === 'tbd2' || field === 'tbd3') {
+    } else if (field === 'color' || field === 'shade' || field === 'zip_code' || field === 'thread_code') {
       newData[index] = {
         ...newData[index],
         [field]: value,
@@ -242,8 +242,8 @@ export default function DashboardContent() {
         pieces: 1 * sumOfRatios,
         color: '',
         shade: '',
-        tbd2: '',
-        tbd3: '',
+        zip_code: '',
+        thread_code: '',
       }
     ])
   }
@@ -323,8 +323,8 @@ export default function DashboardContent() {
           layer: Number(row.layer) || 1,
           color: row.color || '',
           shade: row.shade || '',
-          tbd2: row.tbd2 || '',
-          tbd3: row.tbd3 || '',
+          zip_code: row.zip_code || '',
+          thread_code: row.thread_code || '',
         })),
         tukda,
         totalMeter,
@@ -362,8 +362,8 @@ export default function DashboardContent() {
                 shade: row.shade || '',
                 front: '',
                 back: '',
-                zip: '',
-                thread: '',
+                zip_code: row.zip_code || '',
+                thread_code: row.thread_code || '',
               })),
               flyWidth: '',
               tbdFields: {
@@ -675,8 +675,8 @@ export default function DashboardContent() {
                   <th>Pieces</th>
                   <th>Color</th>
                   <th>Shade</th>
-                  <th>TBD2</th>
-                  <th>TBD3</th>
+                  <th>Zip Code</th>
+                  <th>Thread Code</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -751,18 +751,18 @@ export default function DashboardContent() {
                     <td>
                       <input
                         type="text"
-                        value={row.tbd2 || ''}
-                        onChange={(e) => updateProductionData(index, 'tbd2', e.target.value)}
-                        placeholder="TBD2"
+                        value={row.zip_code || ''}
+                        onChange={(e) => updateProductionData(index, 'zip_code', e.target.value)}
+                        placeholder="Zip Code"
                         className="tbd-input"
                       />
                     </td>
                     <td>
                       <input
                         type="text"
-                        value={row.tbd3 || ''}
-                        onChange={(e) => updateProductionData(index, 'tbd3', e.target.value)}
-                        placeholder="TBD3"
+                        value={row.thread_code || ''}
+                        onChange={(e) => updateProductionData(index, 'thread_code', e.target.value)}
+                        placeholder="Thread Code"
                         className="tbd-input"
                       />
                     </td>

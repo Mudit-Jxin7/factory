@@ -42,8 +42,8 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
       rate: '',
       front: '',
       back: '',
-      zip: '',
-      thread: '',
+      zip_code: '',
+      thread_code: '',
     }
   ])
   const [flyWidth, setFlyWidth] = useState('')
@@ -137,8 +137,8 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
             rate: row.rate || '',
             front: '',
             back: '',
-            zip: '',
-            thread: '',
+            zip_code: '',
+            thread_code: '',
           }))
           setProductionData(prefilledData)
         }
@@ -196,8 +196,8 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
         rate: '',
         front: '',
         back: '',
-        zip: '',
-        thread: '',
+        zip_code: '',
+        thread_code: '',
       }
     ])
   }
@@ -508,8 +508,8 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
                   <th style={{ width: '120px', minWidth: '120px' }}>Rate</th>
                   <th>Front</th>
                   <th>Back</th>
-                  <th>Zip</th>
-                  <th style={{ width: '80px', minWidth: '80px' }}>Thread</th>
+                  <th>Zip Code</th>
+                  <th style={{ width: '80px', minWidth: '80px' }}>Thread Code</th>
                 </tr>
               </thead>
               <tbody>
@@ -618,23 +618,23 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
                     <td>
                       <input
                         type="text"
-                        value={row.zip}
-                        onChange={(e) => updateProductionData(index, 'zip', e.target.value)}
-                        disabled={!isEditMode}
+                        value={row.zip_code ?? (row as { zip?: string }).zip ?? ''}
+                        readOnly
+                        disabled
                         className="tbd-input"
-                        style={!isEditMode ? { background: '#f8f9fa', cursor: 'not-allowed' } : {}}
-                        placeholder="Zip"
+                        style={{ background: '#f8f9fa', cursor: 'not-allowed' }}
+                        placeholder="Zip Code"
                       />
                     </td>
                     <td style={{ width: '80px', minWidth: '80px' }}>
                       <input
                         type="text"
-                        value={row.thread}
-                        onChange={(e) => updateProductionData(index, 'thread', e.target.value)}
-                        disabled={!isEditMode}
+                        value={row.thread_code ?? (row as { thread?: string }).thread ?? ''}
+                        readOnly
+                        disabled
                         className="tbd-input"
-                        style={!isEditMode ? { background: '#f8f9fa', cursor: 'not-allowed' } : { width: '100%' }}
-                        placeholder="Thread"
+                        style={{ background: '#f8f9fa', cursor: 'not-allowed', width: '100%' }}
+                        placeholder="Thread Code"
                       />
                     </td>
                   </tr>

@@ -91,8 +91,8 @@ export default function LotViewContent({ lotNumber }: LotViewContentProps) {
           shade: row.shade || '',
           front: '',
           back: '',
-          zip: '',
-          thread: '',
+          zip_code: '',
+          thread_code: '',
         })),
         flyWidth: '',
         tbdFields: {

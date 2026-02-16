@@ -66,8 +66,8 @@ export default function AllLotsContent() {
           shade: row.shade || '',
           front: '',
           back: '',
-          zip: '',
-          thread: '',
+          zip_code: '',
+          thread_code: '',
         })),
         flyWidth: '',
         tbdFields: {
