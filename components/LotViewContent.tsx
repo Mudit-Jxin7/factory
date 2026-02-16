@@ -99,6 +99,9 @@ export default function LotViewContent({ lotNumber }: LotViewContentProps) {
           belt: '',
           botto: '',
           pasting: '',
+          bone: '',
+          hala: '',
+          ticketPocket: '',
         },
       }
 

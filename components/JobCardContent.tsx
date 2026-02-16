@@ -52,6 +52,9 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
     belt: '',
     botto: '',
     pasting: '',
+    bone: '',
+    hala: '',
+    ticketPocket: '',
   })
   
   const [loading, setLoading] = useState(false)
@@ -94,7 +97,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
           setRatios(jobCard.ratios || ratios)
           setProductionData(jobCard.productionData || productionData)
           setFlyWidth(jobCard.flyWidth || '')
-          setAdditionalInfo(jobCard.additionalInfo || { belt: '', botto: '', pasting: '' })
+          setAdditionalInfo(jobCard.additionalInfo || { belt: '', botto: '', pasting: '', bone: '', hala: '', ticketPocket: '' })
           setLoading(false)
         } else {
           // No job card exists - show error, job cards can only be edited
@@ -165,7 +168,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
         setRatios(jobCard.ratios || ratios)
         setProductionData(jobCard.productionData || productionData)
         setFlyWidth(jobCard.flyWidth || '')
-        setAdditionalInfo(jobCard.additionalInfo || { belt: '', botto: '', pasting: '' })
+        setAdditionalInfo(jobCard.additionalInfo || { belt: '', botto: '', pasting: '', bone: '', hala: '', ticketPocket: '' })
       } else {
         setError('Job card not found')
       }
@@ -689,6 +692,39 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
                 disabled={!isEditMode}
                 style={!isEditMode ? { background: '#f8f9fa', cursor: 'not-allowed' } : {}}
                 placeholder="Pasting"
+              />
+            </div>
+            <div className="form-group">
+              <label>Bone</label>
+              <input
+                type="text"
+                value={additionalInfo.bone}
+                onChange={(e) => setAdditionalInfo({ ...additionalInfo, bone: e.target.value })}
+                disabled={!isEditMode}
+                style={!isEditMode ? { background: '#f8f9fa', cursor: 'not-allowed' } : {}}
+                placeholder="Bone"
+              />
+            </div>
+            <div className="form-group">
+              <label>Hala</label>
+              <input
+                type="text"
+                value={additionalInfo.hala}
+                onChange={(e) => setAdditionalInfo({ ...additionalInfo, hala: e.target.value })}
+                disabled={!isEditMode}
+                style={!isEditMode ? { background: '#f8f9fa', cursor: 'not-allowed' } : {}}
+                placeholder="Hala"
+              />
+            </div>
+            <div className="form-group">
+              <label>Ticket Pocket</label>
+              <input
+                type="text"
+                value={additionalInfo.ticketPocket}
+                onChange={(e) => setAdditionalInfo({ ...additionalInfo, ticketPocket: e.target.value })}
+                disabled={!isEditMode}
+                style={!isEditMode ? { background: '#f8f9fa', cursor: 'not-allowed' } : {}}
+                placeholder="Ticket Pocket"
               />
             </div>
           </div>

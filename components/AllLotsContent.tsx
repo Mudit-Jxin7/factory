@@ -74,6 +74,9 @@ export default function AllLotsContent() {
           belt: '',
           botto: '',
           pasting: '',
+          bone: '',
+          hala: '',
+          ticketPocket: '',
         },
       }
 

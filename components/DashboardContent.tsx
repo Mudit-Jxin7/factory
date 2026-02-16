@@ -377,6 +377,9 @@ export default function DashboardContent() {
                 belt: '',
                 botto: '',
                 pasting: '',
+                bone: '',
+                hala: '',
+                ticketPocket: '',
               },
             }
             await jobCardsAPI.createJobCard(jobCardData)
