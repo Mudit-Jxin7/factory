@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { lotsAPI, jobCardsAPI, colorsAPI } from '@/lib/api'
+import { lotsAPI, jobCardsAPI, colorsAPI, brandsAPI, patternsAPI, fabricsAPI } from '@/lib/api'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 import NavigationBar from './NavigationBar'
@@ -18,6 +18,9 @@ export default function DashboardContent() {
   const [loadingLot, setLoadingLot] = useState(false)
   const dashboardRef = useRef<HTMLDivElement>(null)
   const [colors, setColors] = useState<any[]>([])
+  const [fabrics, setFabrics] = useState<any[]>([])
+  const [patterns, setPatterns] = useState<any[]>([])
+  const [brands, setBrands] = useState<any[]>([])
 
   const handleLogout = () => {
     localStorage.removeItem('isAuthenticated')
@@ -69,6 +72,7 @@ export default function DashboardContent() {
   // Load colors on mount
   useEffect(() => {
     fetchColors()
+    fetchMasterDropdowns()
   }, [])
 
   // Load lot data for editing
@@ -87,6 +91,28 @@ export default function DashboardContent() {
       }
     } catch (error) {
       console.error('Error fetching colors:', error)
+    }
+  }
+
+  const fetchMasterDropdowns = async () => {
+    try {
+      const [fabricsResult, patternsResult, brandsResult] = await Promise.all([
+        fabricsAPI.getAllFabrics(),
+        patternsAPI.getAllPatterns(),
+        brandsAPI.getAllBrands(),
+      ])
+
+      if (fabricsResult.success) {
+        setFabrics(fabricsResult.fabrics || [])
+      }
+      if (patternsResult.success) {
+        setPatterns(patternsResult.patterns || [])
+      }
+      if (brandsResult.success) {
+        setBrands(brandsResult.brands || [])
+      }
+    } catch (error) {
+      console.error('Error fetching dropdown masters:', error)
     }
   }
 
@@ -567,30 +593,45 @@ export default function DashboardContent() {
             </div>
             <div className="form-group">
               <label>Fabric</label>
-              <input
-                type="text"
+              <select
                 value={fabric}
                 onChange={(e) => setFabric(e.target.value)}
-                placeholder="Enter fabric"
-              />
+              >
+                <option value="">Select fabric</option>
+                {fabrics.map((item: any) => (
+                  <option key={item._id} value={item.name}>
+                    {item.name}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="form-group">
               <label>Pattern</label>
-              <input
-                type="text"
+              <select
                 value={pattern}
                 onChange={(e) => setPattern(e.target.value)}
-                placeholder="Enter pattern"
-              />
+              >
+                <option value="">Select pattern</option>
+                {patterns.map((item: any) => (
+                  <option key={item._id} value={item.name}>
+                    {item.name}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="form-group">
               <label>Brand</label>
-              <input
-                type="text"
+              <select
                 value={brand}
                 onChange={(e) => setBrand(e.target.value)}
-                placeholder="Enter brand"
-              />
+              >
+                <option value="">Select brand</option>
+                {brands.map((item: any) => (
+                  <option key={item._id} value={item.name}>
+                    {item.name}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
         </div>

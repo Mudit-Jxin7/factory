@@ -306,4 +306,187 @@ export const workersAPI = {
   },
 }
 
+// Brands API
+export const brandsAPI = {
+  getAllBrands: async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/brands`)
+      const result = await response.json()
+      return result
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      return { success: false, error: errorMessage }
+    }
+  },
+
+  createBrand: async (brandData: Record<string, unknown>) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/brands`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(brandData),
+      })
+      const result = await response.json()
+      return result
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      return { success: false, error: errorMessage }
+    }
+  },
+
+  updateBrand: async (id: string, brandData: Record<string, unknown>) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/brands/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(brandData),
+      })
+      const result = await response.json()
+      return result
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      return { success: false, error: errorMessage }
+    }
+  },
+
+  deleteBrand: async (id: string) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/brands/${id}`, {
+        method: 'DELETE',
+      })
+      const result = await response.json()
+      return result
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      return { success: false, error: errorMessage }
+    }
+  },
+}
+
+// Patterns API
+export const patternsAPI = {
+  getAllPatterns: async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/patterns`)
+      const result = await response.json()
+      return result
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      return { success: false, error: errorMessage }
+    }
+  },
+
+  createPattern: async (patternData: Record<string, unknown>) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/patterns`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(patternData),
+      })
+      const result = await response.json()
+      return result
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      return { success: false, error: errorMessage }
+    }
+  },
+
+  updatePattern: async (id: string, patternData: Record<string, unknown>) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/patterns/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(patternData),
+      })
+      const result = await response.json()
+      return result
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      return { success: false, error: errorMessage }
+    }
+  },
+
+  deletePattern: async (id: string) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/patterns/${id}`, {
+        method: 'DELETE',
+      })
+      const result = await response.json()
+      return result
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      return { success: false, error: errorMessage }
+    }
+  },
+}
+
+// Fabrics API
+export const fabricsAPI = {
+  getAllFabrics: async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/fabrics`)
+      const result = await response.json()
+      return result
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      return { success: false, error: errorMessage }
+    }
+  },
+
+  createFabric: async (fabricData: Record<string, unknown>) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/fabrics`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(fabricData),
+      })
+      const result = await response.json()
+      return result
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      return { success: false, error: errorMessage }
+    }
+  },
+
+  updateFabric: async (id: string, fabricData: Record<string, unknown>) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/fabrics/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(fabricData),
+      })
+      const result = await response.json()
+      return result
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      return { success: false, error: errorMessage }
+    }
+  },
+
+  deleteFabric: async (id: string) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/fabrics/${id}`, {
+        method: 'DELETE',
+      })
+      const result = await response.json()
+      return result
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      return { success: false, error: errorMessage }
+    }
+  },
+}
+
 export default lotsAPI

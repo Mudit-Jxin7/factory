@@ -1,13 +1,27 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { colorsAPI, workersAPI } from '@/lib/api'
+import { useState, useEffect, useCallback } from 'react'
+import { colorsAPI, workersAPI, brandsAPI, patternsAPI, fabricsAPI } from '@/lib/api'
 import NavigationBar from './NavigationBar'
 import { useToast } from './ToastProvider'
 import { useConfirm } from './ConfirmProvider'
 import './dashboard.css'
 
-type TabType = 'colors' | 'workers'
+type TabType = 'colors' | 'workers' | 'brands' | 'patterns' | 'fabrics'
+
+type MasterTab = 'brands' | 'patterns' | 'fabrics'
+type MasterItem = { _id: string; name: string }
+type MasterApi = {
+  getAll: () => Promise<{ success: boolean; error?: string; [key: string]: unknown }>
+  create: (payload: { name: string }) => Promise<{ success: boolean; error?: string }>
+  update: (id: string, payload: { name: string }) => Promise<{ success: boolean; error?: string }>
+  remove: (id: string) => Promise<{ success: boolean; error?: string }>
+}
+const MASTER_TAB_CONFIG: Record<MasterTab, { title: string; singular: string; listKey: string; api: MasterApi }> = {
+  brands: { title: 'Brands', singular: 'Brand', listKey: 'brands', api: { getAll: brandsAPI.getAllBrands, create: brandsAPI.createBrand, update: brandsAPI.updateBrand, remove: brandsAPI.deleteBrand } },
+  patterns: { title: 'Patterns', singular: 'Pattern', listKey: 'patterns', api: { getAll: patternsAPI.getAllPatterns, create: patternsAPI.createPattern, update: patternsAPI.updatePattern, remove: patternsAPI.deletePattern } },
+  fabrics: { title: 'Fabrics', singular: 'Fabric', listKey: 'fabrics', api: { getAll: fabricsAPI.getAllFabrics, create: fabricsAPI.createFabric, update: fabricsAPI.updateFabric, remove: fabricsAPI.deleteFabric } },
+}
 
 export default function DeveloperContent() {
   const toast = useToast()
@@ -40,13 +54,41 @@ export default function DeveloperContent() {
   })
   const [deletingWorker, setDeletingWorker] = useState<string | null>(null)
 
+  // Master tabs (brands, patterns, fabrics) state
+  const [itemsByTab, setItemsByTab] = useState<Record<MasterTab, MasterItem[]>>({ brands: [], patterns: [], fabrics: [] })
+  const [loadingByTab, setLoadingByTab] = useState<Record<MasterTab, boolean>>({ brands: true, patterns: true, fabrics: true })
+  const [newValueByTab, setNewValueByTab] = useState<Record<MasterTab, string>>({ brands: '', patterns: '', fabrics: '' })
+  const [editingIdByTab, setEditingIdByTab] = useState<Record<MasterTab, string | null>>({ brands: null, patterns: null, fabrics: null })
+  const [editValueByTab, setEditValueByTab] = useState<Record<MasterTab, string>>({ brands: '', patterns: '', fabrics: '' })
+  const [deletingIdByTab, setDeletingIdByTab] = useState<Record<MasterTab, string | null>>({ brands: null, patterns: null, fabrics: null })
+
+  const fetchMasterTabItems = useCallback(async (tab: MasterTab) => {
+    setLoadingByTab((prev) => ({ ...prev, [tab]: true }))
+    const config = MASTER_TAB_CONFIG[tab]
+    try {
+      const result = await config.api.getAll()
+      if (result.success) {
+        const raw = result[config.listKey]
+        setItemsByTab((prev) => ({ ...prev, [tab]: Array.isArray(raw) ? (raw as MasterItem[]) : [] }))
+      } else {
+        toast.showToast(`Error fetching ${config.title.toLowerCase()}: ${result.error}`, 'error')
+      }
+    } catch (err: unknown) {
+      toast.showToast(`Error: ${err instanceof Error ? err.message : 'Unknown error'}`, 'error')
+    } finally {
+      setLoadingByTab((prev) => ({ ...prev, [tab]: false }))
+    }
+  }, [toast])
+
   useEffect(() => {
     if (activeTab === 'colors') {
       fetchColors()
-    } else {
+    } else if (activeTab === 'workers') {
       fetchWorkers()
+    } else if (activeTab === 'brands' || activeTab === 'patterns' || activeTab === 'fabrics') {
+      fetchMasterTabItems(activeTab)
     }
-  }, [activeTab])
+  }, [activeTab, fetchMasterTabItems])
 
   // Colors functions
   const fetchColors = async () => {
@@ -243,6 +285,77 @@ export default function DeveloperContent() {
     }
   }
 
+  // Master tab handlers (brands, patterns, fabrics)
+  const handleCreateMasterItem = async (tab: MasterTab) => {
+    const config = MASTER_TAB_CONFIG[tab]
+    const name = newValueByTab[tab].trim()
+    if (!name) {
+      toast.showToast(`Please enter a ${config.singular.toLowerCase()} name`, 'warning')
+      return
+    }
+    try {
+      const result = await config.api.create({ name })
+      if (result.success) {
+        setNewValueByTab((prev) => ({ ...prev, [tab]: '' }))
+        await fetchMasterTabItems(tab)
+        toast.showToast(`${config.singular} created successfully!`, 'success')
+      } else {
+        toast.showToast(`Error: ${result.error}`, 'error')
+      }
+    } catch (err: unknown) {
+      toast.showToast(`Error: ${err instanceof Error ? err.message : 'Unknown error'}`, 'error')
+    }
+  }
+  const handleStartEditMaster = (tab: MasterTab, item: MasterItem) => {
+    setEditingIdByTab((prev) => ({ ...prev, [tab]: item._id }))
+    setEditValueByTab((prev) => ({ ...prev, [tab]: item.name }))
+  }
+  const handleUpdateMasterItem = async (tab: MasterTab, id: string) => {
+    const config = MASTER_TAB_CONFIG[tab]
+    const name = editValueByTab[tab].trim()
+    if (!name) {
+      toast.showToast(`Please enter a ${config.singular.toLowerCase()} name`, 'warning')
+      return
+    }
+    try {
+      const result = await config.api.update(id, { name })
+      if (result.success) {
+        setEditingIdByTab((prev) => ({ ...prev, [tab]: null }))
+        await fetchMasterTabItems(tab)
+        toast.showToast(`${config.singular} updated successfully!`, 'success')
+      } else {
+        toast.showToast(`Error: ${result.error}`, 'error')
+      }
+    } catch (err: unknown) {
+      toast.showToast(`Error: ${err instanceof Error ? err.message : 'Unknown error'}`, 'error')
+    }
+  }
+  const handleDeleteMasterItem = async (tab: MasterTab, id: string) => {
+    const config = MASTER_TAB_CONFIG[tab]
+    const confirmed = await showConfirm({
+      title: `Delete ${config.singular}`,
+      message: `Are you sure you want to delete this ${config.singular.toLowerCase()}?`,
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      type: 'danger',
+    })
+    if (!confirmed) return
+    setDeletingIdByTab((prev) => ({ ...prev, [tab]: id }))
+    try {
+      const result = await config.api.remove(id)
+      if (result.success) {
+        await fetchMasterTabItems(tab)
+        toast.showToast(`${config.singular} deleted successfully!`, 'success')
+      } else {
+        toast.showToast(`Error: ${result.error}`, 'error')
+      }
+    } catch (err: unknown) {
+      toast.showToast(`Error: ${err instanceof Error ? err.message : 'Unknown error'}`, 'error')
+    } finally {
+      setDeletingIdByTab((prev) => ({ ...prev, [tab]: null }))
+    }
+  }
+
   return (
     <>
       <NavigationBar />
@@ -250,14 +363,14 @@ export default function DeveloperContent() {
         <div className="dashboard-header">
           <div className="header-title">
             <h1>Developer Settings</h1>
-            <p>Manage colors and workers</p>
+            <p>Manage colors, workers, brand, pattern, and fabric</p>
           </div>
         </div>
 
         <div className="dashboard-content">
           {/* Tabs */}
           <div className="card" style={{ marginBottom: '20px' }}>
-            <div style={{ display: 'flex', gap: '10px', borderBottom: '2px solid #e9ecef' }}>
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', borderBottom: '2px solid #e9ecef' }}>
               <button
                 className={`btn ${activeTab === 'colors' ? 'btn-primary' : 'btn-secondary'}`}
                 onClick={() => setActiveTab('colors')}
@@ -271,6 +384,27 @@ export default function DeveloperContent() {
                 style={{ borderRadius: '6px 6px 0 0', marginBottom: '-2px' }}
               >
                 Workers
+              </button>
+              <button
+                className={`btn ${activeTab === 'brands' ? 'btn-primary' : 'btn-secondary'}`}
+                onClick={() => setActiveTab('brands')}
+                style={{ borderRadius: '6px 6px 0 0', marginBottom: '-2px' }}
+              >
+                Brands
+              </button>
+              <button
+                className={`btn ${activeTab === 'patterns' ? 'btn-primary' : 'btn-secondary'}`}
+                onClick={() => setActiveTab('patterns')}
+                style={{ borderRadius: '6px 6px 0 0', marginBottom: '-2px' }}
+              >
+                Patterns
+              </button>
+              <button
+                className={`btn ${activeTab === 'fabrics' ? 'btn-primary' : 'btn-secondary'}`}
+                onClick={() => setActiveTab('fabrics')}
+                style={{ borderRadius: '6px 6px 0 0', marginBottom: '-2px' }}
+              >
+                Fabrics
               </button>
             </div>
           </div>
@@ -560,6 +694,91 @@ export default function DeveloperContent() {
               )}
             </div>
           )}
+
+          {/* Brands / Patterns / Fabrics tabs */}
+          {(activeTab === 'brands' || activeTab === 'patterns' || activeTab === 'fabrics') && (() => {
+            const tab = activeTab
+            const config = MASTER_TAB_CONFIG[tab]
+            const items = itemsByTab[tab]
+            const loading = loadingByTab[tab]
+            const editingId = editingIdByTab[tab]
+            const deletingId = deletingIdByTab[tab]
+            return (
+              <div className="card">
+                <h2>{config.title} Management</h2>
+                <div className="card" style={{ marginBottom: '20px', padding: '20px', background: '#fff9e6' }}>
+                  <h3 style={{ marginTop: 0, marginBottom: '15px', fontSize: '16px', fontWeight: '600' }}>Add New {config.singular}</h3>
+                  <div style={{ display: 'flex', gap: '10px', alignItems: 'end' }}>
+                    <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
+                      <label>{config.singular} Name</label>
+                      <input
+                        type="text"
+                        value={newValueByTab[tab]}
+                        onChange={(e) => setNewValueByTab((prev) => ({ ...prev, [tab]: e.target.value }))}
+                        placeholder={`Enter ${config.singular.toLowerCase()} name`}
+                        onKeyDown={(e) => e.key === 'Enter' && handleCreateMasterItem(tab)}
+                      />
+                    </div>
+                    <button className="btn btn-primary" onClick={() => handleCreateMasterItem(tab)}>Add {config.singular}</button>
+                  </div>
+                </div>
+                {loading ? (
+                  <div style={{ padding: '40px', textAlign: 'center' }}><p>Loading {config.title.toLowerCase()}...</p></div>
+                ) : (
+                  <div style={{ overflowX: 'auto' }}>
+                    <table className="production-table" style={{ width: '100%' }}>
+                      <thead>
+                        <tr>
+                          <th>{config.singular} Name</th>
+                          <th style={{ textAlign: 'center' }}>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {items.length === 0 ? (
+                          <tr>
+                            <td colSpan={2} style={{ padding: '40px', textAlign: 'center', color: '#6c757d' }}>No {config.title.toLowerCase()} found</td>
+                          </tr>
+                        ) : (
+                          items.map((item) => (
+                            <tr key={item._id}>
+                              <td>
+                                {editingId === item._id ? (
+                                  <input
+                                    type="text"
+                                    value={editValueByTab[tab]}
+                                    onChange={(e) => setEditValueByTab((prev) => ({ ...prev, [tab]: e.target.value }))}
+                                    style={{ width: '100%', padding: '8px' }}
+                                    onKeyDown={(e) => e.key === 'Enter' && handleUpdateMasterItem(tab, item._id)}
+                                  />
+                                ) : (
+                                  <span style={{ fontWeight: '600', color: '#1a1a1a' }}>{item.name}</span>
+                                )}
+                              </td>
+                              <td style={{ textAlign: 'center' }}>
+                                {editingId === item._id ? (
+                                  <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                                    <button className="btn btn-primary" onClick={() => handleUpdateMasterItem(tab, item._id)} style={{ padding: '6px 12px', fontSize: '12px' }}>Save</button>
+                                    <button className="btn btn-secondary" onClick={() => setEditingIdByTab((prev) => ({ ...prev, [tab]: null }))} style={{ padding: '6px 12px', fontSize: '12px' }}>Cancel</button>
+                                  </div>
+                                ) : (
+                                  <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                                    <button className="btn btn-primary" onClick={() => handleStartEditMaster(tab, item)} style={{ padding: '6px 12px', fontSize: '12px' }}>Edit</button>
+                                    <button className="btn btn-logout" onClick={() => handleDeleteMasterItem(tab, item._id)} disabled={deletingId === item._id} style={{ padding: '6px 12px', fontSize: '12px' }}>
+                                      {deletingId === item._id ? 'Deleting...' : 'Delete'}
+                                    </button>
+                                  </div>
+                                )}
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )
+          })()}
         </div>
       </div>
     </>
