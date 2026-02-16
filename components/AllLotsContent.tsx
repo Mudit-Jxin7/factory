@@ -70,12 +70,10 @@ export default function AllLotsContent() {
           thread_code: '',
         })),
         flyWidth: '',
-        tbdFields: {
-          tbd1: '',
-          tbd2: '',
-          tbd3: '',
-          tbd4: '',
-          tbd5: '',
+        additionalInfo: {
+          belt: '',
+          botto: '',
+          pasting: '',
         },
       }
 

@@ -47,12 +47,10 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
     }
   ])
   const [flyWidth, setFlyWidth] = useState('')
-  const [tbdFields, setTbdFields] = useState({
-    tbd1: '',
-    tbd2: '',
-    tbd3: '',
-    tbd4: '',
-    tbd5: '',
+  const [additionalInfo, setAdditionalInfo] = useState({
+    belt: '',
+    botto: '',
+    pasting: '',
   })
   
   const [loading, setLoading] = useState(false)
@@ -95,7 +93,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
           setRatios(jobCard.ratios || ratios)
           setProductionData(jobCard.productionData || productionData)
           setFlyWidth(jobCard.flyWidth || '')
-          setTbdFields(jobCard.tbdFields || tbdFields)
+          setAdditionalInfo(jobCard.additionalInfo || { belt: '', botto: '', pasting: '' })
           setLoading(false)
         } else {
           // No job card exists - show error, job cards can only be edited
@@ -166,7 +164,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
         setRatios(jobCard.ratios || ratios)
         setProductionData(jobCard.productionData || productionData)
         setFlyWidth(jobCard.flyWidth || '')
-        setTbdFields(jobCard.tbdFields || tbdFields)
+        setAdditionalInfo(jobCard.additionalInfo || { belt: '', botto: '', pasting: '' })
       } else {
         setError('Job card not found')
       }
@@ -242,7 +240,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
           rate: row.rate || '',
         })),
         flyWidth,
-        tbdFields,
+        additionalInfo,
       }
 
       const result = await jobCardsAPI.updateJobCard(lotNumber, jobCardData)
@@ -659,58 +657,36 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
               />
             </div>
             <div className="form-group">
-              <label>TBD 1</label>
+              <label>Belt</label>
               <input
                 type="text"
-                value={tbdFields.tbd1}
-                onChange={(e) => setTbdFields({ ...tbdFields, tbd1: e.target.value })}
+                value={additionalInfo.belt}
+                onChange={(e) => setAdditionalInfo({ ...additionalInfo, belt: e.target.value })}
                 disabled={!isEditMode}
                 style={!isEditMode ? { background: '#f8f9fa', cursor: 'not-allowed' } : {}}
-                placeholder="TBD 1"
+                placeholder="Belt"
               />
             </div>
             <div className="form-group">
-              <label>TBD 2</label>
+              <label>Botto</label>
               <input
                 type="text"
-                value={tbdFields.tbd2}
-                onChange={(e) => setTbdFields({ ...tbdFields, tbd2: e.target.value })}
+                value={additionalInfo.botto}
+                onChange={(e) => setAdditionalInfo({ ...additionalInfo, botto: e.target.value })}
                 disabled={!isEditMode}
                 style={!isEditMode ? { background: '#f8f9fa', cursor: 'not-allowed' } : {}}
-                placeholder="TBD 2"
+                placeholder="Botto"
               />
             </div>
             <div className="form-group">
-              <label>TBD 3</label>
+              <label>Pasting</label>
               <input
                 type="text"
-                value={tbdFields.tbd3}
-                onChange={(e) => setTbdFields({ ...tbdFields, tbd3: e.target.value })}
+                value={additionalInfo.pasting}
+                onChange={(e) => setAdditionalInfo({ ...additionalInfo, pasting: e.target.value })}
                 disabled={!isEditMode}
                 style={!isEditMode ? { background: '#f8f9fa', cursor: 'not-allowed' } : {}}
-                placeholder="TBD 3"
-              />
-            </div>
-            <div className="form-group">
-              <label>TBD 4</label>
-              <input
-                type="text"
-                value={tbdFields.tbd4}
-                onChange={(e) => setTbdFields({ ...tbdFields, tbd4: e.target.value })}
-                disabled={!isEditMode}
-                style={!isEditMode ? { background: '#f8f9fa', cursor: 'not-allowed' } : {}}
-                placeholder="TBD 4"
-              />
-            </div>
-            <div className="form-group">
-              <label>TBD 5</label>
-              <input
-                type="text"
-                value={tbdFields.tbd5}
-                onChange={(e) => setTbdFields({ ...tbdFields, tbd5: e.target.value })}
-                disabled={!isEditMode}
-                style={!isEditMode ? { background: '#f8f9fa', cursor: 'not-allowed' } : {}}
-                placeholder="TBD 5"
+                placeholder="Pasting"
               />
             </div>
           </div>
