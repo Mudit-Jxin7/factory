@@ -38,12 +38,18 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
       pieces: 0,
       color: '',
       shade: '',
-      worker: '',
-      date: '',
-      rate: '',
       front: '',
+      frontWorker: '',
+      frontDate: '',
+      frontRate: '',
       back: '',
+      backWorker: '',
+      backDate: '',
+      backRate: '',
       zip: '',
+      zipWorker: '',
+      zipDate: '',
+      zipRate: '',
       zip_code: '',
       thread_code: '',
     }
@@ -64,6 +70,46 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
   const [generatingPDF, setGeneratingPDF] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const jobCardRef = useRef<HTMLDivElement>(null)
+
+  const [editingWorkerCell, setEditingWorkerCell] = useState<{ rowIndex: number; field: 'front' | 'back' | 'zip' } | null>(null)
+  const [popupWorker, setPopupWorker] = useState('')
+  const [popupDate, setPopupDate] = useState('')
+  const [popupRate, setPopupRate] = useState('')
+
+  const getWorkerName = (workerId: string) => {
+    if (!workerId) return '—'
+    const w = workers.find((x: { _id: string }) => x._id === workerId)
+    return w ? (w.worker_full_name || String(w.worker_id)) : '—'
+  }
+
+  const openWorkerPopup = (rowIndex: number, field: 'front' | 'back' | 'zip') => {
+    const row = productionData[rowIndex]
+    const workerKey = `${field}Worker` as keyof typeof row
+    const dateKey = `${field}Date` as keyof typeof row
+    const rateKey = `${field}Rate` as keyof typeof row
+    setPopupWorker(String(row[workerKey] ?? ''))
+    setPopupDate(String(row[dateKey] ?? ''))
+    setPopupRate(String(row[rateKey] ?? ''))
+    setEditingWorkerCell({ rowIndex, field })
+  }
+
+  const saveWorkerPopup = () => {
+    if (!editingWorkerCell) return
+    const { rowIndex, field } = editingWorkerCell
+    setProductionData(prev =>
+      prev.map((row, i) =>
+        i === rowIndex
+          ? {
+              ...row,
+              [`${field}Worker`]: popupWorker,
+              [`${field}Date`]: popupDate,
+              [`${field}Rate`]: popupRate,
+            }
+          : row
+      )
+    )
+    setEditingWorkerCell(null)
+  }
 
   const sumOfRatios = useMemo(() => {
     return Object.values(ratios).reduce((sum, val) => sum + (Number(val) || 0), 0)
@@ -135,12 +181,18 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
             pieces: Number(row.pieces || 0),
             color: row.color || '',
             shade: row.shade || '',
-            worker: row.worker || '',
-            date: row.date || '',
-            rate: row.rate || '',
             front: '',
+            frontWorker: '',
+            frontDate: '',
+            frontRate: '',
             back: '',
+            backWorker: '',
+            backDate: '',
+            backRate: '',
             zip: '',
+            zipWorker: '',
+            zipDate: '',
+            zipRate: '',
             zip_code: '',
             thread_code: '',
           }))
@@ -195,12 +247,18 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
         pieces: 0,
         color: '',
         shade: '',
-        worker: '',
-        date: '',
-        rate: '',
         front: '',
+        frontWorker: '',
+        frontDate: '',
+        frontRate: '',
         back: '',
+        backWorker: '',
+        backDate: '',
+        backRate: '',
         zip: '',
+        zipWorker: '',
+        zipDate: '',
+        zipRate: '',
         zip_code: '',
         thread_code: '',
       }
@@ -242,9 +300,6 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
           ...row,
           layer: Number(row.layer) || 1,
           pieces: Number(row.pieces) || 0,
-          worker: row.worker || '',
-          date: row.date || '',
-          rate: row.rate || '',
         })),
         flyWidth,
         additionalInfo,
@@ -508,12 +563,9 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
                   <th>Pieces</th>
                   <th>Color</th>
                   <th>Shade</th>
-                  <th style={{ width: '200px', minWidth: '200px' }}>Worker</th>
-                  <th style={{ width: '130px', minWidth: '130px' }}>Date</th>
-                  <th style={{ width: '120px', minWidth: '120px' }}>Rate</th>
-                  <th>Front</th>
-                  <th>Back</th>
-                  <th>Zip</th>
+                  <th style={{ width: '180px', minWidth: '180px' }}>Front</th>
+                  <th style={{ width: '180px', minWidth: '180px' }}>Back</th>
+                  <th style={{ width: '180px', minWidth: '180px' }}>Zip</th>
                   <th>Zip Code</th>
                   <th style={{ width: '80px', minWidth: '80px' }}>Thread Code</th>
                 </tr>
@@ -561,77 +613,65 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
                         )}
                       </div>
                     </td>
-                    <td style={{ width: '200px', minWidth: '200px' }}>
-                      <select
-                        value={row.worker || ''}
-                        onChange={(e) => updateProductionData(index, 'worker', e.target.value)}
+                    <td style={{ width: '180px', minWidth: '180px' }}>
+                      <button
+                        type="button"
+                        onClick={() => isEditMode && openWorkerPopup(index, 'front')}
                         disabled={!isEditMode}
                         className="tbd-input"
-                        style={!isEditMode ? { background: '#f8f9fa', cursor: 'not-allowed' } : { width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px' }}
+                        style={{
+                          width: '100%',
+                          padding: '8px 12px',
+                          border: '1px solid #ddd',
+                          borderRadius: '4px',
+                          fontSize: '14px',
+                          textAlign: 'left',
+                          background: !isEditMode ? '#f8f9fa' : '#fff',
+                          cursor: !isEditMode ? 'not-allowed' : 'pointer',
+                        }}
                       >
-                        <option value="">Select worker</option>
-                        {workers.map((w: any) => (
-                          <option key={w._id} value={w._id}>
-                            {w.worker_id} - {w.worker_full_name}
-                          </option>
-                        ))}
-                      </select>
+                        {getWorkerName(row.frontWorker ?? '')}
+                      </button>
                     </td>
-                    <td style={{ width: '130px', minWidth: '130px' }}>
-                      <input
-                        type="date"
-                        value={row.date || ''}
-                        onChange={(e) => updateProductionData(index, 'date', e.target.value)}
+                    <td style={{ width: '180px', minWidth: '180px' }}>
+                      <button
+                        type="button"
+                        onClick={() => isEditMode && openWorkerPopup(index, 'back')}
                         disabled={!isEditMode}
                         className="tbd-input"
-                        style={!isEditMode ? { background: '#f8f9fa', cursor: 'not-allowed' } : { width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px' }}
-                      />
+                        style={{
+                          width: '100%',
+                          padding: '8px 12px',
+                          border: '1px solid #ddd',
+                          borderRadius: '4px',
+                          fontSize: '14px',
+                          textAlign: 'left',
+                          background: !isEditMode ? '#f8f9fa' : '#fff',
+                          cursor: !isEditMode ? 'not-allowed' : 'pointer',
+                        }}
+                      >
+                        {getWorkerName(row.backWorker ?? '')}
+                      </button>
                     </td>
-                    <td style={{ width: '120px', minWidth: '120px' }}>
-                      <input
-                        type="number"
-                        value={row.rate || ''}
-                        onChange={(e) => updateProductionData(index, 'rate', e.target.value)}
+                    <td style={{ width: '180px', minWidth: '180px' }}>
+                      <button
+                        type="button"
+                        onClick={() => isEditMode && openWorkerPopup(index, 'zip')}
                         disabled={!isEditMode}
                         className="tbd-input"
-                        style={!isEditMode ? { background: '#f8f9fa', cursor: 'not-allowed' } : { width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px' }}
-                        placeholder="Rate"
-                        step="0.01"
-                        min="0"
-                      />
-                    </td>
-                    <td>
-                      <input
-                        type="text"
-                        value={row.front}
-                        onChange={(e) => updateProductionData(index, 'front', e.target.value)}
-                        disabled={!isEditMode}
-                        className="tbd-input"
-                        style={!isEditMode ? { background: '#f8f9fa', cursor: 'not-allowed' } : {}}
-                        placeholder="Front"
-                      />
-                    </td>
-                    <td>
-                      <input
-                        type="text"
-                        value={row.back}
-                        onChange={(e) => updateProductionData(index, 'back', e.target.value)}
-                        disabled={!isEditMode}
-                        className="tbd-input"
-                        style={!isEditMode ? { background: '#f8f9fa', cursor: 'not-allowed' } : {}}
-                        placeholder="Back"
-                      />
-                    </td>
-                    <td>
-                      <input
-                        type="text"
-                        value={row.zip ?? ''}
-                        onChange={(e) => updateProductionData(index, 'zip', e.target.value)}
-                        disabled={!isEditMode}
-                        className="tbd-input"
-                        style={!isEditMode ? { background: '#f8f9fa', cursor: 'not-allowed' } : {}}
-                        placeholder="Zip"
-                      />
+                        style={{
+                          width: '100%',
+                          padding: '8px 12px',
+                          border: '1px solid #ddd',
+                          borderRadius: '4px',
+                          fontSize: '14px',
+                          textAlign: 'left',
+                          background: !isEditMode ? '#f8f9fa' : '#fff',
+                          cursor: !isEditMode ? 'not-allowed' : 'pointer',
+                        }}
+                      >
+                        {getWorkerName(row.zipWorker ?? '')}
+                      </button>
                     </td>
                     <td>
                       <input
@@ -746,6 +786,86 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
         </div>
       </div>
       </div>
+
+      {editingWorkerCell && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+          onClick={() => setEditingWorkerCell(null)}
+        >
+          <div
+            style={{
+              background: '#fff',
+              padding: '24px',
+              borderRadius: '8px',
+              minWidth: '320px',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ margin: '0 0 20px', fontSize: '18px' }}>
+              {editingWorkerCell.field === 'front' ? 'Front' : editingWorkerCell.field === 'back' ? 'Back' : 'Zip'} — Worker / Date / Rate
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label>Worker</label>
+                <select
+                  value={popupWorker}
+                  onChange={(e) => setPopupWorker(e.target.value)}
+                  style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px' }}
+                >
+                  <option value="">Select worker</option>
+                  {workers.map((w: any) => (
+                    <option key={w._id} value={w._id}>
+                      {w.worker_id} - {w.worker_full_name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label>Date</label>
+                <input
+                  type="date"
+                  value={popupDate}
+                  onChange={(e) => setPopupDate(e.target.value)}
+                  style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px' }}
+                />
+              </div>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label>Rate</label>
+                <input
+                  type="number"
+                  value={popupRate}
+                  onChange={(e) => setPopupRate(e.target.value)}
+                  placeholder="Rate"
+                  step="0.01"
+                  min="0"
+                  style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px' }}
+                />
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '20px' }}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setEditingWorkerCell(null)}
+              >
+                Cancel
+              </button>
+              <button type="button" className="btn btn-primary" onClick={saveWorkerPopup}>
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }
