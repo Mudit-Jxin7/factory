@@ -347,6 +347,40 @@ export default function DashboardContent() {
       if (editLotNumber && decodeURIComponent(editLotNumber) === lotNumber) {
         // Update existing lot
         result = await lotsAPI.updateLot(lotNumber, lotData)
+        // Sync job card with lot data so they stay in sync
+        if (result.success) {
+          try {
+            const jobCardResult = await jobCardsAPI.getJobCardByLotNumber(lotNumber)
+            if (jobCardResult.success && jobCardResult.jobCard) {
+              const existing = jobCardResult.jobCard
+              const mergedProductionData = productionData.map((lotRow, i) => {
+                const existingRow = existing.productionData && existing.productionData[i] ? existing.productionData[i] : {}
+                return {
+                  ...existingRow,
+                  serialNumber: lotRow.serialNumber,
+                  layer: Number(lotRow.layer) || 1,
+                  pieces: Number(lotRow.pieces) || 0,
+                  color: lotRow.color || '',
+                  shade: lotRow.shade || '',
+                  zip_code: lotRow.zip_code || '',
+                  thread_code: lotRow.thread_code || '',
+                }
+              })
+              await jobCardsAPI.updateJobCard(lotNumber, {
+                lotNumber,
+                date,
+                brand: brand,
+                ratios,
+                productionData: mergedProductionData,
+                flyWidth: existing.flyWidth ?? '',
+                additionalInfo: existing.additionalInfo ?? { belt: '', bottom: '', pasting: '', bone: '', hala: '', ticketPocket: '' },
+              })
+            }
+          } catch (err) {
+            console.error('Error syncing job card with lot:', err)
+            // Don't fail the lot update if job card sync fails
+          }
+        }
       } else {
         // Create new lot
         result = await lotsAPI.saveLot(lotData)
