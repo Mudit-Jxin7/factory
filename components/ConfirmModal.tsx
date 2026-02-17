@@ -81,7 +81,7 @@ export default function ConfirmModal({
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px', marginBottom: '20px' }}>
           <div
             style={{
-              fontSize: '32px',
+              fontSize: '36px',
               flexShrink: 0,
               lineHeight: 1,
             }}
@@ -93,7 +93,7 @@ export default function ConfirmModal({
               style={{
                 margin: 0,
                 marginBottom: '8px',
-                fontSize: '20px',
+                fontSize: '22px',
                 fontWeight: '600',
                 color: '#1a1a1a',
               }}
@@ -103,7 +103,7 @@ export default function ConfirmModal({
             <p
               style={{
                 margin: 0,
-                fontSize: '14px',
+                fontSize: '16px',
                 color: '#6c757d',
                 lineHeight: '1.5',
               }}
@@ -126,7 +126,7 @@ export default function ConfirmModal({
             onClick={onCancel}
             style={{
               padding: '10px 20px',
-              fontSize: '14px',
+              fontSize: '16px',
               fontWeight: '500',
             }}
           >
@@ -136,7 +136,7 @@ export default function ConfirmModal({
             onClick={onConfirm}
             style={{
               padding: '10px 20px',
-              fontSize: '14px',
+              fontSize: '16px',
               fontWeight: '500',
               backgroundColor: style.confirmBg,
               color: '#ffffff',

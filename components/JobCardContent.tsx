@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { jobCardsAPI, lotsAPI, workersAPI } from '@/lib/api'
 import { getColorForShade } from '@/lib/colorUtils'
+import { prepareCloneForPDF, replaceInputsForPDF, scaleCloneFontsForPDF } from '@/lib/pdfUtils'
 import NavigationBar from './NavigationBar'
 import { useToast } from './ToastProvider'
 import jsPDF from 'jspdf'
@@ -340,41 +341,13 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
       clone.style.left = '-9999px'
       clone.style.top = '0'
       document.body.appendChild(clone)
+      prepareCloneForPDF(clone, jobCardRef.current)
+      replaceInputsForPDF(clone)
 
-      // Replace all inputs with divs showing their values (empty if no value)
-      const inputs = clone.querySelectorAll('input, textarea, select')
-      inputs.forEach((input) => {
-        const htmlInput = input as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-        const element = input as HTMLElement
-        const computedStyle = window.getComputedStyle(element)
-        
-        // Get the actual value (empty string if empty, no placeholder)
-        const value = htmlInput.value || ''
-        
-        // Create a div to replace the input
-        const div = document.createElement('div')
-        div.textContent = value // Empty string if no value
-        div.style.cssText = computedStyle.cssText
-        div.style.display = 'inline-block'
-        div.style.width = computedStyle.width
-        div.style.height = computedStyle.height
-        div.style.padding = computedStyle.padding
-        div.style.border = computedStyle.border
-        div.style.borderRadius = computedStyle.borderRadius
-        div.style.backgroundColor = computedStyle.backgroundColor
-        div.style.color = computedStyle.color
-        div.style.fontSize = computedStyle.fontSize
-        div.style.fontFamily = computedStyle.fontFamily
-        div.style.lineHeight = computedStyle.lineHeight
-        div.style.minHeight = computedStyle.minHeight
-        div.style.boxSizing = 'border-box'
-        
-        // Replace input with div
-        element.parentNode?.replaceChild(div, element)
-      })
-
-      // Wait for DOM to update
       await new Promise(resolve => setTimeout(resolve, 50))
+
+      // Increase font sizes for PDF readability (clone only, not the live UI)
+      scaleCloneFontsForPDF(clone)
 
       const canvas = await html2canvas(clone, {
         scale: 2,
@@ -593,7 +566,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
                       />
                     </td>
                     <td>
-                      <span style={{ fontSize: '14px', color: '#1a1a1a' }}>{row.color || '—'}</span>
+                      <span style={{ fontSize: '16px', color: '#1a1a1a' }}>{row.color || '—'}</span>
                     </td>
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', minHeight: '36px' }}>
@@ -609,7 +582,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
                             }}
                           />
                         ) : (
-                          <span style={{ fontSize: '14px', color: '#6c757d' }}>—</span>
+                          <span style={{ fontSize: '16px', color: '#6c757d' }}>—</span>
                         )}
                       </div>
                     </td>
@@ -624,7 +597,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
                           padding: '8px 12px',
                           border: '1px solid #ddd',
                           borderRadius: '4px',
-                          fontSize: '14px',
+                          fontSize: '16px',
                           textAlign: 'left',
                           background: !isEditMode ? '#f8f9fa' : '#fff',
                           cursor: !isEditMode ? 'not-allowed' : 'pointer',
@@ -644,7 +617,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
                           padding: '8px 12px',
                           border: '1px solid #ddd',
                           borderRadius: '4px',
-                          fontSize: '14px',
+                          fontSize: '16px',
                           textAlign: 'left',
                           background: !isEditMode ? '#f8f9fa' : '#fff',
                           cursor: !isEditMode ? 'not-allowed' : 'pointer',
@@ -664,7 +637,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
                           padding: '8px 12px',
                           border: '1px solid #ddd',
                           borderRadius: '4px',
-                          fontSize: '14px',
+                          fontSize: '16px',
                           textAlign: 'left',
                           background: !isEditMode ? '#f8f9fa' : '#fff',
                           cursor: !isEditMode ? 'not-allowed' : 'pointer',
@@ -810,7 +783,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 style={{ margin: '0 0 20px', fontSize: '18px' }}>
+            <h3 style={{ margin: '0 0 20px', fontSize: '20px' }}>
               {editingWorkerCell.field === 'front' ? 'Front' : editingWorkerCell.field === 'back' ? 'Back' : 'Zip'} — Worker / Date / Rate
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -819,7 +792,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
                 <select
                   value={popupWorker}
                   onChange={(e) => setPopupWorker(e.target.value)}
-                  style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px' }}
+                  style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '16px' }}
                 >
                   <option value="">Select worker</option>
                   {workers.map((w: any) => (
@@ -835,7 +808,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
                   type="date"
                   value={popupDate}
                   onChange={(e) => setPopupDate(e.target.value)}
-                  style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px' }}
+                  style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '16px' }}
                 />
               </div>
               <div className="form-group" style={{ marginBottom: 0 }}>
@@ -847,7 +820,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
                   placeholder="Rate"
                   step="0.01"
                   min="0"
-                  style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px' }}
+                  style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '16px' }}
                 />
               </div>
             </div>

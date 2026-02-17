@@ -248,7 +248,7 @@ export default function DeveloperMasterContent() {
             <h2>{currentConfig.title} Management</h2>
 
             <div className="card" style={{ marginBottom: '20px', padding: '20px', background: '#fff9e6' }}>
-              <h3 style={{ marginTop: 0, marginBottom: '15px', fontSize: '16px', fontWeight: '600' }}>
+              <h3 style={{ marginTop: 0, marginBottom: '15px', fontSize: '18px', fontWeight: '600' }}>
                 Add New {currentConfig.singular}
               </h3>
               <div style={{ display: 'flex', gap: '10px', alignItems: 'end' }}>
@@ -310,14 +310,14 @@ export default function DeveloperMasterContent() {
                                 <button
                                   className="btn btn-primary"
                                   onClick={() => handleUpdateItem(activeTab, item._id)}
-                                  style={{ padding: '6px 12px', fontSize: '12px' }}
+                                  style={{ padding: '6px 12px', fontSize: '14px' }}
                                 >
                                   Save
                                 </button>
                                 <button
                                   className="btn btn-secondary"
                                   onClick={() => setEditingIdByTab((prev) => ({ ...prev, [activeTab]: null }))}
-                                  style={{ padding: '6px 12px', fontSize: '12px' }}
+                                  style={{ padding: '6px 12px', fontSize: '14px' }}
                                 >
                                   Cancel
                                 </button>
@@ -327,7 +327,7 @@ export default function DeveloperMasterContent() {
                                 <button
                                   className="btn btn-primary"
                                   onClick={() => handleStartEdit(activeTab, item)}
-                                  style={{ padding: '6px 12px', fontSize: '12px' }}
+                                  style={{ padding: '6px 12px', fontSize: '14px' }}
                                 >
                                   Edit
                                 </button>
@@ -335,7 +335,7 @@ export default function DeveloperMasterContent() {
                                   className="btn btn-logout"
                                   onClick={() => handleDeleteItem(activeTab, item._id)}
                                   disabled={deletingId === item._id}
-                                  style={{ padding: '6px 12px', fontSize: '12px' }}
+                                  style={{ padding: '6px 12px', fontSize: '14px' }}
                                 >
                                   {deletingId === item._id ? 'Deleting...' : 'Delete'}
                                 </button>

@@ -416,7 +416,7 @@ export default function DeveloperContent() {
               
               {/* Add Color Form */}
               <div className="card" style={{ marginBottom: '20px', padding: '20px', background: '#fff9e6' }}>
-                <h3 style={{ marginTop: 0, marginBottom: '15px', fontSize: '16px', fontWeight: '600' }}>Add New Color</h3>
+                <h3 style={{ marginTop: 0, marginBottom: '15px', fontSize: '18px', fontWeight: '600' }}>Add New Color</h3>
                 <div style={{ display: 'flex', gap: '10px', alignItems: 'end' }}>
                   <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
                     <label>Color Name</label>
@@ -477,14 +477,14 @@ export default function DeveloperContent() {
                                   <button
                                     className="btn btn-primary"
                                     onClick={() => handleUpdateColor(color._id)}
-                                    style={{ padding: '6px 12px', fontSize: '12px' }}
+                                    style={{ padding: '6px 12px', fontSize: '14px' }}
                                   >
                                     Save
                                   </button>
                                   <button
                                     className="btn btn-secondary"
                                     onClick={() => setEditingColor(null)}
-                                    style={{ padding: '6px 12px', fontSize: '12px' }}
+                                    style={{ padding: '6px 12px', fontSize: '14px' }}
                                   >
                                     Cancel
                                   </button>
@@ -494,7 +494,7 @@ export default function DeveloperContent() {
                                   <button
                                     className="btn btn-primary"
                                     onClick={() => handleEditColor(color)}
-                                    style={{ padding: '6px 12px', fontSize: '12px' }}
+                                    style={{ padding: '6px 12px', fontSize: '14px' }}
                                   >
                                     Edit
                                   </button>
@@ -502,7 +502,7 @@ export default function DeveloperContent() {
                                     className="btn btn-logout"
                                     onClick={() => handleDeleteColor(color._id)}
                                     disabled={deletingColor === color._id}
-                                    style={{ padding: '6px 12px', fontSize: '12px' }}
+                                    style={{ padding: '6px 12px', fontSize: '14px' }}
                                   >
                                     {deletingColor === color._id ? 'Deleting...' : 'Delete'}
                                   </button>
@@ -526,7 +526,7 @@ export default function DeveloperContent() {
               
               {/* Add Worker Form */}
               <div className="card" style={{ marginBottom: '20px', padding: '20px', background: '#fff9e6' }}>
-                <h3 style={{ marginTop: 0, marginBottom: '15px', fontSize: '16px', fontWeight: '600' }}>Add New Worker</h3>
+                <h3 style={{ marginTop: 0, marginBottom: '15px', fontSize: '18px', fontWeight: '600' }}>Add New Worker</h3>
                 <div className="form-grid">
                   <div className="form-group">
                     <label>Worker Full Name *</label>
@@ -653,14 +653,14 @@ export default function DeveloperContent() {
                                   <button
                                     className="btn btn-primary"
                                     onClick={() => handleUpdateWorker(worker._id)}
-                                    style={{ padding: '6px 12px', fontSize: '12px' }}
+                                    style={{ padding: '6px 12px', fontSize: '14px' }}
                                   >
                                     Save
                                   </button>
                                   <button
                                     className="btn btn-secondary"
                                     onClick={() => setEditingWorker(null)}
-                                    style={{ padding: '6px 12px', fontSize: '12px' }}
+                                    style={{ padding: '6px 12px', fontSize: '14px' }}
                                   >
                                     Cancel
                                   </button>
@@ -670,7 +670,7 @@ export default function DeveloperContent() {
                                   <button
                                     className="btn btn-primary"
                                     onClick={() => handleEditWorker(worker)}
-                                    style={{ padding: '6px 12px', fontSize: '12px' }}
+                                    style={{ padding: '6px 12px', fontSize: '14px' }}
                                   >
                                     Edit
                                   </button>
@@ -678,7 +678,7 @@ export default function DeveloperContent() {
                                     className="btn btn-logout"
                                     onClick={() => handleDeleteWorker(worker._id)}
                                     disabled={deletingWorker === worker._id}
-                                    style={{ padding: '6px 12px', fontSize: '12px' }}
+                                    style={{ padding: '6px 12px', fontSize: '14px' }}
                                   >
                                     {deletingWorker === worker._id ? 'Deleting...' : 'Delete'}
                                   </button>
@@ -707,7 +707,7 @@ export default function DeveloperContent() {
               <div className="card">
                 <h2>{config.title} Management</h2>
                 <div className="card" style={{ marginBottom: '20px', padding: '20px', background: '#fff9e6' }}>
-                  <h3 style={{ marginTop: 0, marginBottom: '15px', fontSize: '16px', fontWeight: '600' }}>Add New {config.singular}</h3>
+                  <h3 style={{ marginTop: 0, marginBottom: '15px', fontSize: '18px', fontWeight: '600' }}>Add New {config.singular}</h3>
                   <div style={{ display: 'flex', gap: '10px', alignItems: 'end' }}>
                     <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
                       <label>{config.singular} Name</label>
@@ -757,13 +757,13 @@ export default function DeveloperContent() {
                               <td style={{ textAlign: 'center' }}>
                                 {editingId === item._id ? (
                                   <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                                    <button className="btn btn-primary" onClick={() => handleUpdateMasterItem(tab, item._id)} style={{ padding: '6px 12px', fontSize: '12px' }}>Save</button>
-                                    <button className="btn btn-secondary" onClick={() => setEditingIdByTab((prev) => ({ ...prev, [tab]: null }))} style={{ padding: '6px 12px', fontSize: '12px' }}>Cancel</button>
+                                    <button className="btn btn-primary" onClick={() => handleUpdateMasterItem(tab, item._id)} style={{ padding: '6px 12px', fontSize: '14px' }}>Save</button>
+                                    <button className="btn btn-secondary" onClick={() => setEditingIdByTab((prev) => ({ ...prev, [tab]: null }))} style={{ padding: '6px 12px', fontSize: '14px' }}>Cancel</button>
                                   </div>
                                 ) : (
                                   <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                                    <button className="btn btn-primary" onClick={() => handleStartEditMaster(tab, item)} style={{ padding: '6px 12px', fontSize: '12px' }}>Edit</button>
-                                    <button className="btn btn-logout" onClick={() => handleDeleteMasterItem(tab, item._id)} disabled={deletingId === item._id} style={{ padding: '6px 12px', fontSize: '12px' }}>
+                                    <button className="btn btn-primary" onClick={() => handleStartEditMaster(tab, item)} style={{ padding: '6px 12px', fontSize: '14px' }}>Edit</button>
+                                    <button className="btn btn-logout" onClick={() => handleDeleteMasterItem(tab, item._id)} disabled={deletingId === item._id} style={{ padding: '6px 12px', fontSize: '14px' }}>
                                       {deletingId === item._id ? 'Deleting...' : 'Delete'}
                                     </button>
                                   </div>

@@ -39,7 +39,7 @@ body {
 }
 
 .header-title h1 {
-  font-size: 32px;
+  font-size: 38px;
   font-weight: 700;
   color: #1a1a1a;
   margin-bottom: 8px;
@@ -51,12 +51,12 @@ body {
 
 .header-title h1::before {
   content: '📦';
-  font-size: 28px;
+  font-size: 32px;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
 }
 
 .header-title p {
-  font-size: 15px;
+  font-size: 17px;
   color: #6c757d;
   margin: 0;
   font-weight: 400;
@@ -69,10 +69,10 @@ body {
 }
 
 .btn {
-  padding: 10px 20px;
+  padding: 12px 22px;
   border: none;
   border-radius: 10px;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 500;
   cursor: pointer;
   display: flex;
@@ -115,7 +115,7 @@ body {
 }
 
 .btn-icon {
-  font-size: 16px;
+  font-size: 18px;
 }
 
 .btn-delete {
@@ -157,7 +157,7 @@ body {
 }
 
 .card h2 {
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 600;
   color: #1a1a1a;
   margin-bottom: 24px;
@@ -191,7 +191,7 @@ body {
 }
 
 .form-group label {
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 600;
   color: #4b5563;
   text-transform: uppercase;
@@ -202,7 +202,7 @@ body {
   padding: 12px 16px;
   border: 1px solid #dee2e6;
   border-radius: 10px;
-  font-size: 15px;
+  font-size: 17px;
   transition: all 0.2s ease;
   background: #ffffff;
 }
@@ -223,7 +223,7 @@ body {
   padding: 12px 16px;
   border: 1px solid #dee2e6;
   border-radius: 10px;
-  font-size: 15px;
+  font-size: 17px;
   background-color: #ffffff;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -255,17 +255,27 @@ body {
 
 .ratios-grid .form-group {
   min-width: 0;
+  padding: 12px;
+  border: 1px solid #dee2e6;
+  border-radius: 10px;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .ratios-grid .form-group label {
-  font-size: 11px;
-  margin-bottom: 6px;
+  font-size: 13px;
+  margin-bottom: 0;
+  text-align: center;
 }
 
 .ratios-grid .form-group input {
-  padding: 8px 10px;
-  font-size: 14px;
+  padding: 10px 12px;
+  font-size: 16px;
   width: 100%;
+  text-align: center;
+  box-sizing: border-box;
 }
 
 @media (max-width: 1400px) {
@@ -274,8 +284,8 @@ body {
   }
   
   .ratios-grid .form-group input {
-    padding: 7px 8px;
-    font-size: 13px;
+    padding: 8px 10px;
+    font-size: 15px;
   }
 }
 
@@ -309,6 +319,41 @@ body {
   border: 1px solid #ffeaa7;
 }
 
+/* PDF export: ensure boxes and cards render clearly in the clone before html2canvas */
+.pdf-export-clone .card {
+  background: #ffffff !important;
+  border: 1px solid #e9ecef !important;
+  border-radius: 16px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+  padding: 28px !important;
+}
+.pdf-export-clone .ratios-grid .form-group {
+  background: #ffffff !important;
+  border: 1px solid #dee2e6 !important;
+  border-radius: 10px !important;
+  padding: 12px !important;
+}
+.pdf-export-clone .ratios-summary {
+  background: #fff9e6 !important;
+  border: 1px solid #ffeaa7 !important;
+  border-radius: 12px !important;
+  padding: 18px 24px !important;
+  text-align: center !important;
+}
+.pdf-export-clone [data-pdf-input="true"] {
+  border: 1px solid #dee2e6 !important;
+  background-color: #ffffff !important;
+  border-radius: 10px !important;
+  min-height: 36px !important;
+  display: inline-block !important;
+  box-sizing: border-box !important;
+}
+.pdf-export-clone .dashboard-header {
+  background: #ffffff !important;
+  border: 1px solid #e9ecef !important;
+  border-radius: 16px !important;
+}
+
 .table-container {
   overflow-x: visible;
 }
@@ -327,7 +372,7 @@ body {
 .production-table th {
   padding: 14px 16px;
   text-align: left;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
   color: #6c757d;
   text-transform: uppercase;
@@ -347,6 +392,7 @@ body {
   padding: 14px 16px;
   border-bottom: 1px solid #e9ecef;
   background: #ffffff;
+  font-size: 16px;
 }
 
 .production-table tbody tr {
@@ -367,10 +413,10 @@ body {
 
 .production-table input {
   width: 100%;
-  padding: 8px 12px;
+  padding: 10px 12px;
   border: 1px solid #dee2e6;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 16px;
   transition: all 0.2s ease;
   background: #ffffff;
 }
@@ -394,10 +440,10 @@ body {
 .color-input,
 .tbd-input {
   width: 100%;
-  padding: 8px 12px;
+  padding: 10px 12px;
   border: 1px solid #dee2e6;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 16px;
   transition: all 0.2s ease;
   background: #ffffff;
 }
@@ -446,7 +492,7 @@ body {
 }
 
 .summary-icon {
-  font-size: 32px;
+  font-size: 36px;
   width: 56px;
   height: 56px;
   display: flex;
@@ -462,7 +508,7 @@ body {
 }
 
 .summary-label {
-  font-size: 11px;
+  font-size: 13px;
   color: #6c757d;
   margin-bottom: 6px;
   font-weight: 600;
@@ -471,7 +517,7 @@ body {
 }
 
 .summary-value {
-  font-size: 24px;
+  font-size: 28px;
   font-weight: 700;
   color: #1a1a1a;
   letter-spacing: -0.5px;
@@ -493,7 +539,7 @@ body {
   }
 
   .header-title h1 {
-    font-size: 24px;
+    font-size: 28px;
   }
 
   .header-actions {
@@ -529,7 +575,7 @@ body {
   }
 
   .production-table {
-    font-size: 12px;
+    font-size: 14px;
   }
 
   .production-table th,
@@ -546,7 +592,7 @@ body {
 }
 
 .info-item label {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
   color: #6c757d;
   text-transform: uppercase;
@@ -554,7 +600,7 @@ body {
 }
 
 .info-value {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 500;
   color: #1a1a1a;
   padding: 4px 0;
@@ -578,14 +624,14 @@ body {
 .loading-container p,
 .error-container p {
   color: #6c757d;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 500;
 }
 
 .error-container h2 {
   color: #1a1a1a;
   margin-bottom: 12px;
-  font-size: 28px;
+  font-size: 32px;
   font-weight: 700;
 }
 
@@ -654,7 +700,7 @@ body {
 }
 
 .login-header h1 {
-  font-size: 32px;
+  font-size: 36px;
   font-weight: 700;
   color: #1a1a1a;
   margin-bottom: 10px;
@@ -662,7 +708,7 @@ body {
 }
 
 .login-header p {
-  font-size: 15px;
+  font-size: 17px;
   color: #6c757d;
   font-weight: 400;
 }
@@ -676,8 +722,8 @@ body {
 .login-button {
   width: 100%;
   margin-top: 10px;
-  padding: 12px;
-  font-size: 16px;
+  padding: 14px;
+  font-size: 18px;
   background: #1a1a1a;
   color: white;
   border-radius: 10px;
@@ -697,7 +743,7 @@ body {
   color: #c92a2a;
   padding: 12px;
   border-radius: 10px;
-  font-size: 14px;
+  font-size: 16px;
   text-align: center;
   border: 1px solid #ffe0e0;
 }
@@ -749,7 +795,7 @@ body {
   align-items: center;
   gap: 12px;
   font-weight: 700;
-  font-size: 18px;
+  font-size: 20px;
   color: #1a1a1a;
   cursor: pointer;
   transition: opacity 0.2s ease;
@@ -760,7 +806,7 @@ body {
 }
 
 .navbar-icon {
-  font-size: 24px;
+  font-size: 26px;
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
 }
 
@@ -784,7 +830,7 @@ body {
   border: none;
   background: transparent;
   color: #6c757d;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 500;
   cursor: pointer;
   border-radius: 10px;
@@ -816,7 +862,7 @@ body {
 }
 
 .navbar-link-icon {
-  font-size: 16px;
+  font-size: 18px;
 }
 
 .navbar-actions {
@@ -833,7 +879,7 @@ body {
   border: none;
   background: #1a1a1a;
   color: white;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 500;
   cursor: pointer;
   border-radius: 10px;
@@ -867,11 +913,11 @@ body {
 
   .navbar-link {
     padding: 8px 12px;
-    font-size: 12px;
+    font-size: 14px;
   }
 
   .navbar-link-icon {
-    font-size: 14px;
+    font-size: 16px;
   }
 
   .navbar-link span:not(.navbar-link-icon) {
@@ -880,7 +926,7 @@ body {
 
   .navbar-logout {
     padding: 8px 16px;
-    font-size: 12px;
+    font-size: 14px;
   }
 
   .navbar-logout span:not(.navbar-link-icon) {

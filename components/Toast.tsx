@@ -61,8 +61,8 @@ export default function Toast({ message, type, isVisible, onClose, duration = 30
       }}
       onClick={onClose}
     >
-      <span style={{ fontSize: '20px', flexShrink: 0 }}>{icons[type]}</span>
-      <span style={{ color: color.text, fontSize: '14px', fontWeight: '500', flex: 1 }}>
+      <span style={{ fontSize: '22px', flexShrink: 0 }}>{icons[type]}</span>
+      <span style={{ color: color.text, fontSize: '16px', fontWeight: '500', flex: 1 }}>
         {message}
       </span>
       <button
@@ -74,7 +74,7 @@ export default function Toast({ message, type, isVisible, onClose, duration = 30
           background: 'none',
           border: 'none',
           color: color.text,
-          fontSize: '20px',
+          fontSize: '22px',
           cursor: 'pointer',
           padding: '0',
           width: '24px',

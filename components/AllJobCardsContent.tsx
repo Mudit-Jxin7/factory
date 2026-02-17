@@ -113,7 +113,7 @@ export default function AllJobCardsContent() {
                   <tbody>
                     {allJobCards.length === 0 ? (
                       <tr>
-                        <td colSpan={4} style={{ padding: '40px', textAlign: 'center', color: '#6c757d', fontSize: '16px' }}>
+                        <td colSpan={4} style={{ padding: '40px', textAlign: 'center', color: '#6c757d', fontSize: '18px' }}>
                           No job cards found
                         </td>
                       </tr>
@@ -128,14 +128,14 @@ export default function AllJobCardsContent() {
                               <button
                                 className="btn btn-secondary"
                                 onClick={() => handleViewJobCard(jobCard.lotNumber)}
-                                style={{ padding: '8px 16px', fontSize: '12px' }}
+                                style={{ padding: '8px 16px', fontSize: '14px' }}
                               >
                                 View
                               </button>
                               <button
                                 className="btn btn-primary"
                                 onClick={() => router.push(`/jobcard/${encodeURIComponent(jobCard.lotNumber)}?edit=true`)}
-                                style={{ padding: '8px 16px', fontSize: '12px' }}
+                                style={{ padding: '8px 16px', fontSize: '14px' }}
                               >
                                 Edit
                               </button>
@@ -143,7 +143,7 @@ export default function AllJobCardsContent() {
                                 className="btn btn-logout"
                                 onClick={() => handleDeleteJobCard(jobCard.lotNumber)}
                                 disabled={deletingJobCard === jobCard.lotNumber}
-                                style={{ padding: '8px 16px', fontSize: '12px' }}
+                                style={{ padding: '8px 16px', fontSize: '14px' }}
                               >
                                 {deletingJobCard === jobCard.lotNumber ? 'Deleting...' : 'Delete'}
                               </button>

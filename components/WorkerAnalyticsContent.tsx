@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useRef } from 'react'
 import { jobCardsAPI, workersAPI } from '@/lib/api'
 import NavigationBar from './NavigationBar'
 import { useToast } from './ToastProvider'
+import { prepareCloneForPDF, replaceInputsForPDF, scaleCloneFontsForPDF } from '@/lib/pdfUtils'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 import './dashboard.css'
@@ -185,6 +186,7 @@ export default function WorkerAnalyticsContent() {
       clone.style.left = '-9999px'
       clone.style.top = '0'
       document.body.appendChild(clone)
+      prepareCloneForPDF(clone, analyticsRef.current)
 
       // Hide filters in PDF
       const filters = clone.querySelector('.filters-section') as HTMLElement
@@ -192,35 +194,11 @@ export default function WorkerAnalyticsContent() {
         filters.style.display = 'none'
       }
 
-      // Replace all inputs with divs showing their values
-      const inputs = clone.querySelectorAll('input, select')
-      inputs.forEach((input) => {
-        const htmlInput = input as HTMLInputElement | HTMLSelectElement
-        const element = input as HTMLElement
-        const computedStyle = window.getComputedStyle(element)
-
-        const value = htmlInput.value || ''
-        const div = document.createElement('div')
-        div.textContent = value
-        div.style.cssText = computedStyle.cssText
-        div.style.display = 'inline-block'
-        div.style.width = computedStyle.width
-        div.style.height = computedStyle.height
-        div.style.padding = computedStyle.padding
-        div.style.border = computedStyle.border
-        div.style.borderRadius = computedStyle.borderRadius
-        div.style.backgroundColor = computedStyle.backgroundColor
-        div.style.color = computedStyle.color
-        div.style.fontSize = computedStyle.fontSize
-        div.style.fontFamily = computedStyle.fontFamily
-        div.style.lineHeight = computedStyle.lineHeight
-        div.style.minHeight = computedStyle.minHeight
-        div.style.boxSizing = 'border-box'
-
-        element.parentNode?.replaceChild(div, element)
-      })
-
+      replaceInputsForPDF(clone)
       await new Promise((resolve) => setTimeout(resolve, 50))
+
+      // Increase font sizes for PDF readability (clone only, not the live UI)
+      scaleCloneFontsForPDF(clone)
 
       const canvas = await html2canvas(clone, {
         scale: 2,
@@ -404,7 +382,7 @@ export default function WorkerAnalyticsContent() {
         <div className="dashboard-content">
           {/* Filters */}
           <div className="card filters-section" style={{ marginBottom: '20px', padding: '20px', background: '#fff9e6' }}>
-            <h3 style={{ marginTop: 0, marginBottom: '15px', fontSize: '16px', fontWeight: '600' }}>Filters</h3>
+            <h3 style={{ marginTop: 0, marginBottom: '15px', fontSize: '18px', fontWeight: '600' }}>Filters</h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '15px', alignItems: 'end' }}>
               <div className="form-group" style={{ marginBottom: 0 }}>
                 <label>From Date</label>
@@ -417,7 +395,7 @@ export default function WorkerAnalyticsContent() {
                     padding: '10px',
                     border: '1px solid #ddd',
                     borderRadius: '6px',
-                    fontSize: '14px',
+                    fontSize: '16px',
                     backgroundColor: '#fff',
                   }}
                 />
@@ -433,7 +411,7 @@ export default function WorkerAnalyticsContent() {
                     padding: '10px',
                     border: '1px solid #ddd',
                     borderRadius: '6px',
-                    fontSize: '14px',
+                    fontSize: '16px',
                     backgroundColor: '#fff',
                   }}
                 />
@@ -448,7 +426,7 @@ export default function WorkerAnalyticsContent() {
                     padding: '10px',
                     border: '1px solid #ddd',
                     borderRadius: '6px',
-                    fontSize: '14px',
+                    fontSize: '16px',
                     backgroundColor: '#fff',
                   }}
                 >
@@ -464,7 +442,7 @@ export default function WorkerAnalyticsContent() {
                 <button
                   className="btn btn-secondary"
                   onClick={clearFilters}
-                  style={{ padding: '10px 20px', fontSize: '14px', whiteSpace: 'nowrap' }}
+                  style={{ padding: '10px 20px', fontSize: '16px', whiteSpace: 'nowrap' }}
                 >
                   Clear Filters
                 </button>

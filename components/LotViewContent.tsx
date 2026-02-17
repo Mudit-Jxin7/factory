@@ -6,6 +6,7 @@ import { lotsAPI, jobCardsAPI } from '@/lib/api'
 import NavigationBar from './NavigationBar'
 import { useToast } from './ToastProvider'
 import { useConfirm } from './ConfirmProvider'
+import { prepareCloneForPDF, replaceInputsForPDF, scaleCloneFontsForPDF } from '@/lib/pdfUtils'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 import './dashboard.css'
@@ -135,41 +136,13 @@ export default function LotViewContent({ lotNumber }: LotViewContentProps) {
       clone.style.left = '-9999px'
       clone.style.top = '0'
       document.body.appendChild(clone)
+      prepareCloneForPDF(clone, lotViewRef.current)
+      replaceInputsForPDF(clone)
 
-      // Replace all inputs with divs showing their values (empty if no value)
-      const inputs = clone.querySelectorAll('input, textarea, select')
-      inputs.forEach((input) => {
-        const htmlInput = input as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-        const element = input as HTMLElement
-        const computedStyle = window.getComputedStyle(element)
-        
-        // Get the actual value (empty string if empty, no placeholder)
-        const value = htmlInput.value || ''
-        
-        // Create a div to replace the input
-        const div = document.createElement('div')
-        div.textContent = value // Empty string if no value
-        div.style.cssText = computedStyle.cssText
-        div.style.display = 'inline-block'
-        div.style.width = computedStyle.width
-        div.style.height = computedStyle.height
-        div.style.padding = computedStyle.padding
-        div.style.border = computedStyle.border
-        div.style.borderRadius = computedStyle.borderRadius
-        div.style.backgroundColor = computedStyle.backgroundColor
-        div.style.color = computedStyle.color
-        div.style.fontSize = computedStyle.fontSize
-        div.style.fontFamily = computedStyle.fontFamily
-        div.style.lineHeight = computedStyle.lineHeight
-        div.style.minHeight = computedStyle.minHeight
-        div.style.boxSizing = 'border-box'
-        
-        // Replace input with div
-        element.parentNode?.replaceChild(div, element)
-      })
-
-      // Wait for DOM to update
       await new Promise(resolve => setTimeout(resolve, 50))
+
+      // Increase font sizes for PDF readability (clone only, not the live UI)
+      scaleCloneFontsForPDF(clone)
 
       const canvas = await html2canvas(clone, {
         scale: 2,
