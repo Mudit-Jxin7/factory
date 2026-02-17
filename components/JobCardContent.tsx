@@ -563,11 +563,11 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
                   <th>Pieces</th>
                   <th>Color</th>
                   <th>Shade</th>
-                  <th style={{ width: '180px', minWidth: '180px' }}>Front</th>
-                  <th style={{ width: '180px', minWidth: '180px' }}>Back</th>
-                  <th style={{ width: '180px', minWidth: '180px' }}>Zip</th>
-                  <th>Zip Code</th>
-                  <th style={{ width: '80px', minWidth: '80px' }}>Thread Code</th>
+                  <th style={{ width: '220px', minWidth: '220px' }}>Front</th>
+                  <th style={{ width: '220px', minWidth: '220px' }}>Back</th>
+                  <th style={{ width: '220px', minWidth: '220px' }}>Zip</th>
+                  <th style={{ width: '100px', minWidth: '100px' }}>Zip Code</th>
+                  <th style={{ width: '100px', minWidth: '100px' }}>Thread Code</th>
                 </tr>
               </thead>
               <tbody>
@@ -613,7 +613,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
                         )}
                       </div>
                     </td>
-                    <td style={{ width: '180px', minWidth: '180px' }}>
+                    <td style={{ width: '240px', minWidth: '240px' }}>
                       <button
                         type="button"
                         onClick={() => isEditMode && openWorkerPopup(index, 'front')}
@@ -633,7 +633,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
                         {getWorkerName(row.frontWorker ?? '')}
                       </button>
                     </td>
-                    <td style={{ width: '180px', minWidth: '180px' }}>
+                    <td style={{ width: '240px', minWidth: '240px' }}>
                       <button
                         type="button"
                         onClick={() => isEditMode && openWorkerPopup(index, 'back')}
@@ -653,7 +653,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
                         {getWorkerName(row.backWorker ?? '')}
                       </button>
                     </td>
-                    <td style={{ width: '180px', minWidth: '180px' }}>
+                    <td style={{ width: '240px', minWidth: '240px' }}>
                       <button
                         type="button"
                         onClick={() => isEditMode && openWorkerPopup(index, 'zip')}
@@ -673,18 +673,18 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
                         {getWorkerName(row.zipWorker ?? '')}
                       </button>
                     </td>
-                    <td>
+                    <td style={{ width: '70px', minWidth: '70px' }}>
                       <input
                         type="text"
                         value={row.zip_code ?? (row as { zip?: string }).zip ?? ''}
                         readOnly
                         disabled
                         className="tbd-input"
-                        style={{ background: '#f8f9fa', cursor: 'not-allowed' }}
+                        style={{ background: '#f8f9fa', cursor: 'not-allowed', width: '100%' }}
                         placeholder="Zip Code"
                       />
                     </td>
-                    <td style={{ width: '80px', minWidth: '80px' }}>
+                    <td style={{ width: '70px', minWidth: '70px' }}>
                       <input
                         type="text"
                         value={row.thread_code ?? (row as { thread?: string }).thread ?? ''}
