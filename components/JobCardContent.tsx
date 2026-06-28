@@ -726,7 +726,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
         } as ActionBarItem] : []),
         { label: 'Back to Job Cards', shortLabel: 'Back', icon: '←', onClick: () => router.push('/jobcards'), variant: 'secondary' as const },
       ]} />
-      <div className="dashboard-container">
+      <div className="dashboard-container job-card-page">
         <div className="dashboard-header">
         <div className="header-title">
           <h1>{isEditMode ? 'Edit Job Card' : 'View Job Card'}</h1>
