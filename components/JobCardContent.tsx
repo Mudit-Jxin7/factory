@@ -710,7 +710,8 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
         <NavigationBar />
         <div className="dashboard-container">
           <div className="loading-container">
-            <p>Loading...</p>
+            <div className="spinner" />
+            <p>Loading job card&hellip;</p>
           </div>
         </div>
       </>

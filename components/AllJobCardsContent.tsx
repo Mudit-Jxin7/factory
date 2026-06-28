@@ -110,9 +110,33 @@ export default function AllJobCardsContent() {
       <div className="dashboard-content">
         <div className="card">
           {loadingJobCards ? (
-            <div style={{ padding: '40px', textAlign: 'center' }}>
-              <p>Loading job cards...</p>
-            </div>
+            <>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                <h2>All Job Cards</h2>
+              </div>
+              <div style={{ overflowX: 'auto' }}>
+                <table className="production-table" style={{ width: '100%' }}>
+                  <thead>
+                    <tr>
+                      <th>Lot Number</th>
+                      <th>Date</th>
+                      <th>Brand</th>
+                      <th style={{ textAlign: 'center' }}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <tr key={i} className="skeleton-row">
+                        <td><div className="skeleton-cell" style={{ width: '75%' }} /></td>
+                        <td><div className="skeleton-cell" style={{ width: '65%' }} /></td>
+                        <td><div className="skeleton-cell" style={{ width: '55%' }} /></td>
+                        <td><div className="skeleton-cell" style={{ width: '85%', margin: '0 auto' }} /></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           ) : (
             <>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>

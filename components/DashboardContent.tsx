@@ -609,7 +609,8 @@ export default function DashboardContent() {
         <NavigationBar />
         <div className="dashboard-container">
           <div className="loading-container">
-            <p>Loading lot data for editing...</p>
+            <div className="spinner" />
+            <p>Loading lot data&hellip;</p>
           </div>
         </div>
       </>

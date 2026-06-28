@@ -436,8 +436,9 @@ export default function DeveloperContent() {
 
               {/* Colors List */}
               {loadingColors ? (
-                <div style={{ padding: '40px', textAlign: 'center' }}>
-                  <p>Loading colors...</p>
+                <div className="card-loading">
+                  <div className="spinner" />
+                  <p>Loading colors&hellip;</p>
                 </div>
               ) : (
                 <div style={{ overflowX: 'auto' }}>
@@ -572,8 +573,9 @@ export default function DeveloperContent() {
 
               {/* Workers List */}
               {loadingWorkers ? (
-                <div style={{ padding: '40px', textAlign: 'center' }}>
-                  <p>Loading workers...</p>
+                <div className="card-loading">
+                  <div className="spinner" />
+                  <p>Loading workers&hellip;</p>
                 </div>
               ) : (
                 <div style={{ overflowX: 'auto' }}>
@@ -723,7 +725,10 @@ export default function DeveloperContent() {
                   </div>
                 </div>
                 {loading ? (
-                  <div style={{ padding: '40px', textAlign: 'center' }}><p>Loading {config.title.toLowerCase()}...</p></div>
+                  <div className="card-loading">
+                    <div className="spinner" />
+                    <p>Loading {config.title.toLowerCase()}&hellip;</p>
+                  </div>
                 ) : (
                   <div style={{ overflowX: 'auto' }}>
                     <table className="production-table" style={{ width: '100%' }}>

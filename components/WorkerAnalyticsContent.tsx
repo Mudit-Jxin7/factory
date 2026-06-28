@@ -415,9 +415,43 @@ export default function WorkerAnalyticsContent() {
           {/* Analytics Table */}
           <div className="card">
             {loading ? (
-              <div style={{ padding: '40px', textAlign: 'center' }}>
-                <p>Loading analytics...</p>
-              </div>
+              <>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                  <h2>Worker Analytics</h2>
+                </div>
+                <div style={{ overflowX: 'auto' }}>
+                  <table className="production-table" style={{ width: '100%' }}>
+                    <thead>
+                      <tr>
+                        <th>Worker ID</th>
+                        <th>Worker Name</th>
+                        <th>Front / Back / Zip</th>
+                        <th>Date</th>
+                        <th>Rate</th>
+                        <th>Lot Number</th>
+                        <th>Layer</th>
+                        <th>Pieces</th>
+                        <th>Total Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {Array.from({ length: 7 }).map((_, i) => (
+                        <tr key={i} className="skeleton-row">
+                          <td><div className="skeleton-cell" style={{ width: '50%' }} /></td>
+                          <td><div className="skeleton-cell" style={{ width: '80%' }} /></td>
+                          <td><div className="skeleton-cell" style={{ width: '60%' }} /></td>
+                          <td><div className="skeleton-cell" style={{ width: '70%' }} /></td>
+                          <td><div className="skeleton-cell" style={{ width: '55%' }} /></td>
+                          <td><div className="skeleton-cell" style={{ width: '65%' }} /></td>
+                          <td><div className="skeleton-cell" style={{ width: '40%' }} /></td>
+                          <td><div className="skeleton-cell" style={{ width: '55%' }} /></td>
+                          <td><div className="skeleton-cell" style={{ width: '60%' }} /></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             ) : (
               <>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>

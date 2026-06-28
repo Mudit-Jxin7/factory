@@ -343,7 +343,8 @@ export default function LotViewContent({ lotNumber }: LotViewContentProps) {
         <NavigationBar />
         <div className="dashboard-container">
           <div className="loading-container">
-            <p>Loading lot data...</p>
+            <div className="spinner" />
+            <p>Loading lot data&hellip;</p>
           </div>
         </div>
       </>

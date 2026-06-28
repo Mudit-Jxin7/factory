@@ -269,8 +269,9 @@ export default function DeveloperMasterContent() {
             </div>
 
             {isLoading ? (
-              <div style={{ padding: '40px', textAlign: 'center' }}>
-                <p>Loading {currentConfig.title.toLowerCase()}...</p>
+              <div className="card-loading">
+                <div className="spinner" />
+                <p>Loading {currentConfig.title.toLowerCase()}&hellip;</p>
               </div>
             ) : (
               <div style={{ overflowX: 'auto' }}>
