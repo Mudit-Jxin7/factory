@@ -41,18 +41,40 @@ export const exportAnalyticsToPDF = (params: ExportParams) => {
   const filterParts: string[] = []
   if (fromDate) filterParts.push(`From: ${fromDate}`)
   if (toDate) filterParts.push(`To: ${toDate}`)
-  if (selectedWorker) {
-    const w = workers.find((w: any) => w._id === selectedWorker)
-    if (w) filterParts.push(`Worker: ${w.worker_full_name}`)
-  }
+  const selectedWorkerObj = selectedWorker ? workers.find((w: any) => w._id === selectedWorker) : null
+  if (selectedWorkerObj) filterParts.push(`Worker: ${selectedWorkerObj.worker_full_name}`)
   if (filterParts.length > 0) pdf.text(filterParts.join('   |   '), pageW / 2, 20, { align: 'center' })
+
+  let tableStartY = filterParts.length > 0 ? 24 : 18
+
+  // Worker detail block (only when a single worker is selected)
+  if (selectedWorkerObj) {
+    const detailLines: string[] = [
+      `Worker ID: ${selectedWorkerObj.worker_id}   |   Name: ${selectedWorkerObj.worker_full_name}`,
+    ]
+    const tbdParts: string[] = []
+    if (selectedWorkerObj.tbd1) tbdParts.push(`TBD1: ${selectedWorkerObj.tbd1}`)
+    if (selectedWorkerObj.tbd2) tbdParts.push(`TBD2: ${selectedWorkerObj.tbd2}`)
+    if (selectedWorkerObj.tbd3) tbdParts.push(`TBD3: ${selectedWorkerObj.tbd3}`)
+    if (tbdParts.length > 0) detailLines.push(tbdParts.join('   |   '))
+
+    pdf.setFillColor(230, 244, 255)
+    const blockH = detailLines.length * 5 + 5
+    pdf.rect(margin, tableStartY, pageW - margin * 2, blockH, 'F')
+    pdf.setFontSize(8.5); pdf.setFont('helvetica', 'bold')
+    detailLines.forEach((line, i) => {
+      pdf.text(line, pageW / 2, tableStartY + 4 + i * 5, { align: 'center' })
+    })
+    pdf.setFont('helvetica', 'normal')
+    tableStartY += blockH + 2
+  }
 
   const head = [['Worker ID', 'Worker Name', 'Section', 'Date', 'Rate', 'Lot Number', 'Layer', 'Pieces', 'Total Amount']]
   const body: any[][] = filteredData.map(row => [row.worker_id, row.worker_full_name, row.section, row.date, row.rate.toFixed(2), row.lotNumber, row.layer, row.pieces.toFixed(2), row.total_amount.toFixed(2)])
   body.push(['', 'TOTAL', '', '', '', '', '', totals.totalPieces.toFixed(2), totals.totalAmount.toFixed(2)])
 
   autoTable(pdf, {
-    startY: filterParts.length > 0 ? 24 : 18, margin: { left: margin, right: margin },
+    startY: tableStartY, margin: { left: margin, right: margin },
     head, body,
     styles: { fontSize: 8, cellPadding: 2, halign: 'center' },
     headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
@@ -68,9 +90,24 @@ export const exportAnalyticsToPDF = (params: ExportParams) => {
 
 export const exportAnalyticsToExcel = (params: ExportParams) => {
   const { filteredData, workers, fromDate, toDate, selectedWorker, totals } = params
-  const selectedWorkerName = selectedWorker ? workers.find((w: any) => w._id === selectedWorker)?.worker_full_name || '' : 'All Workers'
+  const selectedWorkerObj = selectedWorker ? workers.find((w: any) => w._id === selectedWorker) : null
+  const selectedWorkerName = selectedWorkerObj?.worker_full_name || 'All Workers'
 
-  const filterRows = [['From Date', fromDate || 'All'], ['To Date', toDate || 'All'], ['Worker', selectedWorkerName], []]
+  const filterRows: string[][] = [
+    ['From Date', fromDate || 'All'],
+    ['To Date', toDate || 'All'],
+    ['Worker', selectedWorkerName],
+  ]
+
+  if (selectedWorkerObj) {
+    filterRows.push(['Worker ID', String(selectedWorkerObj.worker_id)])
+    if (selectedWorkerObj.tbd1) filterRows.push(['TBD1', selectedWorkerObj.tbd1])
+    if (selectedWorkerObj.tbd2) filterRows.push(['TBD2', selectedWorkerObj.tbd2])
+    if (selectedWorkerObj.tbd3) filterRows.push(['TBD3', selectedWorkerObj.tbd3])
+  }
+
+  filterRows.push([])
+
   const headers = ['Worker ID', 'Worker Name', 'Front / Back / Zip', 'Date', 'Rate', 'Lot Number', 'Layer', 'Pieces', 'Total Amount']
   const rows = filteredData.map((row) => [row.worker_id.toString(), row.worker_full_name, row.section, row.date, row.rate.toString(), row.lotNumber, row.layer.toString(), row.pieces.toString(), row.total_amount.toFixed(2)])
   rows.push(['', 'TOTAL', '', '', '', '', '', totals.totalPieces.toFixed(2), totals.totalAmount.toFixed(2)])
