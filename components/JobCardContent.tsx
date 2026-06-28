@@ -1,14 +1,13 @@
 'use client'
 
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { jobCardsAPI, lotsAPI, workersAPI } from '@/lib/api'
 import { getColorForShade } from '@/lib/colorUtils'
-import { prepareCloneForPDF, replaceInputsForPDF, scaleCloneFontsForPDF } from '@/lib/pdfUtils'
 import NavigationBar from './NavigationBar'
 import { useToast } from './ToastProvider'
 import jsPDF from 'jspdf'
-import html2canvas from 'html2canvas'
+import autoTable from 'jspdf-autotable'
 import './dashboard.css'
 
 interface JobCardContentProps {
@@ -98,7 +97,6 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
   const [saving, setSaving] = useState(false)
   const [generatingPDF, setGeneratingPDF] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const jobCardRef = useRef<HTMLDivElement>(null)
 
   const [editingWorkerCell, setEditingWorkerCell] = useState<{ rowIndex: number; field: 'front' | 'back' | 'zip' | 'astar' | 'beltProd' | 'add1' | 'add2' } | null>(null)
   const [popupWorker, setPopupWorker] = useState('')
@@ -382,97 +380,133 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
     }
   }
 
-  const exportToPDF = async () => {
-    if (!jobCardRef.current) return
-
+  const exportToPDF = () => {
     setGeneratingPDF(true)
-    
     try {
-      // Hide navigation bar temporarily
-      const navBar = document.querySelector('.main-navbar') as HTMLElement
-      const originalDisplay = navBar?.style.display
-      if (navBar) {
-        navBar.style.display = 'none'
-      }
+      const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
+      const pageW = pdf.internal.pageSize.getWidth()
+      const margin = 10
 
-      // Clone the element for PDF generation
-      const clone = jobCardRef.current.cloneNode(true) as HTMLElement
-      clone.style.position = 'absolute'
-      clone.style.left = '-9999px'
-      clone.style.top = '0'
-      document.body.appendChild(clone)
-      prepareCloneForPDF(clone, jobCardRef.current)
-      replaceInputsForPDF(clone)
+      // ── Title ──────────────────────────────────────────────────────────────
+      pdf.setFontSize(16)
+      pdf.setFont('helvetica', 'bold')
+      pdf.text('Job Card', pageW / 2, 14, { align: 'center' })
 
-      await new Promise(resolve => setTimeout(resolve, 50))
+      // ── Header Info ────────────────────────────────────────────────────────
+      pdf.setFontSize(9)
+      pdf.setFont('helvetica', 'normal')
+      pdf.text(`Lot Number: ${lotNumber}`, margin, 22)
+      pdf.text(`Brand: ${brand}`, margin + 80, 22)
+      pdf.text(`Date: ${date}`, margin + 160, 22)
 
-      // Increase font sizes for PDF readability (clone only, not the live UI)
-      scaleCloneFontsForPDF(clone)
+      // ── Ratios ─────────────────────────────────────────────────────────────
+      pdf.setFontSize(11)
+      pdf.setFont('helvetica', 'bold')
+      pdf.text('Ratios', margin, 30)
 
-      const canvas = await html2canvas(clone, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#f8f9fa',
-        windowWidth: clone.scrollWidth,
-        windowHeight: clone.scrollHeight,
+      autoTable(pdf, {
+        startY: 32,
+        margin: { left: margin, right: margin },
+        head: [Object.keys(ratios).map(k => k.toUpperCase())],
+        body: [Object.values(ratios).map(v => String(v))],
+        styles: { fontSize: 8, cellPadding: 2, halign: 'center' },
+        headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
+        theme: 'grid',
       })
 
-      // Remove clone
-      document.body.removeChild(clone)
+      // ── Production Data ────────────────────────────────────────────────────
+      const afterRatios = (pdf as any).lastAutoTable.finalY + 6
+      pdf.setFontSize(11)
+      pdf.setFont('helvetica', 'bold')
+      pdf.text('Production Data', margin, afterRatios)
 
-      if (navBar) {
-        navBar.style.display = originalDisplay || ''
-      }
+      const prodHead = [
+        'S.No', 'Layer', 'Pieces', 'Color',
+        'Front Worker', 'Front Date', 'Front Rate',
+        'Back Worker', 'Back Date', 'Back Rate',
+        'Zip Worker', 'Zip Date', 'Zip Rate',
+        'Astar Worker', 'Astar Date', 'Astar Rate',
+        'Belt Worker', 'Belt Date', 'Belt Rate',
+        'Add1 Worker', 'Add1 Date', 'Add1 Rate',
+        'Add2 Worker', 'Add2 Date', 'Add2 Rate',
+        'Zip Code', 'Thread Code',
+      ]
 
-      const imgData = canvas.toDataURL('image/png')
-      const imgWidth = canvas.width
-      const imgHeight = canvas.height
+      const prodBody = productionData.map(row => [
+        row.serialNumber,
+        row.layer,
+        row.pieces,
+        row.color || '—',
+        getWorkerName(row.frontWorker ?? ''), row.frontDate || '—', row.frontRate || '—',
+        getWorkerName(row.backWorker ?? ''), row.backDate || '—', row.backRate || '—',
+        getWorkerName(row.zipWorker ?? ''), row.zipDate || '—', row.zipRate || '—',
+        getWorkerName((row as any).astarWorker ?? ''), (row as any).astarDate || '—', (row as any).astarRate || '—',
+        getWorkerName((row as any).beltProdWorker ?? ''), (row as any).beltProdDate || '—', (row as any).beltProdRate || '—',
+        getWorkerName((row as any).add1Worker ?? ''), (row as any).add1Date || '—', (row as any).add1Rate || '—',
+        getWorkerName((row as any).add2Worker ?? ''), (row as any).add2Date || '—', (row as any).add2Rate || '—',
+        (row as any).zip_code || '—',
+        (row as any).thread_code || '—',
+      ])
 
-      const pdf = new jsPDF('p', 'mm', 'a4')
-      const pdfWidth = pdf.internal.pageSize.getWidth()
-      const pdfHeight = pdf.internal.pageSize.getHeight()
-      
-      const ratio = imgWidth / imgHeight
-      const pageWidth = pdfWidth - 20
-      const pageHeight = pdfHeight - 20
-      
-      let finalWidth = pageWidth
-      let finalHeight = finalWidth / ratio
+      autoTable(pdf, {
+        startY: afterRatios + 2,
+        margin: { left: margin, right: margin },
+        head: [prodHead],
+        body: prodBody,
+        styles: { fontSize: 6.5, cellPadding: 1.5, halign: 'center', overflow: 'linebreak' },
+        headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
+        alternateRowStyles: { fillColor: [240, 247, 255] },
+        theme: 'grid',
+      })
 
-      const marginX = (pdfWidth - finalWidth) / 2
-      let positionY = 10
+      // ── Additional Information ─────────────────────────────────────────────
+      const afterProd = (pdf as any).lastAutoTable.finalY + 6
+      pdf.setFontSize(11)
+      pdf.setFont('helvetica', 'bold')
+      pdf.text('Additional Information', margin, afterProd)
 
-      if (finalHeight <= pageHeight) {
-        pdf.addImage(imgData, 'PNG', marginX, positionY, finalWidth, finalHeight)
-      } else {
-        const totalPages = Math.ceil(finalHeight / pageHeight)
-        let sourceY = 0
+      const addlFields: [string, string][] = [
+        ['Fly Width', flyWidth],
+        ['Belt', additionalInfo.belt],
+        ['Bottom', additionalInfo.bottom],
+        ['Pasting', additionalInfo.pasting],
+        ['Bone', additionalInfo.bone],
+        ['Hala', additionalInfo.hala],
+        ['Ticket Pocket', additionalInfo.ticketPocket],
+        ['Cutting', additionalInfo.cutting],
+        ['Number', additionalInfo.number],
+        ['Button Take', additionalInfo.buttonTake],
+        ['Assembly', additionalInfo.assembly],
+        ['Seal Stitch', additionalInfo.sealStitch],
+        ['Label', additionalInfo.label],
+        ['Tanki', additionalInfo.tanki],
+        ['Kaaj + Button', additionalInfo.kaajButton],
+        ['Finishing', additionalInfo.finishing],
+        ['Addition 1', additionalInfo.addition1],
+        ['Addition 2', additionalInfo.addition2],
+        ['Addition 3', additionalInfo.addition3],
+      ]
 
-        for (let i = 0; i < totalPages; i++) {
-          if (i > 0) {
-            pdf.addPage()
-            positionY = 10
-          }
+      // Split into two columns of roughly equal length
+      const half = Math.ceil(addlFields.length / 2)
+      const col1 = addlFields.slice(0, half)
+      const col2 = addlFields.slice(half)
+      const addlBody = col1.map((item, i) => [
+        item[0], item[1] || '—',
+        col2[i]?.[0] ?? '', col2[i]?.[1] ?? '',
+      ])
 
-          const remainingHeight = finalHeight - (i * pageHeight)
-          const currentPageHeight = Math.min(pageHeight, remainingHeight)
-          const sourceHeight = (currentPageHeight / finalHeight) * imgHeight
-
-          const pageCanvas = document.createElement('canvas')
-          pageCanvas.width = imgWidth
-          pageCanvas.height = sourceHeight
-          const ctx = pageCanvas.getContext('2d')
-          if (ctx) {
-            ctx.drawImage(canvas, 0, sourceY, imgWidth, sourceHeight, 0, 0, imgWidth, sourceHeight)
-          }
-
-          const pageImgData = pageCanvas.toDataURL('image/png')
-          pdf.addImage(pageImgData, 'PNG', marginX, positionY, finalWidth, currentPageHeight)
-
-          sourceY += sourceHeight
-        }
-      }
+      autoTable(pdf, {
+        startY: afterProd + 2,
+        margin: { left: margin, right: margin },
+        head: [['Field', 'Value', 'Field', 'Value']],
+        body: addlBody,
+        styles: { fontSize: 8, cellPadding: 2 },
+        headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
+        columnStyles: { 0: { fontStyle: 'bold' }, 2: { fontStyle: 'bold' } },
+        alternateRowStyles: { fillColor: [240, 247, 255] },
+        theme: 'grid',
+      })
 
       pdf.save(`JobCard_${lotNumber || 'Production'}_${date || 'Report'}.pdf`)
     } catch (error: any) {
@@ -499,7 +533,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
   return (
     <>
       <NavigationBar />
-      <div className="dashboard-container" ref={jobCardRef}>
+      <div className="dashboard-container">
         <div className="dashboard-header">
         <div className="header-title">
           <h1>{isEditMode ? 'Edit Job Card' : 'View Job Card'}</h1>
