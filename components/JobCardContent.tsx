@@ -63,6 +63,18 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
     bone: '',
     hala: '',
     ticketPocket: '',
+    cutting: '',
+    number: '',
+    buttonTake: '',
+    assembly: '',
+    sealStitch: '',
+    label: '',
+    tanki: '',
+    kaajButton: '',
+    finishing: '',
+    addition1: '',
+    addition2: '',
+    addition3: '',
   })
   
   const [loading, setLoading] = useState(false)
@@ -145,7 +157,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
           setRatios(jobCard.ratios || ratios)
           setProductionData(jobCard.productionData || productionData)
           setFlyWidth(jobCard.flyWidth || '')
-          setAdditionalInfo(jobCard.additionalInfo || { belt: '', bottom: '', pasting: '', bone: '', hala: '', ticketPocket: '' })
+          setAdditionalInfo(jobCard.additionalInfo || { belt: '', bottom: '', pasting: '', bone: '', hala: '', ticketPocket: '', cutting: '', number: '', buttonTake: '', assembly: '', sealStitch: '', label: '', tanki: '', kaajButton: '', finishing: '', addition1: '', addition2: '', addition3: '' })
           setLoading(false)
         } else {
           // No job card exists - show error, job cards can only be edited
@@ -223,7 +235,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
         setRatios(jobCard.ratios || ratios)
         setProductionData(jobCard.productionData || productionData)
         setFlyWidth(jobCard.flyWidth || '')
-        setAdditionalInfo(jobCard.additionalInfo || { belt: '', bottom: '', pasting: '', bone: '', hala: '', ticketPocket: '' })
+        setAdditionalInfo(jobCard.additionalInfo || { belt: '', bottom: '', pasting: '', bone: '', hala: '', ticketPocket: '', cutting: '', number: '', buttonTake: '', assembly: '', sealStitch: '', label: '', tanki: '', kaajButton: '', finishing: '', addition1: '', addition2: '', addition3: '' })
       } else {
         setError('Job card not found')
       }
@@ -753,6 +765,138 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
                 disabled={!isEditMode}
                 style={!isEditMode ? { background: '#f8f9fa', cursor: 'not-allowed' } : {}}
                 placeholder="Ticket Pocket"
+              />
+            </div>
+            <div className="form-group">
+              <label>Cutting</label>
+              <input
+                type="text"
+                value={additionalInfo.cutting}
+                onChange={(e) => setAdditionalInfo({ ...additionalInfo, cutting: e.target.value })}
+                disabled={!isEditMode}
+                style={!isEditMode ? { background: '#f8f9fa', cursor: 'not-allowed' } : {}}
+                placeholder="Cutting"
+              />
+            </div>
+            <div className="form-group">
+              <label>Number</label>
+              <input
+                type="text"
+                value={additionalInfo.number}
+                onChange={(e) => setAdditionalInfo({ ...additionalInfo, number: e.target.value })}
+                disabled={!isEditMode}
+                style={!isEditMode ? { background: '#f8f9fa', cursor: 'not-allowed' } : {}}
+                placeholder="Number"
+              />
+            </div>
+            <div className="form-group">
+              <label>Button Take</label>
+              <input
+                type="text"
+                value={additionalInfo.buttonTake}
+                onChange={(e) => setAdditionalInfo({ ...additionalInfo, buttonTake: e.target.value })}
+                disabled={!isEditMode}
+                style={!isEditMode ? { background: '#f8f9fa', cursor: 'not-allowed' } : {}}
+                placeholder="Button Take"
+              />
+            </div>
+            <div className="form-group">
+              <label>Assembly</label>
+              <input
+                type="text"
+                value={additionalInfo.assembly}
+                onChange={(e) => setAdditionalInfo({ ...additionalInfo, assembly: e.target.value })}
+                disabled={!isEditMode}
+                style={!isEditMode ? { background: '#f8f9fa', cursor: 'not-allowed' } : {}}
+                placeholder="Assembly"
+              />
+            </div>
+            <div className="form-group">
+              <label>Seal Stitch</label>
+              <input
+                type="text"
+                value={additionalInfo.sealStitch}
+                onChange={(e) => setAdditionalInfo({ ...additionalInfo, sealStitch: e.target.value })}
+                disabled={!isEditMode}
+                style={!isEditMode ? { background: '#f8f9fa', cursor: 'not-allowed' } : {}}
+                placeholder="Seal Stitch"
+              />
+            </div>
+            <div className="form-group">
+              <label>Label</label>
+              <input
+                type="text"
+                value={additionalInfo.label}
+                onChange={(e) => setAdditionalInfo({ ...additionalInfo, label: e.target.value })}
+                disabled={!isEditMode}
+                style={!isEditMode ? { background: '#f8f9fa', cursor: 'not-allowed' } : {}}
+                placeholder="Label"
+              />
+            </div>
+            <div className="form-group">
+              <label>Tanki</label>
+              <input
+                type="text"
+                value={additionalInfo.tanki}
+                onChange={(e) => setAdditionalInfo({ ...additionalInfo, tanki: e.target.value })}
+                disabled={!isEditMode}
+                style={!isEditMode ? { background: '#f8f9fa', cursor: 'not-allowed' } : {}}
+                placeholder="Tanki"
+              />
+            </div>
+            <div className="form-group">
+              <label>Kaaj + Button</label>
+              <input
+                type="text"
+                value={additionalInfo.kaajButton}
+                onChange={(e) => setAdditionalInfo({ ...additionalInfo, kaajButton: e.target.value })}
+                disabled={!isEditMode}
+                style={!isEditMode ? { background: '#f8f9fa', cursor: 'not-allowed' } : {}}
+                placeholder="Kaaj + Button"
+              />
+            </div>
+            <div className="form-group">
+              <label>Finishing</label>
+              <input
+                type="text"
+                value={additionalInfo.finishing}
+                onChange={(e) => setAdditionalInfo({ ...additionalInfo, finishing: e.target.value })}
+                disabled={!isEditMode}
+                style={!isEditMode ? { background: '#f8f9fa', cursor: 'not-allowed' } : {}}
+                placeholder="Finishing"
+              />
+            </div>
+            <div className="form-group">
+              <label>Addition 1</label>
+              <input
+                type="text"
+                value={additionalInfo.addition1}
+                onChange={(e) => setAdditionalInfo({ ...additionalInfo, addition1: e.target.value })}
+                disabled={!isEditMode}
+                style={!isEditMode ? { background: '#f8f9fa', cursor: 'not-allowed' } : {}}
+                placeholder="Addition 1"
+              />
+            </div>
+            <div className="form-group">
+              <label>Addition 2</label>
+              <input
+                type="text"
+                value={additionalInfo.addition2}
+                onChange={(e) => setAdditionalInfo({ ...additionalInfo, addition2: e.target.value })}
+                disabled={!isEditMode}
+                style={!isEditMode ? { background: '#f8f9fa', cursor: 'not-allowed' } : {}}
+                placeholder="Addition 2"
+              />
+            </div>
+            <div className="form-group">
+              <label>Addition 3</label>
+              <input
+                type="text"
+                value={additionalInfo.addition3}
+                onChange={(e) => setAdditionalInfo({ ...additionalInfo, addition3: e.target.value })}
+                disabled={!isEditMode}
+                style={!isEditMode ? { background: '#f8f9fa', cursor: 'not-allowed' } : {}}
+                placeholder="Addition 3"
               />
             </div>
           </div>
