@@ -9,7 +9,9 @@ interface LotInfoFormProps {
   fabrics: any[]
   patterns: any[]
   brands: any[]
+  lotNumberError?: string | null
   onLotNumberChange: (v: string) => void
+  onLotNumberBlur?: () => void
   onDateChange: (v: string) => void
   onFabricChange: (v: string) => void
   onPatternChange: (v: string) => void
@@ -19,7 +21,8 @@ interface LotInfoFormProps {
 export default function LotInfoForm({
   lotNumber, date, fabric, pattern, brand,
   fabrics, patterns, brands,
-  onLotNumberChange, onDateChange, onFabricChange, onPatternChange, onBrandChange,
+  lotNumberError,
+  onLotNumberChange, onLotNumberBlur, onDateChange, onFabricChange, onPatternChange, onBrandChange,
 }: LotInfoFormProps) {
   return (
     <div className="card">
@@ -27,7 +30,19 @@ export default function LotInfoForm({
       <div className="form-grid">
         <div className="form-group">
           <label>Lot Number</label>
-          <input type="text" value={lotNumber} onChange={(e) => onLotNumberChange(e.target.value)} placeholder="Enter lot number" />
+          <input
+            type="text"
+            value={lotNumber}
+            onChange={(e) => onLotNumberChange(e.target.value)}
+            onBlur={onLotNumberBlur}
+            placeholder="Enter lot number"
+            style={lotNumberError ? { borderColor: '#dc3545' } : undefined}
+          />
+          {lotNumberError && (
+            <span style={{ color: '#dc3545', fontSize: '13px', marginTop: '4px', display: 'block' }}>
+              {lotNumberError}
+            </span>
+          )}
         </div>
         <div className="form-group">
           <label>Date</label>

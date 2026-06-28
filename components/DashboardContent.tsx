@@ -26,6 +26,7 @@ export default function DashboardContent() {
   const [generatingPDF, setGeneratingPDF] = useState(false)
   const [generatingExcel, setGeneratingExcel] = useState(false)
   const [loadingLot, setLoadingLot] = useState(false)
+  const [lotNumberError, setLotNumberError] = useState<string | null>(null)
   const [colors, setColors] = useState<any[]>([])
   const [fabrics, setFabrics] = useState<any[]>([])
   const [patterns, setPatterns] = useState<any[]>([])
@@ -134,6 +135,18 @@ export default function DashboardContent() {
     setProductionData(productionData.filter((_, i) => i !== index).map((row, idx) => ({ ...row, serialNumber: idx + 1 })))
   }
 
+  const isEdit = !!searchParams?.get('edit')
+
+  const handleLotNumberBlur = async () => {
+    if (isEdit || !lotNumber.trim()) { setLotNumberError(null); return }
+    const result = await lotsAPI.getLotByNumber(lotNumber.trim())
+    if (result.success && result.lot) {
+      setLotNumberError(`Lot number "${lotNumber}" already exists`)
+    } else {
+      setLotNumberError(null)
+    }
+  }
+
   const handleSave = () => saveLotFn(
     { lotNumber, date, fabric, pattern, brand, ratios, productionData, tukda, totalMeter, totalPieces, totalPiecesWithTukda, average, editLotNumber: searchParams?.get('edit') },
     setSaving
@@ -151,12 +164,11 @@ export default function DashboardContent() {
     )
   }
 
-  const isEdit = !!searchParams?.get('edit')
   return (
     <>
       <NavigationBar />
       <ActionBar actions={[
-        { label: isEdit ? 'Update Lot' : 'Save Lot', shortLabel: isEdit ? 'Update' : 'Save', icon: '💾', onClick: handleSave, disabled: saving || loadingLot, loading: saving || loadingLot, loadingLabel: loadingLot ? '…' : 'Saving…' },
+        { label: isEdit ? 'Update Lot' : 'Save Lot', shortLabel: isEdit ? 'Update' : 'Save', icon: '💾', onClick: handleSave, disabled: saving || loadingLot || !!lotNumberError, loading: saving || loadingLot, loadingLabel: loadingLot ? '…' : 'Saving…' },
         { label: 'Download PDF', shortLabel: 'PDF', icon: '📄', onClick: () => { setGeneratingPDF(true); try { exportLotToPDF(exportParams) } catch (e: any) { toast.showToast('Error: ' + e.message, 'error') } finally { setGeneratingPDF(false) } }, loading: generatingPDF, loadingLabel: '…' },
         { label: 'Download Excel', shortLabel: 'Excel', icon: '📊', onClick: () => { setGeneratingExcel(true); try { exportLotToExcel(exportParams); toast.showToast('Excel exported!', 'success') } catch (e: any) { toast.showToast('Error: ' + e.message, 'error') } finally { setGeneratingExcel(false) } }, loading: generatingExcel, loadingLabel: '…' },
       ]} />
@@ -171,7 +183,10 @@ export default function DashboardContent() {
           <LotInfoForm
             lotNumber={lotNumber} date={date} fabric={fabric} pattern={pattern} brand={brand}
             fabrics={fabrics} patterns={patterns} brands={brands}
-            onLotNumberChange={setLotNumber} onDateChange={setDate}
+            lotNumberError={isEdit ? null : lotNumberError}
+            onLotNumberChange={(v) => { setLotNumber(v); setLotNumberError(null) }}
+            onLotNumberBlur={handleLotNumberBlur}
+            onDateChange={setDate}
             onFabricChange={setFabric} onPatternChange={setPattern} onBrandChange={setBrand}
           />
           <RatiosForm ratios={ratios} sumOfRatios={sumOfRatios} onRatioChange={updateRatio} />

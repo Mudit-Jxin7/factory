@@ -25,25 +25,43 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const lotData = await request.json()
+
+    if (!lotData.lotNumber?.trim()) {
+      return NextResponse.json(
+        { success: false, error: 'Lot number is required' },
+        { status: 400 }
+      )
+    }
+
     const client = await clientPromise
     const db = client.db(DB_NAME)
     const collection = db.collection('lots')
-    
-    // Add timestamp
+
+    const existing = await collection.findOne({ lotNumber: lotData.lotNumber })
+    if (existing) {
+      return NextResponse.json(
+        { success: false, error: `Lot number "${lotData.lotNumber}" already exists` },
+        { status: 409 }
+      )
+    }
+
     lotData.createdAt = new Date()
     lotData.updatedAt = new Date()
-    
+
     const result = await collection.insertOne(lotData)
-    
+
     return NextResponse.json(
-      {
-        success: true,
-        id: result.insertedId,
-        lotNumber: lotData.lotNumber
-      },
+      { success: true, id: result.insertedId, lotNumber: lotData.lotNumber },
       { status: 201 }
     )
   } catch (error: any) {
+    // Unique index safety net (race condition between the findOne check and insertOne)
+    if (error.code === 11000) {
+      return NextResponse.json(
+        { success: false, error: `Lot number "${error.keyValue?.lotNumber}" already exists` },
+        { status: 409 }
+      )
+    }
     console.error('Error saving lot:', error)
     return NextResponse.json(
       { success: false, error: error.message },
