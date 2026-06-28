@@ -17,12 +17,15 @@ export default function AllJobCardsContent() {
   const [allJobCards, setAllJobCards] = useState<any[]>([])
   const [loadingJobCards, setLoadingJobCards] = useState(true)
   const [deletingJobCard, setDeletingJobCard] = useState<string | null>(null)
+  const [bulkDeleting, setBulkDeleting] = useState(false)
+  const [selectedJobCardIds, setSelectedJobCardIds] = useState<Set<string>>(new Set())
   const [filterLotNumber, setFilterLotNumber] = useState('')
   const [filterDate, setFilterDate] = useState('')
   const [filterBrand, setFilterBrand] = useState('')
 
   const fetchAllJobCards = async () => {
     setLoadingJobCards(true)
+    setSelectedJobCardIds(new Set())
     try {
       const result = await jobCardsAPI.getAllJobCards()
       if (result.success) setAllJobCards(result.jobCards || [])
@@ -51,6 +54,47 @@ export default function AllJobCardsContent() {
     } finally { setDeletingJobCard(null) }
   }
 
+  const handleDeleteSelected = async () => {
+    const cardsToDelete = filteredJobCards.filter(j => selectedJobCardIds.has(j._id))
+    const confirmed = await showConfirm({
+      title: 'Delete Selected Job Cards',
+      message: `Are you sure you want to delete ${cardsToDelete.length} job card(s)? This action cannot be undone.`,
+      confirmText: `Delete ${cardsToDelete.length} Job Card${cardsToDelete.length > 1 ? 's' : ''}`,
+      cancelText: 'Cancel',
+      type: 'danger',
+    })
+    if (!confirmed) return
+
+    setBulkDeleting(true)
+    let deleted = 0, failed = 0
+    for (const jobCard of cardsToDelete) {
+      try {
+        const result = await jobCardsAPI.deleteJobCard(jobCard.lotNumber)
+        if (result.success) deleted++
+        else failed++
+      } catch { failed++ }
+    }
+    setBulkDeleting(false)
+    setSelectedJobCardIds(new Set())
+    fetchAllJobCards()
+
+    if (failed === 0) toast.showToast(`${deleted} job card${deleted > 1 ? 's' : ''} deleted successfully!`, 'success')
+    else toast.showToast(`Deleted ${deleted}, failed to delete ${failed}.`, 'error')
+  }
+
+  const handleSelectId = (id: string, checked: boolean) => {
+    setSelectedJobCardIds(prev => {
+      const next = new Set(prev)
+      if (checked) next.add(id)
+      else next.delete(id)
+      return next
+    })
+  }
+
+  const handleSelectAll = (checked: boolean) => {
+    setSelectedJobCardIds(checked ? new Set(filteredJobCards.map(j => j._id)) : new Set())
+  }
+
   const brandOptions = [...new Set(allJobCards.map((j: any) => j.brand).filter(Boolean))].sort() as string[]
 
   const filteredJobCards = allJobCards.filter((j: any) =>
@@ -59,6 +103,8 @@ export default function AllJobCardsContent() {
     (!filterBrand     || j.brand === filterBrand)
   )
 
+  const selectedCount = filteredJobCards.filter(j => selectedJobCardIds.has(j._id)).length
+
   return (
     <>
       <NavigationBar />
@@ -66,7 +112,19 @@ export default function AllJobCardsContent() {
         <div className="dashboard-header">
           <div className="header-title"><h1>All Job Cards</h1><p>View and manage all job cards</p></div>
           <div className="header-actions">
-            <button className="btn btn-secondary" onClick={fetchAllJobCards}><span className="btn-icon">🔄</span>Refresh</button>
+            {selectedCount > 0 && (
+              <button
+                className="btn btn-logout"
+                onClick={handleDeleteSelected}
+                disabled={bulkDeleting}
+                style={{ minWidth: '180px' }}
+              >
+                {bulkDeleting ? 'Deleting...' : `Delete Selected (${selectedCount})`}
+              </button>
+            )}
+            <button className="btn btn-secondary" onClick={fetchAllJobCards} disabled={bulkDeleting}>
+              <span className="btn-icon">🔄</span>Refresh
+            </button>
           </div>
         </div>
         <div className="dashboard-content">
@@ -82,6 +140,9 @@ export default function AllJobCardsContent() {
             <JobCardsTable
               jobCards={filteredJobCards} allCount={allJobCards.length} loading={loadingJobCards}
               deletingJobCard={deletingJobCard}
+              selectedIds={selectedJobCardIds}
+              onSelectId={handleSelectId}
+              onSelectAll={handleSelectAll}
               onView={(lotNumber) => router.push(`/jobcard/${encodeURIComponent(lotNumber)}`)}
               onDelete={handleDeleteJobCard}
             />

@@ -18,6 +18,8 @@ export default function AllLotsContent() {
   const [allLots, setAllLots] = useState<any[]>([])
   const [loadingLots, setLoadingLots] = useState(true)
   const [deletingLot, setDeletingLot] = useState<string | null>(null)
+  const [bulkDeleting, setBulkDeleting] = useState(false)
+  const [selectedLotIds, setSelectedLotIds] = useState<Set<string>>(new Set())
   const [filterDate, setFilterDate] = useState('')
   const [filterLotNumber, setFilterLotNumber] = useState('')
   const [filterFabric, setFilterFabric] = useState('')
@@ -26,6 +28,7 @@ export default function AllLotsContent() {
 
   const fetchAllLots = async () => {
     setLoadingLots(true)
+    setSelectedLotIds(new Set())
     try {
       const result = await lotsAPI.getAllLots()
       if (result.success) setAllLots(result.lots || [])
@@ -60,6 +63,47 @@ export default function AllLotsContent() {
     } finally { setDeletingLot(null) }
   }
 
+  const handleDeleteSelected = async () => {
+    const lotsToDelete = filteredLots.filter(l => selectedLotIds.has(l._id))
+    const confirmed = await showConfirm({
+      title: 'Delete Selected Lots',
+      message: `Are you sure you want to delete ${lotsToDelete.length} lot(s)? Their job cards will also be deleted. This action cannot be undone.`,
+      confirmText: `Delete ${lotsToDelete.length} Lot${lotsToDelete.length > 1 ? 's' : ''}`,
+      cancelText: 'Cancel',
+      type: 'danger',
+    })
+    if (!confirmed) return
+
+    setBulkDeleting(true)
+    let deleted = 0, failed = 0
+    for (const lot of lotsToDelete) {
+      try {
+        const result = await lotsAPI.deleteLot(lot.lotNumber)
+        if (result.success) deleted++
+        else failed++
+      } catch { failed++ }
+    }
+    setBulkDeleting(false)
+    setSelectedLotIds(new Set())
+    fetchAllLots()
+
+    if (failed === 0) toast.showToast(`${deleted} lot${deleted > 1 ? 's' : ''} deleted successfully!`, 'success')
+    else toast.showToast(`Deleted ${deleted}, failed to delete ${failed}.`, 'error')
+  }
+
+  const handleSelectId = (id: string, checked: boolean) => {
+    setSelectedLotIds(prev => {
+      const next = new Set(prev)
+      if (checked) next.add(id)
+      else next.delete(id)
+      return next
+    })
+  }
+
+  const handleSelectAll = (checked: boolean) => {
+    setSelectedLotIds(checked ? new Set(filteredLots.map(l => l._id)) : new Set())
+  }
+
   const filteredLots = allLots.filter((lot: any) =>
     (!filterDate      || lot.date      === filterDate) &&
     (!filterLotNumber || lot.lotNumber?.toLowerCase().includes(filterLotNumber.toLowerCase())) &&
@@ -72,6 +116,8 @@ export default function AllLotsContent() {
   const patternOptions = [...new Set(allLots.map((l: any) => l.pattern).filter(Boolean))].sort() as string[]
   const brandOptions   = [...new Set(allLots.map((l: any) => l.brand).filter(Boolean))].sort() as string[]
 
+  const selectedCount = filteredLots.filter(l => selectedLotIds.has(l._id)).length
+
   return (
     <>
       <NavigationBar />
@@ -79,7 +125,19 @@ export default function AllLotsContent() {
         <div className="dashboard-header">
           <div className="header-title"><h1>All Lots</h1><p>View and manage all production lots</p></div>
           <div className="header-actions">
-            <button className="btn btn-secondary" onClick={fetchAllLots}><span className="btn-icon">🔄</span>Refresh</button>
+            {selectedCount > 0 && (
+              <button
+                className="btn btn-logout"
+                onClick={handleDeleteSelected}
+                disabled={bulkDeleting}
+                style={{ minWidth: '160px' }}
+              >
+                {bulkDeleting ? 'Deleting...' : `Delete Selected (${selectedCount})`}
+              </button>
+            )}
+            <button className="btn btn-secondary" onClick={fetchAllLots} disabled={bulkDeleting}>
+              <span className="btn-icon">🔄</span>Refresh
+            </button>
           </div>
         </div>
         <div className="dashboard-content">
@@ -97,6 +155,9 @@ export default function AllLotsContent() {
             <LotsTable
               lots={filteredLots} allCount={allLots.length} loading={loadingLots}
               deletingLot={deletingLot}
+              selectedIds={selectedLotIds}
+              onSelectId={handleSelectId}
+              onSelectAll={handleSelectAll}
               onView={(lotNumber) => router.push(`/lot/${lotNumber}`)}
               onDelete={handleDeleteLot}
             />
