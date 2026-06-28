@@ -546,10 +546,6 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
               {saving ? 'Saving...' : 'Update Job Card'}
             </button>
           )}
-          <button className="btn btn-primary" onClick={exportToPDF} disabled={generatingPDF}>
-            <span className="btn-icon">📄</span>
-            {generatingPDF ? 'Generating PDF...' : 'Save as PDF'}
-          </button>
           {!isEditMode && (
             <button className="btn btn-primary" onClick={() => router.push(`/jobcard/${encodeURIComponent(lotNumber)}?edit=true`)}>
               <span className="btn-icon">✏️</span>

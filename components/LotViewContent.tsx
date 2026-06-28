@@ -312,10 +312,6 @@ export default function LotViewContent({ lotNumber }: LotViewContentProps) {
           <p>View saved lot production data</p>
         </div>
         <div className="header-actions">
-          <button className="btn btn-primary" onClick={exportToPDF} disabled={generatingPDF}>
-            <span className="btn-icon">📄</span>
-            {generatingPDF ? 'Generating PDF...' : 'Save as PDF'}
-          </button>
           <button className="btn btn-secondary" onClick={() => router.push('/dashboard')}>
             <span className="btn-icon">←</span>
             Back to Dashboard

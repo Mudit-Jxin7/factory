@@ -583,10 +583,6 @@ export default function DashboardContent() {
               <span className="btn-icon">💾</span>
               {loadingLot ? 'Loading...' : saving ? 'Saving...' : searchParams?.get('edit') ? 'Update Lot' : 'Save Lot'}
             </button>
-            <button className="btn btn-primary" onClick={exportToPDF} disabled={generatingPDF}>
-              <span className="btn-icon">📄</span>
-              {generatingPDF ? 'Generating PDF...' : 'Save as PDF'}
-            </button>
           </div>
         </div>
 

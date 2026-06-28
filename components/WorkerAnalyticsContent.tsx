@@ -322,22 +322,6 @@ export default function WorkerAnalyticsContent() {
             <p>Analyze worker performance and earnings</p>
           </div>
           <div className="header-actions">
-            <button
-              className="btn btn-primary"
-              onClick={exportToPDF}
-              disabled={generatingPDF || filteredData.length === 0}
-            >
-              <span className="btn-icon">📄</span>
-              {generatingPDF ? 'Generating PDF...' : 'Export PDF'}
-            </button>
-            <button
-              className="btn btn-primary"
-              onClick={exportToExcel}
-              disabled={generatingExcel || filteredData.length === 0}
-            >
-              <span className="btn-icon">📊</span>
-              {generatingExcel ? 'Generating Excel...' : 'Export Excel'}
-            </button>
           </div>
         </div>
 
