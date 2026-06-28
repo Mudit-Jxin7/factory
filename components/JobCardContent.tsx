@@ -458,8 +458,27 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
         Add2:  { workerKey: 'add2Worker',     dateKey: 'add2Date',     rateKey: 'add2Rate'     },
       }
 
-      const prodBody: CellDef[][] = []
-      productionData.forEach((row, idx) => {
+      const prodTableOptions = {
+        margin: { left: margin, right: margin },
+        head: [] as any[],
+        showHead: 'never' as const,
+        styles: { fontSize: 7, cellPadding: 1.5, halign: 'left' as const, overflow: 'linebreak' as const },
+        theme: 'grid' as const,
+        columnStyles: {
+          0: { cellWidth: 38 },
+          1: { cellWidth: 25 },
+          2: { cellWidth: 18 },
+          3: { cellWidth: 38 },
+          4: { cellWidth: 25 },
+          5: { cellWidth: 'auto' as const },
+        },
+      }
+
+      let prodStartY = afterRatios + 2
+      productionData.forEach((row) => {
+        const infoVal = { fontStyle: 'bold' as const, fontSize: 8 }
+        const prodBody: CellDef[][] = []
+
         // Info header + data
         prodBody.push([
           { content: 'S.No',        styles: infoHdr },
@@ -469,14 +488,13 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
           { content: 'Zip Code',    styles: infoHdr },
           { content: 'Thread Code', styles: infoHdr },
         ])
-        const infoVal = { fontStyle: 'bold' as const, fontSize: 8 }
         prodBody.push([
-          { content: row.serialNumber,                    styles: infoVal },
-          { content: row.layer,                           styles: infoVal },
-          { content: row.pieces,                          styles: infoVal },
-          { content: row.color || '',                     styles: infoVal },
-          { content: (row as any).zip_code    || '',      styles: infoVal },
-          { content: (row as any).thread_code || '',      styles: infoVal },
+          { content: row.serialNumber,               styles: infoVal },
+          { content: row.layer,                      styles: infoVal },
+          { content: row.pieces,                     styles: infoVal },
+          { content: row.color || '',                styles: infoVal },
+          { content: (row as any).zip_code    || '', styles: infoVal },
+          { content: (row as any).thread_code || '', styles: infoVal },
         ])
         prodBody.push(blankRow)
 
@@ -484,7 +502,6 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
         workerPairs.forEach(([w1, w2], pIdx) => {
           const m1 = workerMeta[w1]
           const m2 = w2 ? workerMeta[w2] : null
-          // Label row
           prodBody.push([
             { content: `${w1} Worker`, styles: labelSty },
             { content: `${w1} Date`,   styles: labelSty },
@@ -493,7 +510,6 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
             { content: w2 ? `${w2} Date`   : '', styles: w2 ? labelSty : {} },
             { content: w2 ? `${w2} Rate`   : '', styles: w2 ? labelSty : {} },
           ])
-          // Value row
           prodBody.push([
             getWorkerName((row as any)[m1.workerKey] ?? '') || '',
             (row as any)[m1.dateKey] || '',
@@ -502,36 +518,15 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
             m2 ? (row as any)[m2.dateKey] || '' : '',
             m2 ? (row as any)[m2.rateKey] || '' : '',
           ])
-          // Blank between pairs (not after the last one within an item)
           if (pIdx < workerPairs.length - 1) {
             prodBody.push(blankRow)
             prodBody.push(blankRow)
           }
         })
 
-        // Separator between multiple production items
-        if (idx < productionData.length - 1) {
-          prodBody.push(blankRow)
-          prodBody.push(blankRow)
-        }
-      })
-
-      autoTable(pdf, {
-        startY: afterRatios + 2,
-        margin: { left: margin, right: margin },
-        head: [],
-        showHead: 'never',
-        body: prodBody,
-        styles: { fontSize: 7, cellPadding: 1.5, halign: 'left', overflow: 'linebreak' },
-        theme: 'grid',
-        columnStyles: {
-          0: { cellWidth: 38 },
-          1: { cellWidth: 25 },
-          2: { cellWidth: 18 },
-          3: { cellWidth: 38 },
-          4: { cellWidth: 25 },
-          5: { cellWidth: 'auto' },
-        },
+        autoTable(pdf, { ...prodTableOptions, startY: prodStartY, body: prodBody })
+        // White space between production items (move startY past the table + gap)
+        prodStartY = (pdf as any).lastAutoTable.finalY + 12
       })
 
       // ── Additional Information ─────────────────────────────────────────────
