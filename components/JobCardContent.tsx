@@ -411,7 +411,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
         margin: { left: margin, right: margin },
         head: [Object.keys(ratios).map(k => k.toUpperCase())],
         body: [Object.values(ratios).map(v => String(v))],
-        styles: { fontSize: 8, cellPadding: 2, halign: 'center' },
+        styles: { fontSize: 10, cellPadding: 2, halign: 'center' },
         headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
         theme: 'grid',
       })
@@ -439,7 +439,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
 
       type CellDef = { content: string | number; styles?: Record<string, unknown> } | string | number
       const infoHdr  = { fontStyle: 'bold' as const, fillColor: [41, 128, 185] as [number,number,number], textColor: [255,255,255] as [number,number,number] }
-      const labelSty = { fontStyle: 'bold' as const, fillColor: [230, 238, 255] as [number,number,number], textColor: [0,0,0] as [number,number,number], fontSize: 8 }
+      const labelSty = { fontStyle: 'bold' as const, fillColor: [230, 238, 255] as [number,number,number], textColor: [0,0,0] as [number,number,number], fontSize: 10 }
       const blankRow: CellDef[] = ['', '', '', '', '', '']
 
       const workerPairs: [string, string | null][] = [
@@ -462,7 +462,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
         margin: { left: margin, right: margin },
         head: [] as any[],
         showHead: 'never' as const,
-        styles: { fontSize: 7, cellPadding: 1.5, halign: 'left' as const, overflow: 'linebreak' as const },
+        styles: { fontSize: 9, cellPadding: 1.5, halign: 'left' as const, overflow: 'linebreak' as const },
         theme: 'grid' as const,
         columnStyles: {
           0: { cellWidth: 38 },
@@ -476,7 +476,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
 
       let prodStartY = afterRatios + 2
       productionData.forEach((row) => {
-        const infoVal = { fontStyle: 'bold' as const, fontSize: 8 }
+        const infoVal = { fontStyle: 'bold' as const, fontSize: 10 }
         const prodBody: CellDef[][] = []
 
         // Info header + data
@@ -573,7 +573,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
         margin: { left: margin, right: margin },
         head: [['Field', 'Value', 'Field', 'Value', 'Field', 'Value']],
         body: addlBody,
-        styles: { fontSize: 8, cellPadding: 2 },
+        styles: { fontSize: 10, cellPadding: 2 },
         headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
         columnStyles: {
           0: { fontStyle: 'bold', cellWidth: 28 },
