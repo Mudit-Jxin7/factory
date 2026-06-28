@@ -74,7 +74,7 @@ body {
   border-bottom: 1px solid #e9ecef;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
   position: sticky;
-  top: 0;
+  top: 64px;
   z-index: 90;
 }
 

@@ -439,7 +439,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
 
       type CellDef = { content: string | number; styles?: Record<string, unknown> } | string | number
       const infoHdr  = { fontStyle: 'bold' as const, fillColor: [41, 128, 185] as [number,number,number], textColor: [255,255,255] as [number,number,number] }
-      const labelSty = { fontStyle: 'bold' as const, fillColor: [230, 238, 255] as [number,number,number] }
+      const labelSty = { fontStyle: 'bold' as const, fillColor: [230, 238, 255] as [number,number,number], textColor: [0,0,0] as [number,number,number], fontSize: 8 }
       const blankRow: CellDef[] = ['', '', '', '', '', '']
 
       const workerPairs: [string, string | null][] = [
@@ -502,7 +502,10 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
             m2 ? (row as any)[m2.rateKey] || '' : '',
           ])
           // Blank between pairs (not after the last one within an item)
-          if (pIdx < workerPairs.length - 1) prodBody.push(blankRow)
+          if (pIdx < workerPairs.length - 1) {
+            prodBody.push(blankRow)
+            prodBody.push(blankRow)
+          }
         })
 
         // Separator between multiple production items
@@ -558,23 +561,32 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
         ['Addition 3', additionalInfo.addition3],
       ]
 
-      // Split into two columns of roughly equal length
-      const half = Math.ceil(addlFields.length / 2)
-      const col1 = addlFields.slice(0, half)
-      const col2 = addlFields.slice(half)
+      // Split into three columns
+      const third = Math.ceil(addlFields.length / 3)
+      const col1 = addlFields.slice(0, third)
+      const col2 = addlFields.slice(third, third * 2)
+      const col3 = addlFields.slice(third * 2)
       const addlBody = col1.map((item, i) => [
         item[0], item[1] || '—',
         col2[i]?.[0] ?? '', col2[i]?.[1] ?? '',
+        col3[i]?.[0] ?? '', col3[i]?.[1] ?? '',
       ])
 
       autoTable(pdf, {
         startY: afterProd + 2,
         margin: { left: margin, right: margin },
-        head: [['Field', 'Value', 'Field', 'Value']],
+        head: [['Field', 'Value', 'Field', 'Value', 'Field', 'Value']],
         body: addlBody,
         styles: { fontSize: 8, cellPadding: 2 },
         headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
-        columnStyles: { 0: { fontStyle: 'bold' }, 2: { fontStyle: 'bold' } },
+        columnStyles: {
+          0: { fontStyle: 'bold', cellWidth: 28 },
+          1: { cellWidth: 45 },
+          2: { fontStyle: 'bold', cellWidth: 28 },
+          3: { cellWidth: 45 },
+          4: { fontStyle: 'bold', cellWidth: 28 },
+          5: { cellWidth: 'auto' },
+        },
         alternateRowStyles: { fillColor: [240, 247, 255] },
         theme: 'grid',
       })
