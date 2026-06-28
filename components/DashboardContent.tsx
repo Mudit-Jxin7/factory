@@ -16,6 +16,7 @@ export default function DashboardContent() {
   const toast = useToast()
   const [saving, setSaving] = useState(false)
   const [generatingPDF, setGeneratingPDF] = useState(false)
+  const [generatingExcel, setGeneratingExcel] = useState(false)
   const [loadingLot, setLoadingLot] = useState(false)
   const [colors, setColors] = useState<any[]>([])
   const [fabrics, setFabrics] = useState<any[]>([])
@@ -556,6 +557,51 @@ export default function DashboardContent() {
     }
   }
 
+  const exportToExcel = () => {
+    setGeneratingExcel(true)
+    try {
+      const infoRows = [
+        ['Lot Number', lotNumber], ['Date', date],
+        ['Fabric', fabric], ['Pattern', pattern], ['Brand', brand],
+        [],
+        ['Ratios'],
+        Object.keys(ratios).map(k => k.toUpperCase()),
+        Object.values(ratios).map(v => String(v)),
+        [],
+      ]
+
+      const prodHeaders = ['S.No', 'Meter', 'Layer', 'Pieces', 'Color', 'Zip Code', 'Thread Code']
+      const prodRows = productionData.map(row => [
+        row.serialNumber, row.meter || '0', row.layer,
+        Number(row.pieces).toFixed(2), row.color || '',
+        (row as any).zip_code || '', (row as any).thread_code || '',
+      ])
+
+      const summaryHeaders = ['# Tukda', 'Tukda Size', 'Total Meter', 'Total Pieces', 'Grand Total', 'Average']
+      const summaryRow = [tukda.count, tukda.size, totalMeter.toFixed(2), totalPieces.toFixed(2), totalPiecesWithTukda.toFixed(2), average.toFixed(4)]
+
+      const allRows = [...infoRows, prodHeaders, ...prodRows, [], ['Summary'], summaryHeaders, summaryRow]
+
+      const csvContent = allRows.map((row) =>
+        (row as any[]).map((cell) => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(',')
+      ).join('\n')
+
+      const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' })
+      const link = document.createElement('a')
+      link.setAttribute('href', URL.createObjectURL(blob))
+      link.setAttribute('download', `Lot_${lotNumber || 'Production'}_${date || 'Report'}.csv`)
+      link.style.visibility = 'hidden'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      toast.showToast('Excel file exported successfully!', 'success')
+    } catch (error: any) {
+      toast.showToast('Error generating Excel: ' + error.message, 'error')
+    } finally {
+      setGeneratingExcel(false)
+    }
+  }
+
   if (loadingLot) {
     return (
       <>
@@ -582,6 +628,14 @@ export default function DashboardContent() {
             <button className="btn btn-primary" onClick={saveLot} disabled={saving || loadingLot}>
               <span className="btn-icon">💾</span>
               {loadingLot ? 'Loading...' : saving ? 'Saving...' : searchParams?.get('edit') ? 'Update Lot' : 'Save Lot'}
+            </button>
+            <button className="btn btn-primary" onClick={exportToPDF} disabled={generatingPDF}>
+              <span className="btn-icon">📄</span>
+              {generatingPDF ? 'Generating...' : 'Download PDF'}
+            </button>
+            <button className="btn btn-primary" onClick={exportToExcel} disabled={generatingExcel}>
+              <span className="btn-icon">📊</span>
+              {generatingExcel ? 'Generating...' : 'Download Excel'}
             </button>
           </div>
         </div>

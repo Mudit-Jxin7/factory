@@ -23,6 +23,7 @@ export default function LotViewContent({ lotNumber }: LotViewContentProps) {
   const [error, setError] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [generatingPDF, setGeneratingPDF] = useState(false)
+  const [generatingExcel, setGeneratingExcel] = useState(false)
 
   useEffect(() => {
     fetchLot()
@@ -239,6 +240,69 @@ export default function LotViewContent({ lotNumber }: LotViewContentProps) {
     }
   }
 
+  const exportToExcel = () => {
+    if (!lot) return
+    setGeneratingExcel(true)
+    try {
+      const infoRows = [
+        ['Lot Number', lot.lotNumber || ''],
+        ['Date', lot.date || ''],
+        ['Fabric', lot.fabric || ''],
+        ['Pattern', lot.pattern || ''],
+        ['Brand', lot.brand || ''],
+        ['Created At', lot.createdAt ? new Date(lot.createdAt).toLocaleString() : ''],
+        [],
+        ['Ratios'],
+        Object.keys(lot.ratios || {}).map((k: string) => k.toUpperCase()),
+        Object.values(lot.ratios || {}).map((v: any) => String(v)),
+        [],
+      ]
+
+      const prodHeaders = ['S.No', 'Meter', 'Layer', 'Pieces', 'Color', 'Shade', 'TBD2', 'TBD3']
+      const prodRows = (lot.productionData || []).map((row: any) => [
+        row.serialNumber, Number(row.meter || 0), Number(row.layer || 1),
+        Number(row.pieces || 0).toFixed(2), row.color || '', row.shade || '',
+        row.tbd2 || '', row.tbd3 || '',
+      ])
+
+      const summaryHeaders = ['# Tukda', 'Tukda Size', 'Total Meter', 'Total Pieces', 'Grand Total Pieces', 'Average']
+      const grandTotal = Number(lot.totalPiecesWithTukda ?? (Number(lot.totalPieces || 0) + Number(lot.tukda?.count || 0))).toFixed(2)
+      const summaryRow = [
+        lot.tukda?.count || 0, lot.tukda?.size || '',
+        Number(lot.totalMeter || 0).toFixed(2), Number(lot.totalPieces || 0).toFixed(2),
+        grandTotal, Number(lot.average || 0).toFixed(4),
+      ]
+
+      const allRows = [
+        ...infoRows,
+        prodHeaders,
+        ...prodRows,
+        [],
+        ['Summary'],
+        summaryHeaders,
+        summaryRow,
+      ]
+
+      const csvContent = allRows.map((row) =>
+        (row as any[]).map((cell) => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(',')
+      ).join('\n')
+
+      const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' })
+      const link = document.createElement('a')
+      link.setAttribute('href', URL.createObjectURL(blob))
+      link.setAttribute('download', `Lot_${lot.lotNumber || 'Production'}_${lot.date || 'Report'}.csv`)
+      link.style.visibility = 'hidden'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      toast.showToast('Excel file exported successfully!', 'success')
+    } catch (error: any) {
+      toast.showToast('Error generating Excel: ' + error.message, 'error')
+    } finally {
+      setGeneratingExcel(false)
+    }
+  }
+
   const handleDeleteLot = async () => {
     if (!lot) return
     
@@ -312,6 +376,14 @@ export default function LotViewContent({ lotNumber }: LotViewContentProps) {
           <p>View saved lot production data</p>
         </div>
         <div className="header-actions">
+          <button className="btn btn-primary" onClick={exportToPDF} disabled={generatingPDF}>
+            <span className="btn-icon">📄</span>
+            {generatingPDF ? 'Generating...' : 'Download PDF'}
+          </button>
+          <button className="btn btn-primary" onClick={exportToExcel} disabled={generatingExcel}>
+            <span className="btn-icon">📊</span>
+            {generatingExcel ? 'Generating...' : 'Download Excel'}
+          </button>
           <button className="btn btn-secondary" onClick={() => router.push('/dashboard')}>
             <span className="btn-icon">←</span>
             Back to Dashboard

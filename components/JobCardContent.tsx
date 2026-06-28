@@ -96,6 +96,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
   const [loadingLot, setLoadingLot] = useState(false)
   const [saving, setSaving] = useState(false)
   const [generatingPDF, setGeneratingPDF] = useState(false)
+  const [generatingExcel, setGeneratingExcel] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const [editingWorkerCell, setEditingWorkerCell] = useState<{ rowIndex: number; field: 'front' | 'back' | 'zip' | 'astar' | 'beltProd' | 'add1' | 'add2' } | null>(null)
@@ -517,6 +518,82 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
     }
   }
 
+  const exportToExcel = () => {
+    setGeneratingExcel(true)
+    try {
+      const infoRows = [
+        ['Lot Number', lotNumber], ['Brand', brand], ['Date', date],
+        [],
+        ['Ratios'],
+        Object.keys(ratios).map(k => k.toUpperCase()),
+        Object.values(ratios).map(v => String(v)),
+        [],
+      ]
+
+      const prodHeaders = [
+        'S.No', 'Layer', 'Pieces', 'Color',
+        'Front Worker', 'Front Date', 'Front Rate',
+        'Back Worker', 'Back Date', 'Back Rate',
+        'Zip Worker', 'Zip Date', 'Zip Rate',
+        'Astar Worker', 'Astar Date', 'Astar Rate',
+        'Belt Worker', 'Belt Date', 'Belt Rate',
+        'Add1 Worker', 'Add1 Date', 'Add1 Rate',
+        'Add2 Worker', 'Add2 Date', 'Add2 Rate',
+        'Zip Code', 'Thread Code',
+      ]
+
+      const prodRows = productionData.map(row => [
+        row.serialNumber, row.layer, row.pieces, row.color || '',
+        getWorkerName(row.frontWorker ?? ''), row.frontDate || '', row.frontRate || '',
+        getWorkerName(row.backWorker ?? ''), row.backDate || '', row.backRate || '',
+        getWorkerName(row.zipWorker ?? ''), row.zipDate || '', row.zipRate || '',
+        getWorkerName((row as any).astarWorker ?? ''), (row as any).astarDate || '', (row as any).astarRate || '',
+        getWorkerName((row as any).beltProdWorker ?? ''), (row as any).beltProdDate || '', (row as any).beltProdRate || '',
+        getWorkerName((row as any).add1Worker ?? ''), (row as any).add1Date || '', (row as any).add1Rate || '',
+        getWorkerName((row as any).add2Worker ?? ''), (row as any).add2Date || '', (row as any).add2Rate || '',
+        (row as any).zip_code || '', (row as any).thread_code || '',
+      ])
+
+      const addlHeaders = ['Field', 'Value']
+      const addlRows = [
+        ['Fly Width', flyWidth],
+        ['Belt', additionalInfo.belt], ['Bottom', additionalInfo.bottom],
+        ['Pasting', additionalInfo.pasting], ['Bone', additionalInfo.bone],
+        ['Hala', additionalInfo.hala], ['Ticket Pocket', additionalInfo.ticketPocket],
+        ['Cutting', additionalInfo.cutting], ['Number', additionalInfo.number],
+        ['Button Take', additionalInfo.buttonTake], ['Assembly', additionalInfo.assembly],
+        ['Seal Stitch', additionalInfo.sealStitch], ['Label', additionalInfo.label],
+        ['Tanki', additionalInfo.tanki], ['Kaaj + Button', additionalInfo.kaajButton],
+        ['Finishing', additionalInfo.finishing],
+        ['Addition 1', additionalInfo.addition1], ['Addition 2', additionalInfo.addition2], ['Addition 3', additionalInfo.addition3],
+      ]
+
+      const allRows = [
+        ...infoRows,
+        prodHeaders, ...prodRows,
+        [], ['Additional Information'], addlHeaders, ...addlRows,
+      ]
+
+      const csvContent = allRows.map((row) =>
+        (row as any[]).map((cell) => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(',')
+      ).join('\n')
+
+      const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' })
+      const link = document.createElement('a')
+      link.setAttribute('href', URL.createObjectURL(blob))
+      link.setAttribute('download', `JobCard_${lotNumber || 'Production'}_${date || 'Report'}.csv`)
+      link.style.visibility = 'hidden'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      toast.showToast('Excel file exported successfully!', 'success')
+    } catch (error: any) {
+      toast.showToast('Error generating Excel: ' + error.message, 'error')
+    } finally {
+      setGeneratingExcel(false)
+    }
+  }
+
   if (loading || loadingLot) {
     return (
       <>
@@ -546,6 +623,14 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
               {saving ? 'Saving...' : 'Update Job Card'}
             </button>
           )}
+          <button className="btn btn-primary" onClick={exportToPDF} disabled={generatingPDF}>
+            <span className="btn-icon">📄</span>
+            {generatingPDF ? 'Generating...' : 'Download PDF'}
+          </button>
+          <button className="btn btn-primary" onClick={exportToExcel} disabled={generatingExcel}>
+            <span className="btn-icon">📊</span>
+            {generatingExcel ? 'Generating...' : 'Download Excel'}
+          </button>
           {!isEditMode && (
             <button className="btn btn-primary" onClick={() => router.push(`/jobcard/${encodeURIComponent(lotNumber)}?edit=true`)}>
               <span className="btn-icon">✏️</span>
