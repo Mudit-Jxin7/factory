@@ -244,6 +244,18 @@ export default function WorkerAnalyticsContent() {
     try {
       setGeneratingExcel(true)
 
+      const selectedWorkerName = selectedWorker
+        ? workers.find((w: any) => w._id === selectedWorker)?.worker_full_name || ''
+        : 'All Workers'
+
+      // Filter summary rows at the top
+      const filterRows = [
+        ['From Date', fromDate || 'All'],
+        ['To Date', toDate || 'All'],
+        ['Worker', selectedWorkerName],
+        [],
+      ]
+
       // Create CSV content
       const headers = [
         'Worker ID',
@@ -283,6 +295,7 @@ export default function WorkerAnalyticsContent() {
       ])
 
       const csvContent = [
+        ...filterRows.map((r) => r.map((cell) => `"${cell}"`).join(',')),
         headers.join(','),
         ...rows.map((row) => row.map((cell) => `"${cell}"`).join(',')),
       ].join('\n')
