@@ -21,29 +21,41 @@ export async function GET() {
   }
 }
 
-// POST create a new job card
+// POST create a new job card (no-op if one already exists for the same lotNumber)
 export async function POST(request: NextRequest) {
   try {
     const jobCardData = await request.json()
     const client = await clientPromise
     const db = client.db(DB_NAME)
     const collection = db.collection('jobcards')
-    
-    // Add timestamp
+
+    const existing = await collection.findOne({ lotNumber: jobCardData.lotNumber })
+    if (existing) {
+      return NextResponse.json(
+        { success: true, id: existing._id, lotNumber: existing.lotNumber, created: false },
+        { status: 200 }
+      )
+    }
+
     jobCardData.createdAt = new Date()
     jobCardData.updatedAt = new Date()
-    
+
     const result = await collection.insertOne(jobCardData)
-    
+
     return NextResponse.json(
-      {
-        success: true,
-        id: result.insertedId,
-        lotNumber: jobCardData.lotNumber
-      },
+      { success: true, id: result.insertedId, lotNumber: jobCardData.lotNumber, created: true },
       { status: 201 }
     )
   } catch (error: any) {
+    // Unique index violation — another request already created the job card (race condition)
+    if (error.code === 11000) {
+      const existing = await clientPromise
+        .then(c => c.db(DB_NAME).collection('jobcards').findOne({ lotNumber: error.keyValue?.lotNumber }))
+      return NextResponse.json(
+        { success: true, id: existing?._id, lotNumber: error.keyValue?.lotNumber, created: false },
+        { status: 200 }
+      )
+    }
     console.error('Error creating job card:', error)
     return NextResponse.json(
       { success: false, error: error.message },
