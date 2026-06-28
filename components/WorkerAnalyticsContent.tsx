@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { jobCardsAPI, workersAPI } from '@/lib/api'
 import NavigationBar from './NavigationBar'
 import { useToast } from './ToastProvider'
+import ActionBar from './ActionBar'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import './dashboard.css'
@@ -328,29 +329,15 @@ export default function WorkerAnalyticsContent() {
   return (
     <>
       <NavigationBar />
+      <ActionBar actions={[
+        { label: 'Download PDF',   shortLabel: 'PDF',   icon: '📄', onClick: exportToPDF,   loading: generatingPDF,   loadingLabel: '…', disabled: filteredData.length === 0 },
+        { label: 'Download Excel', shortLabel: 'Excel', icon: '📊', onClick: exportToExcel, loading: generatingExcel, loadingLabel: '…', disabled: filteredData.length === 0 },
+      ]} />
       <div className="dashboard-container">
         <div className="dashboard-header">
           <div className="header-title">
             <h1>Worker Analytics</h1>
             <p>Analyze worker performance and earnings</p>
-          </div>
-          <div className="header-actions">
-            <button
-              className="btn btn-primary"
-              onClick={exportToPDF}
-              disabled={generatingPDF || filteredData.length === 0}
-            >
-              <span className="btn-icon">📄</span>
-              {generatingPDF ? 'Generating...' : 'Download PDF'}
-            </button>
-            <button
-              className="btn btn-primary"
-              onClick={exportToExcel}
-              disabled={generatingExcel || filteredData.length === 0}
-            >
-              <span className="btn-icon">📊</span>
-              {generatingExcel ? 'Generating...' : 'Download Excel'}
-            </button>
           </div>
         </div>
 

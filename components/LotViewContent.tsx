@@ -6,6 +6,7 @@ import { lotsAPI, jobCardsAPI } from '@/lib/api'
 import NavigationBar from './NavigationBar'
 import { useToast } from './ToastProvider'
 import { useConfirm } from './ConfirmProvider'
+import ActionBar from './ActionBar'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import './dashboard.css'
@@ -369,25 +370,16 @@ export default function LotViewContent({ lotNumber }: LotViewContentProps) {
   return (
     <>
       <NavigationBar />
+      <ActionBar actions={[
+        { label: 'Download PDF',   shortLabel: 'PDF',   icon: '📄', onClick: exportToPDF,   loading: generatingPDF,   loadingLabel: '…' },
+        { label: 'Download Excel', shortLabel: 'Excel', icon: '📊', onClick: exportToExcel, loading: generatingExcel, loadingLabel: '…' },
+        { label: 'Back to Dashboard', shortLabel: 'Back', icon: '←', onClick: () => router.push('/dashboard'), variant: 'secondary' as const },
+      ]} />
       <div className="dashboard-container">
         <div className="dashboard-header">
         <div className="header-title">
           <h1>Lot Details: {lot.lotNumber}</h1>
           <p>View saved lot production data</p>
-        </div>
-        <div className="header-actions">
-          <button className="btn btn-primary" onClick={exportToPDF} disabled={generatingPDF}>
-            <span className="btn-icon">📄</span>
-            {generatingPDF ? 'Generating...' : 'Download PDF'}
-          </button>
-          <button className="btn btn-primary" onClick={exportToExcel} disabled={generatingExcel}>
-            <span className="btn-icon">📊</span>
-            {generatingExcel ? 'Generating...' : 'Download Excel'}
-          </button>
-          <button className="btn btn-secondary" onClick={() => router.push('/dashboard')}>
-            <span className="btn-icon">←</span>
-            Back to Dashboard
-          </button>
         </div>
       </div>
 

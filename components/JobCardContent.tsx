@@ -6,6 +6,7 @@ import { jobCardsAPI, lotsAPI, workersAPI } from '@/lib/api'
 import { getColorForShade } from '@/lib/colorUtils'
 import NavigationBar from './NavigationBar'
 import { useToast } from './ToastProvider'
+import ActionBar, { ActionBarItem } from './ActionBar'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import './dashboard.css'
@@ -711,37 +712,25 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
   return (
     <>
       <NavigationBar />
+      <ActionBar actions={[
+        ...(isEditMode ? [{
+          label: 'Update Job Card', shortLabel: 'Save', icon: '💾',
+          onClick: handleSave, disabled: saving || !lotNumber,
+          loading: saving, loadingLabel: 'Saving…',
+        } as ActionBarItem] : []),
+        { label: 'Download PDF',   shortLabel: 'PDF',   icon: '📄', onClick: exportToPDF,   loading: generatingPDF,   loadingLabel: '…' },
+        { label: 'Download Excel', shortLabel: 'Excel', icon: '📊', onClick: exportToExcel, loading: generatingExcel, loadingLabel: '…' },
+        ...(!isEditMode ? [{
+          label: 'Edit Job Card', shortLabel: 'Edit', icon: '✏️',
+          onClick: () => router.push(`/jobcard/${encodeURIComponent(lotNumber)}?edit=true`),
+        } as ActionBarItem] : []),
+        { label: 'Back to Job Cards', shortLabel: 'Back', icon: '←', onClick: () => router.push('/jobcards'), variant: 'secondary' as const },
+      ]} />
       <div className="dashboard-container">
         <div className="dashboard-header">
         <div className="header-title">
           <h1>{isEditMode ? 'Edit Job Card' : 'View Job Card'}</h1>
           <p>{isEditMode ? 'Edit' : 'View'} job card details for lot {lotNumber}</p>
-        </div>
-        <div className="header-actions">
-          {isEditMode && (
-            <button className="btn btn-primary" onClick={handleSave} disabled={saving || !lotNumber}>
-              <span className="btn-icon">💾</span>
-              {saving ? 'Saving...' : 'Update Job Card'}
-            </button>
-          )}
-          <button className="btn btn-primary" onClick={exportToPDF} disabled={generatingPDF}>
-            <span className="btn-icon">📄</span>
-            {generatingPDF ? 'Generating...' : 'Download PDF'}
-          </button>
-          <button className="btn btn-primary" onClick={exportToExcel} disabled={generatingExcel}>
-            <span className="btn-icon">📊</span>
-            {generatingExcel ? 'Generating...' : 'Download Excel'}
-          </button>
-          {!isEditMode && (
-            <button className="btn btn-primary" onClick={() => router.push(`/jobcard/${encodeURIComponent(lotNumber)}?edit=true`)}>
-              <span className="btn-icon">✏️</span>
-              Edit Job Card
-            </button>
-          )}
-          <button className="btn btn-secondary" onClick={() => router.push('/jobcards')}>
-            <span className="btn-icon">←</span>
-            Back to Job Cards
-          </button>
         </div>
       </div>
 

@@ -7,6 +7,7 @@ import { getColorForShade } from '@/lib/colorUtils'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import NavigationBar from './NavigationBar'
+import ActionBar from './ActionBar'
 import { useToast } from './ToastProvider'
 import './dashboard.css'
 
@@ -618,25 +619,18 @@ export default function DashboardContent() {
   return (
     <>
       <NavigationBar />
+      <ActionBar actions={[
+        { label: searchParams?.get('edit') ? 'Update Lot' : 'Save Lot', shortLabel: searchParams?.get('edit') ? 'Update' : 'Save',
+          icon: '💾', onClick: saveLot, disabled: saving || loadingLot,
+          loading: saving || loadingLot, loadingLabel: loadingLot ? '…' : 'Saving…' },
+        { label: 'Download PDF',   shortLabel: 'PDF',   icon: '📄', onClick: exportToPDF,   loading: generatingPDF,   loadingLabel: '…' },
+        { label: 'Download Excel', shortLabel: 'Excel', icon: '📊', onClick: exportToExcel, loading: generatingExcel, loadingLabel: '…' },
+      ]} />
       <div className="dashboard-container">
         <div className="dashboard-header">
           <div className="header-title">
             <h1>{searchParams?.get('edit') ? 'Edit Lot' : 'Lot Production Dashboard'}</h1>
             <p>{searchParams?.get('edit') ? 'Edit existing lot production data' : 'Track and manage production data'}</p>
-          </div>
-          <div className="header-actions">
-            <button className="btn btn-primary" onClick={saveLot} disabled={saving || loadingLot}>
-              <span className="btn-icon">💾</span>
-              {loadingLot ? 'Loading...' : saving ? 'Saving...' : searchParams?.get('edit') ? 'Update Lot' : 'Save Lot'}
-            </button>
-            <button className="btn btn-primary" onClick={exportToPDF} disabled={generatingPDF}>
-              <span className="btn-icon">📄</span>
-              {generatingPDF ? 'Generating...' : 'Download PDF'}
-            </button>
-            <button className="btn btn-primary" onClick={exportToExcel} disabled={generatingExcel}>
-              <span className="btn-icon">📊</span>
-              {generatingExcel ? 'Generating...' : 'Download Excel'}
-            </button>
           </div>
         </div>
 
