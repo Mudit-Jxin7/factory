@@ -1,20 +1,27 @@
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { lotsAPI, jobCardsAPI, colorsAPI, brandsAPI, patternsAPI, fabricsAPI } from '@/lib/api'
-import { getColorForShade } from '@/lib/colorUtils'
-import jsPDF from 'jspdf'
-import autoTable from 'jspdf-autotable'
+import { useSearchParams } from 'next/navigation'
+import { lotsAPI, colorsAPI, brandsAPI, patternsAPI, fabricsAPI } from '@/lib/api'
+import { Ratios, DEFAULT_RATIOS } from '@/lib/types'
 import NavigationBar from './NavigationBar'
 import ActionBar from './ActionBar'
 import { useToast } from './ToastProvider'
+import LotInfoForm from './dashboard/LotInfoForm'
+import RatiosForm from './dashboard/RatiosForm'
+import ProductionTable from './dashboard/ProductionTable'
+import SummarySection from './dashboard/SummarySection'
+import { exportLotToPDF, exportLotToExcel } from './dashboard/exportUtils'
+import { useSaveLot } from './dashboard/useSaveLot'
 import './dashboard.css'
 
+const BLANK_ROW = { serialNumber: 1, meter: '', layer: '1', pieces: 0, color: '', shade: '', zip_code: '', thread_code: '' }
+
 export default function DashboardContent() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const toast = useToast()
+  const saveLotFn = useSaveLot()
+
   const [saving, setSaving] = useState(false)
   const [generatingPDF, setGeneratingPDF] = useState(false)
   const [generatingExcel, setGeneratingExcel] = useState(false)
@@ -23,914 +30,164 @@ export default function DashboardContent() {
   const [fabrics, setFabrics] = useState<any[]>([])
   const [patterns, setPatterns] = useState<any[]>([])
   const [brands, setBrands] = useState<any[]>([])
-
-  const handleLogout = () => {
-    localStorage.removeItem('isAuthenticated')
-    router.push('/login')
-  }
-  
-  // Lot Information State
   const [lotNumber, setLotNumber] = useState('')
   const [date, setDate] = useState(new Date().toISOString().split('T')[0])
   const [fabric, setFabric] = useState('')
   const [pattern, setPattern] = useState('')
   const [brand, setBrand] = useState('')
+  const [ratios, setRatios] = useState<Ratios>(DEFAULT_RATIOS)
+  const [productionData, setProductionData] = useState([BLANK_ROW])
+  const [tukda, setTukda] = useState({ count: 0, size: '28' })
 
-  // Ratio State (r28, r30, r32, r34, r36, r38, r40, r42, r44)
-  const [ratios, setRatios] = useState({
-    r28: 0,
-    r30: 0,
-    r32: 0,
-    r34: 0,
-    r36: 0,
-    r38: 0,
-    r40: 0,
-    r42: 0,
-    r44: 0,
-  })
-
-  // Production Data Table State
-  const [productionData, setProductionData] = useState([
-    {
-      serialNumber: 1,
-      meter: '',
-      layer: '1',
-      pieces: 0,
-      color: '',
-      shade: '',
-      zip_code: '',
-      thread_code: '',
-    }
-  ])
-
-  // Tukda State
-  const [tukda, setTukda] = useState({
-    count: 0,
-    size: '28'
-  })
-  
-  const tukdaSizes = ['28', '30', '32', '34', '36', '38', '40', '42', '44']
-
-  // Load colors on mount
   useEffect(() => {
-    fetchColors()
-    fetchMasterDropdowns()
+    colorsAPI.getAllColors().then(r => { if (r.success) setColors(r.colors || []) })
+    Promise.all([fabricsAPI.getAllFabrics(), patternsAPI.getAllPatterns(), brandsAPI.getAllBrands()])
+      .then(([fr, pr, br]) => {
+        if (fr.success) setFabrics(fr.fabrics || [])
+        if (pr.success) setPatterns(pr.patterns || [])
+        if (br.success) setBrands(br.brands || [])
+      })
   }, [])
 
-  // Load lot data for editing
   useEffect(() => {
     const editLotNumber = searchParams?.get('edit')
-    if (editLotNumber) {
-      loadLotForEdit(editLotNumber)
-    }
+    if (editLotNumber) loadLotForEdit(editLotNumber)
   }, [searchParams])
-
-  const fetchColors = async () => {
-    try {
-      const result = await colorsAPI.getAllColors()
-      if (result.success) {
-        setColors(result.colors || [])
-      }
-    } catch (error) {
-      console.error('Error fetching colors:', error)
-    }
-  }
-
-  const fetchMasterDropdowns = async () => {
-    try {
-      const [fabricsResult, patternsResult, brandsResult] = await Promise.all([
-        fabricsAPI.getAllFabrics(),
-        patternsAPI.getAllPatterns(),
-        brandsAPI.getAllBrands(),
-      ])
-
-      if (fabricsResult.success) {
-        setFabrics(fabricsResult.fabrics || [])
-      }
-      if (patternsResult.success) {
-        setPatterns(patternsResult.patterns || [])
-      }
-      if (brandsResult.success) {
-        setBrands(brandsResult.brands || [])
-      }
-    } catch (error) {
-      console.error('Error fetching dropdown masters:', error)
-    }
-  }
 
   const loadLotForEdit = async (lotNumberParam: string) => {
     setLoadingLot(true)
     try {
-      const decodedLotNumber = decodeURIComponent(lotNumberParam)
-      const result = await lotsAPI.getLotByNumber(decodedLotNumber)
-      
+      const result = await lotsAPI.getLotByNumber(decodeURIComponent(lotNumberParam))
       if (result.success && result.lot) {
         const lot = result.lot
         setLotNumber(lot.lotNumber || '')
         setDate(lot.date || new Date().toISOString().split('T')[0])
-        setFabric(lot.fabric || '')
-        setPattern(lot.pattern || '')
-        setBrand(lot.brand || '')
-        setRatios(lot.ratios || {
-          r28: 0, r30: 0, r32: 0, r34: 0, r36: 0,
-          r38: 0, r40: 0, r42: 0, r44: 0,
-        })
-        setProductionData(lot.productionData && lot.productionData.length > 0 
-          ? lot.productionData.map((row: any) => ({
-              ...row,
-              meter: String(row.meter || ''),
-              layer: String(row.layer || '1'),
-            }))
-          : [{
-              serialNumber: 1,
-              meter: '',
-              layer: '1',
-              pieces: 0,
-              color: '',
-              shade: '',
-              zip_code: '',
-              thread_code: '',
-            }]
-        )
+        setFabric(lot.fabric || ''); setPattern(lot.pattern || ''); setBrand(lot.brand || '')
+        setRatios(lot.ratios || DEFAULT_RATIOS)
+        setProductionData(lot.productionData?.length > 0
+          ? lot.productionData.map((row: any) => ({ ...row, meter: String(row.meter || ''), layer: String(row.layer || '1') }))
+          : [BLANK_ROW])
         setTukda(lot.tukda || { count: 0, size: '28' })
       } else {
         toast.showToast('Error loading lot: ' + (result.error || 'Lot not found'), 'error')
       }
     } catch (error: any) {
-      console.error('Error loading lot for edit:', error)
       toast.showToast('Error loading lot: ' + error.message, 'error')
-    } finally {
-      setLoadingLot(false)
-    }
+    } finally { setLoadingLot(false) }
   }
 
-  const sumOfRatios = useMemo(() => {
-    return Object.values(ratios).reduce((sum, val) => sum + (Number(val) || 0), 0)
-  }, [ratios])
-
-  const updateProductionData = (index: number, field: string, value: string) => {
-    const newData = [...productionData]
-    
-    if (field === 'layer') {
-      if (value === '') {
-        newData[index] = {
-          ...newData[index],
-          [field]: '',
-        }
-      } else {
-        const isValidNatural = /^[1-9][0-9]*$/.test(value) || value === '1'
-        if (isValidNatural) {
-          const numValue = Number(value)
-          if (numValue >= 1 && Number.isInteger(numValue)) {
-            newData[index] = {
-              ...newData[index],
-              [field]: value,
-            }
-          } else {
-            return
-          }
-        } else {
-          return
-        }
-      }
-    } else if (field === 'meter') {
-      if (value === '' || value === '0') {
-        newData[index] = {
-          ...newData[index],
-          [field]: '',
-        }
-      } else {
-        const isValidDecimal = /^[0-9]*\.?[0-9]*$/.test(value)
-        if (isValidDecimal) {
-          newData[index] = {
-            ...newData[index],
-            [field]: value,
-          }
-        } else {
-          return
-        }
-      }
-    } else if (field === 'color') {
-      newData[index] = {
-        ...newData[index],
-        color: value,
-        shade: value,
-      }
-    } else if (field === 'zip_code' || field === 'thread_code') {
-      newData[index] = {
-        ...newData[index],
-        [field]: value,
-      }
-    } else {
-      newData[index] = {
-        ...newData[index],
-        [field]: Number(value) || 0,
-      }
-    }
-    
-    if (field === 'layer' || field === 'meter') {
-      const layerValue = Number(newData[index].layer) || 0
-      newData[index].pieces = layerValue * sumOfRatios
-    }
-    
-    setProductionData(newData)
-  }
-
-  const addRow = () => {
-    const newSerialNumber = productionData.length > 0 
-      ? Math.max(...productionData.map(row => row.serialNumber)) + 1 
-      : 1
-    
-    setProductionData([
-      ...productionData,
-      {
-        serialNumber: newSerialNumber,
-        meter: '',
-        layer: '1',
-        pieces: 1 * sumOfRatios,
-        color: '',
-        shade: '',
-        zip_code: '',
-        thread_code: '',
-      }
-    ])
-  }
-
-  const deleteRow = (index: number) => {
-    const newData = productionData.filter((_, i) => i !== index)
-    // Renumber serial numbers sequentially starting from 1
-    const renumberedData = newData.map((row, idx) => ({
-      ...row,
-      serialNumber: idx + 1
-    }))
-    setProductionData(renumberedData)
-  }
-
-  const totalMeter = useMemo(() => {
-    return productionData.reduce((sum, row) => sum + (Number(row.meter) || 0), 0)
-  }, [productionData])
-
-  const totalPieces = useMemo(() => {
-    return productionData.reduce((sum, row) => sum + (Number(row.pieces) || 0), 0)
-  }, [productionData])
-
-  const totalPiecesWithTukda = useMemo(() => {
-    return totalPieces + (Number(tukda.count) || 0)
-  }, [totalPieces, tukda.count])
-
+  const sumOfRatios = useMemo(() => Object.values(ratios).reduce((sum, val) => sum + (Number(val) || 0), 0), [ratios])
+  const totalMeter = useMemo(() => productionData.reduce((sum, row) => sum + (Number(row.meter) || 0), 0), [productionData])
+  const totalPieces = useMemo(() => productionData.reduce((sum, row) => sum + (Number(row.pieces) || 0), 0), [productionData])
+  const totalPiecesWithTukda = useMemo(() => totalPieces + (Number(tukda.count) || 0), [totalPieces, tukda.count])
   const average = useMemo(() => {
-    const denominator = totalPieces + (Number(tukda.count) || 0)
-    if (denominator === 0) return 0
-    return totalMeter / denominator
+    const denom = totalPieces + (Number(tukda.count) || 0)
+    return denom === 0 ? 0 : totalMeter / denom
   }, [totalMeter, totalPieces, tukda.count])
 
   const updateRatio = (ratioKey: string, value: string) => {
-    let numValue = Number(value) || 0
-    
-    if (numValue > 0 && numValue < 0.5) {
-      numValue = 0.5
-    } else if (numValue > 0) {
-      numValue = Math.round(numValue * 2) / 2
-    }
-    
-    const newRatios = {
-      ...ratios,
-      [ratioKey]: numValue,
-    }
-    
+    let num = Number(value) || 0
+    if (num > 0 && num < 0.5) num = 0.5
+    else if (num > 0) num = Math.round(num * 2) / 2
+    const newRatios = { ...ratios, [ratioKey]: num }
     setRatios(newRatios)
-    
-    const newSumOfRatios = Object.values(newRatios).reduce((sum, val) => sum + (Number(val) || 0), 0)
-    
-    setProductionData(prevData => 
-      prevData.map(row => ({
-        ...row,
-        pieces: (Number(row.layer) || 0) * newSumOfRatios
-      }))
-    )
+    const newSum = Object.values(newRatios).reduce((s, v) => s + (Number(v) || 0), 0)
+    setProductionData(prev => prev.map(row => ({ ...row, pieces: (Number(row.layer) || 0) * newSum })))
   }
 
-  const saveLot = async () => {
-    if (!lotNumber.trim()) {
-      toast.showToast('Please enter a lot number', 'warning')
-      return
+  const updateProductionData = (index: number, field: string, value: string) => {
+    const newData = [...productionData]
+    if (field === 'layer') {
+      if (value === '') { newData[index] = { ...newData[index], layer: '' }; setProductionData(newData); return }
+      if (!/^[1-9][0-9]*$/.test(value)) return
+      newData[index] = { ...newData[index], layer: value }
+    } else if (field === 'meter') {
+      if (value === '' || value === '0') { newData[index] = { ...newData[index], meter: '' }; setProductionData(newData); return }
+      if (!/^[0-9]*\.?[0-9]*$/.test(value)) return
+      newData[index] = { ...newData[index], meter: value }
+    } else if (field === 'color') {
+      newData[index] = { ...newData[index], color: value, shade: value }
+    } else {
+      newData[index] = { ...newData[index], [field]: value }
     }
-
-    setSaving(true)
-    try {
-      const lotData = {
-        lotNumber,
-        date,
-        fabric,
-        pattern,
-        brand,
-        ratios,
-        productionData: productionData.map(row => ({
-          ...row,
-          meter: Number(row.meter) || 0,
-          layer: Number(row.layer) || 1,
-          color: row.color || '',
-          shade: row.shade || '',
-          zip_code: row.zip_code || '',
-          thread_code: row.thread_code || '',
-        })),
-        tukda,
-        totalMeter,
-        totalPieces,
-        totalPiecesWithTukda,
-        average,
-      }
-
-      // Check if we're editing an existing lot
-      const editLotNumber = searchParams?.get('edit')
-      let result
-      
-      if (editLotNumber && decodeURIComponent(editLotNumber) === lotNumber) {
-        // Update existing lot
-        result = await lotsAPI.updateLot(lotNumber, lotData)
-        // Sync job card with lot data so they stay in sync
-        if (result.success) {
-          try {
-            const jobCardResult = await jobCardsAPI.getJobCardByLotNumber(lotNumber)
-            if (jobCardResult.success && jobCardResult.jobCard) {
-              const existing = jobCardResult.jobCard
-              const mergedProductionData = productionData.map((lotRow, i) => {
-                const existingRow = existing.productionData && existing.productionData[i] ? existing.productionData[i] : {}
-                return {
-                  ...existingRow,
-                  serialNumber: lotRow.serialNumber,
-                  layer: Number(lotRow.layer) || 1,
-                  pieces: Number(lotRow.pieces) || 0,
-                  color: lotRow.color || '',
-                  shade: lotRow.shade || '',
-                  zip_code: lotRow.zip_code || '',
-                  thread_code: lotRow.thread_code || '',
-                }
-              })
-              await jobCardsAPI.updateJobCard(lotNumber, {
-                lotNumber,
-                date,
-                brand: brand,
-                ratios,
-                productionData: mergedProductionData,
-                flyWidth: existing.flyWidth ?? '',
-                additionalInfo: existing.additionalInfo ?? { belt: '', bottom: '', pasting: '', bone: '', hala: '', ticketPocket: '' },
-              })
-            }
-          } catch (err) {
-            console.error('Error syncing job card with lot:', err)
-            // Don't fail the lot update if job card sync fails
-          }
-        }
-      } else {
-        // Create new lot
-        result = await lotsAPI.saveLot(lotData)
-        
-        // Auto-create job card when new lot is saved
-        if (result.success) {
-          try {
-            const jobCardData = {
-              lotNumber,
-              date,
-              brand,
-              worker: '',
-              rate: '',
-              ratios,
-              productionData: productionData.map(row => ({
-                serialNumber: row.serialNumber,
-                layer: Number(row.layer) || 1,
-                pieces: Number(row.pieces) || 0,
-                color: row.color || '',
-                shade: row.shade || '',
-                front: '',
-                back: '',
-                zip_code: row.zip_code || '',
-                thread_code: row.thread_code || '',
-              })),
-              flyWidth: '',
-              additionalInfo: {
-                belt: '',
-                bottom: '',
-                pasting: '',
-                bone: '',
-                hala: '',
-                ticketPocket: '',
-              },
-            }
-            await jobCardsAPI.createJobCard(jobCardData)
-          } catch (error) {
-            console.error('Error auto-creating job card:', error)
-            // Don't fail the lot save if job card creation fails
-          }
-        }
-      }
-
-      if (result.success) {
-        const isNewLot = !editLotNumber || decodeURIComponent(editLotNumber) !== lotNumber
-        const successMessage = isNewLot ? 'Lot saved successfully!' : 'Lot updated successfully!'
-        
-        // Show success toast
-        toast.showToast(successMessage, 'success')
-        
-        // Navigate based on whether it's a new lot or update
-        if (isNewLot) {
-          // For new lots, navigate to job card edit page
-          router.push(`/jobcard/${encodeURIComponent(lotNumber)}?edit=true`)
-        } else {
-          // For updates, navigate to lot view
-          router.push(`/lot/${lotNumber}`)
-        }
-      } else {
-        toast.showToast('Error saving lot: ' + result.error, 'error')
-      }
-    } catch (error: any) {
-      console.error('Error saving lot:', error)
-      toast.showToast('Error saving lot: ' + error.message, 'error')
-    } finally {
-      setSaving(false)
-    }
+    if (field === 'layer' || field === 'meter') newData[index].pieces = (Number(newData[index].layer) || 0) * sumOfRatios
+    setProductionData(newData)
   }
 
-  const exportToPDF = () => {
-    setGeneratingPDF(true)
-    try {
-      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
-      const pageW = pdf.internal.pageSize.getWidth()
-      const margin = 10
-
-      // ── Title ──────────────────────────────────────────────────────────────
-      pdf.setFontSize(16)
-      pdf.setFont('helvetica', 'bold')
-      pdf.text('Lot Production', pageW / 2, 14, { align: 'center' })
-
-      // ── Lot Information ────────────────────────────────────────────────────
-      pdf.setFontSize(11)
-      pdf.text('Lot Information', margin, 24)
-
-      autoTable(pdf, {
-        startY: 26,
-        margin: { left: margin, right: margin },
-        body: [
-          ['Lot Number', lotNumber || '—', 'Date', date || '—'],
-          ['Fabric', fabric || '—', 'Pattern', pattern || '—'],
-          ['Brand', brand || '—', '', ''],
-        ],
-        styles: { fontSize: 9, cellPadding: 2 },
-        columnStyles: { 0: { fontStyle: 'bold', cellWidth: 35 }, 2: { fontStyle: 'bold', cellWidth: 35 } },
-        theme: 'grid',
-      })
-
-      // ── Ratios ─────────────────────────────────────────────────────────────
-      const afterInfo = (pdf as any).lastAutoTable.finalY + 6
-      pdf.setFontSize(11)
-      pdf.setFont('helvetica', 'bold')
-      pdf.text('Ratios', margin, afterInfo)
-
-      autoTable(pdf, {
-        startY: afterInfo + 2,
-        margin: { left: margin, right: margin },
-        head: [Object.keys(ratios).map(k => k.toUpperCase())],
-        body: [Object.values(ratios).map(v => String(v))],
-        styles: { fontSize: 8, cellPadding: 2, halign: 'center' },
-        headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
-        theme: 'grid',
-      })
-
-      const afterRatios = (pdf as any).lastAutoTable.finalY + 2
-      pdf.setFontSize(9)
-      pdf.setFont('helvetica', 'normal')
-      pdf.text(`Sum of Ratios: ${sumOfRatios.toFixed(2)}`, margin, afterRatios + 4)
-
-      // ── Production Data ────────────────────────────────────────────────────
-      const afterRatioSum = afterRatios + 10
-      pdf.setFontSize(11)
-      pdf.setFont('helvetica', 'bold')
-      pdf.text('Production Data', margin, afterRatioSum)
-
-      autoTable(pdf, {
-        startY: afterRatioSum + 2,
-        margin: { left: margin, right: margin },
-        head: [['S.No', 'Meter', 'Layer', 'Pieces', 'Color', 'Zip Code', 'Thread Code']],
-        body: productionData.map(row => [
-          row.serialNumber,
-          row.meter || '0',
-          row.layer,
-          Number(row.pieces).toFixed(2),
-          row.color || '—',
-          (row as any).zip_code || '—',
-          (row as any).thread_code || '—',
-        ]),
-        styles: { fontSize: 8, cellPadding: 2, halign: 'center' },
-        headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
-        alternateRowStyles: { fillColor: [240, 247, 255] },
-        theme: 'grid',
-      })
-
-      // ── Summary ────────────────────────────────────────────────────────────
-      const afterProd = (pdf as any).lastAutoTable.finalY + 6
-      pdf.setFontSize(11)
-      pdf.setFont('helvetica', 'bold')
-      pdf.text('Summary & Calculations', margin, afterProd)
-
-      autoTable(pdf, {
-        startY: afterProd + 2,
-        margin: { left: margin, right: margin },
-        head: [['# Tukda', 'Tukda Size', 'Total Meter', 'Total Pieces', 'Grand Total Pieces', 'Average']],
-        body: [[
-          tukda.count,
-          tukda.size,
-          totalMeter.toFixed(2),
-          totalPieces.toFixed(2),
-          totalPiecesWithTukda.toFixed(2),
-          average.toFixed(4),
-        ]],
-        styles: { fontSize: 8, cellPadding: 2, halign: 'center' },
-        headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
-        theme: 'grid',
-      })
-
-      pdf.save(`Lot_${lotNumber || 'Production'}_${date || 'Report'}.pdf`)
-    } catch (error: any) {
-      console.error('Error generating PDF:', error)
-      toast.showToast('Error generating PDF: ' + error.message, 'error')
-    } finally {
-      setGeneratingPDF(false)
-    }
+  const handleBlurMeter = (index: number, value: string) => {
+    const num = Number(value)
+    updateProductionData(index, 'meter', value === '' || isNaN(num) || num < 0 ? '' : num.toString())
   }
 
-  const exportToExcel = () => {
-    setGeneratingExcel(true)
-    try {
-      const infoRows = [
-        ['Lot Number', lotNumber], ['Date', date],
-        ['Fabric', fabric], ['Pattern', pattern], ['Brand', brand],
-        [],
-        ['Ratios'],
-        Object.keys(ratios).map(k => k.toUpperCase()),
-        Object.values(ratios).map(v => String(v)),
-        [],
-      ]
-
-      const prodHeaders = ['S.No', 'Meter', 'Layer', 'Pieces', 'Color', 'Zip Code', 'Thread Code']
-      const prodRows = productionData.map(row => [
-        row.serialNumber, row.meter || '0', row.layer,
-        Number(row.pieces).toFixed(2), row.color || '',
-        (row as any).zip_code || '', (row as any).thread_code || '',
-      ])
-
-      const summaryHeaders = ['# Tukda', 'Tukda Size', 'Total Meter', 'Total Pieces', 'Grand Total', 'Average']
-      const summaryRow = [tukda.count, tukda.size, totalMeter.toFixed(2), totalPieces.toFixed(2), totalPiecesWithTukda.toFixed(2), average.toFixed(4)]
-
-      const allRows = [...infoRows, prodHeaders, ...prodRows, [], ['Summary'], summaryHeaders, summaryRow]
-
-      const csvContent = allRows.map((row) =>
-        (row as any[]).map((cell) => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(',')
-      ).join('\n')
-
-      const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' })
-      const link = document.createElement('a')
-      link.setAttribute('href', URL.createObjectURL(blob))
-      link.setAttribute('download', `Lot_${lotNumber || 'Production'}_${date || 'Report'}.csv`)
-      link.style.visibility = 'hidden'
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      toast.showToast('Excel file exported successfully!', 'success')
-    } catch (error: any) {
-      toast.showToast('Error generating Excel: ' + error.message, 'error')
-    } finally {
-      setGeneratingExcel(false)
-    }
+  const handleBlurLayer = (index: number, value: string) => {
+    const num = Number(value)
+    const natural = value === '' || isNaN(num) || num < 1 ? '1' : Math.max(1, Math.floor(num)).toString()
+    updateProductionData(index, 'layer', natural)
   }
+
+  const addRow = () => {
+    const newSN = productionData.length > 0 ? Math.max(...productionData.map(r => r.serialNumber)) + 1 : 1
+    setProductionData([...productionData, { ...BLANK_ROW, serialNumber: newSN, pieces: 1 * sumOfRatios }])
+  }
+
+  const deleteRow = (index: number) => {
+    setProductionData(productionData.filter((_, i) => i !== index).map((row, idx) => ({ ...row, serialNumber: idx + 1 })))
+  }
+
+  const handleSave = () => saveLotFn(
+    { lotNumber, date, fabric, pattern, brand, ratios, productionData, tukda, totalMeter, totalPieces, totalPiecesWithTukda, average, editLotNumber: searchParams?.get('edit') },
+    setSaving
+  )
+
+  const exportParams = { lotNumber, date, fabric, pattern, brand, ratios, sumOfRatios, productionData, tukda, totalMeter, totalPieces, totalPiecesWithTukda, average }
 
   if (loadingLot) {
     return (
-      <>
-        <NavigationBar />
+      <><NavigationBar />
         <div className="dashboard-container">
-          <div className="loading-container">
-            <div className="spinner" />
-            <p>Loading lot data&hellip;</p>
-          </div>
+          <div className="loading-container"><div className="spinner" /><p>Loading lot data&hellip;</p></div>
         </div>
       </>
     )
   }
 
+  const isEdit = !!searchParams?.get('edit')
   return (
     <>
       <NavigationBar />
       <ActionBar actions={[
-        { label: searchParams?.get('edit') ? 'Update Lot' : 'Save Lot', shortLabel: searchParams?.get('edit') ? 'Update' : 'Save',
-          icon: '💾', onClick: saveLot, disabled: saving || loadingLot,
-          loading: saving || loadingLot, loadingLabel: loadingLot ? '…' : 'Saving…' },
-        { label: 'Download PDF',   shortLabel: 'PDF',   icon: '📄', onClick: exportToPDF,   loading: generatingPDF,   loadingLabel: '…' },
-        { label: 'Download Excel', shortLabel: 'Excel', icon: '📊', onClick: exportToExcel, loading: generatingExcel, loadingLabel: '…' },
+        { label: isEdit ? 'Update Lot' : 'Save Lot', shortLabel: isEdit ? 'Update' : 'Save', icon: '💾', onClick: handleSave, disabled: saving || loadingLot, loading: saving || loadingLot, loadingLabel: loadingLot ? '…' : 'Saving…' },
+        { label: 'Download PDF', shortLabel: 'PDF', icon: '📄', onClick: () => { setGeneratingPDF(true); try { exportLotToPDF(exportParams) } catch (e: any) { toast.showToast('Error: ' + e.message, 'error') } finally { setGeneratingPDF(false) } }, loading: generatingPDF, loadingLabel: '…' },
+        { label: 'Download Excel', shortLabel: 'Excel', icon: '📊', onClick: () => { setGeneratingExcel(true); try { exportLotToExcel(exportParams); toast.showToast('Excel exported!', 'success') } catch (e: any) { toast.showToast('Error: ' + e.message, 'error') } finally { setGeneratingExcel(false) } }, loading: generatingExcel, loadingLabel: '…' },
       ]} />
       <div className="dashboard-container">
         <div className="dashboard-header">
           <div className="header-title">
-            <h1>{searchParams?.get('edit') ? 'Edit Lot' : 'Lot Production Dashboard'}</h1>
-            <p>{searchParams?.get('edit') ? 'Edit existing lot production data' : 'Track and manage production data'}</p>
+            <h1>{isEdit ? 'Edit Lot' : 'Lot Production Dashboard'}</h1>
+            <p>{isEdit ? 'Edit existing lot production data' : 'Track and manage production data'}</p>
           </div>
         </div>
-
-      <div className="dashboard-content">
-        <div className="card">
-          <h2>Lot Information</h2>
-          <div className="form-grid">
-            <div className="form-group">
-              <label>Lot Number</label>
-              <input
-                type="text"
-                value={lotNumber}
-                onChange={(e) => setLotNumber(e.target.value)}
-                placeholder="Enter lot number"
-              />
-            </div>
-            <div className="form-group">
-              <label>Date</label>
-              <input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-              />
-            </div>
-            <div className="form-group">
-              <label>Fabric</label>
-              <select
-                value={fabric}
-                onChange={(e) => setFabric(e.target.value)}
-              >
-                <option value="">Select fabric</option>
-                {fabrics.map((item: any) => (
-                  <option key={item._id} value={item.name}>
-                    {item.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="form-group">
-              <label>Pattern</label>
-              <select
-                value={pattern}
-                onChange={(e) => setPattern(e.target.value)}
-              >
-                <option value="">Select pattern</option>
-                {patterns.map((item: any) => (
-                  <option key={item._id} value={item.name}>
-                    {item.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="form-group">
-              <label>Brand</label>
-              <select
-                value={brand}
-                onChange={(e) => setBrand(e.target.value)}
-              >
-                <option value="">Select brand</option>
-                {brands.map((item: any) => (
-                  <option key={item._id} value={item.name}>
-                    {item.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
+        <div className="dashboard-content">
+          <LotInfoForm
+            lotNumber={lotNumber} date={date} fabric={fabric} pattern={pattern} brand={brand}
+            fabrics={fabrics} patterns={patterns} brands={brands}
+            onLotNumberChange={setLotNumber} onDateChange={setDate}
+            onFabricChange={setFabric} onPatternChange={setPattern} onBrandChange={setBrand}
+          />
+          <RatiosForm ratios={ratios} sumOfRatios={sumOfRatios} onRatioChange={updateRatio} />
+          <ProductionTable
+            productionData={productionData} colors={colors}
+            onUpdate={updateProductionData} onBlurMeter={handleBlurMeter} onBlurLayer={handleBlurLayer}
+            onAddRow={addRow} onDeleteRow={deleteRow}
+          />
+          <SummarySection
+            tukda={tukda} totalMeter={totalMeter} totalPieces={totalPieces}
+            totalPiecesWithTukda={totalPiecesWithTukda} average={average}
+            onTukdaCountChange={(v) => { if (v === '' || /^[0-9]+$/.test(v)) setTukda({ ...tukda, count: v === '' ? 0 : Number(v) }) }}
+            onTukdaCountBlur={(v) => { const n = Number(v); setTukda({ ...tukda, count: v === '' || isNaN(n) || n < 0 ? 0 : Math.floor(n) }) }}
+            onTukdaSizeChange={(v) => setTukda({ ...tukda, size: v })}
+          />
         </div>
-
-        <div className="card">
-          <h2>Ratios</h2>
-          <div className="ratios-grid">
-            {Object.keys(ratios).map((ratioKey) => (
-              <div key={ratioKey} className="form-group">
-                <label>{ratioKey.toUpperCase()}</label>
-                <input
-                  type="number"
-                  value={ratios[ratioKey as keyof typeof ratios]}
-                  onChange={(e) => updateRatio(ratioKey, e.target.value)}
-                  min="0.5"
-                  step="0.5"
-                />
-              </div>
-            ))}
-          </div>
-          <div className="ratios-summary">
-            <strong>Sum of Ratios: {sumOfRatios.toFixed(2)}</strong>
-          </div>
-        </div>
-
-        <div className="card">
-          <div className="card-header">
-            <h2>Production Data</h2>
-            <button className="btn btn-secondary" onClick={addRow}>
-              <span className="btn-icon">+</span>
-              Add Row
-            </button>
-          </div>
-          <div className="table-container">
-            <table className="production-table">
-              <thead>
-                <tr>
-                  <th>Serial Number</th>
-                  <th>Meter</th>
-                  <th>Layer</th>
-                  <th>Pieces</th>
-                  <th>Color</th>
-                  <th>Shade</th>
-                  <th>Zip Code</th>
-                  <th>Thread Code</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {productionData.map((row, index) => (
-                  <tr key={index}>
-                    <td>{row.serialNumber}</td>
-                    <td>
-                      <input
-                        type="text"
-                        value={row.meter}
-                        onChange={(e) => updateProductionData(index, 'meter', e.target.value)}
-                        onBlur={(e) => {
-                          const value = e.target.value
-                          const numValue = Number(value)
-                          if (value === '' || isNaN(numValue) || numValue < 0) {
-                            updateProductionData(index, 'meter', '')
-                          } else {
-                            updateProductionData(index, 'meter', numValue.toString())
-                          }
-                        }}
-                        inputMode="decimal"
-                        pattern="[0-9]*\.?[0-9]*"
-                        placeholder="0"
-                      />
-                    </td>
-                    <td>
-                      <input
-                        type="text"
-                        value={row.layer}
-                        onChange={(e) => updateProductionData(index, 'layer', e.target.value)}
-                        onBlur={(e) => {
-                          const value = e.target.value
-                          const numValue = Number(value)
-                          if (value === '' || isNaN(numValue) || numValue < 1) {
-                            updateProductionData(index, 'layer', '1')
-                          } else {
-                            const naturalNum = Math.max(1, Math.floor(numValue))
-                            updateProductionData(index, 'layer', naturalNum.toString())
-                          }
-                        }}
-                        inputMode="numeric"
-                        pattern="[1-9][0-9]*"
-                        placeholder="1"
-                      />
-                    </td>
-                    <td className="pieces-cell">{row.pieces.toFixed(2)}</td>
-                    <td>
-                      <select
-                        value={row.color || ''}
-                        onChange={(e) => updateProductionData(index, 'color', e.target.value)}
-                        className="color-input"
-                        style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }}
-                      >
-                        <option value="">Select color</option>
-                        {colors.map((color: any) => (
-                          <option key={color._id} value={color.name}>
-                            {color.name}
-                          </option>
-                        ))}
-                      </select>
-                    </td>
-                    <td>
-                      <div style={{ display: 'flex', alignItems: 'center', minHeight: '36px' }}>
-                        {row.color ? (
-                          <div
-                            title={row.color}
-                            style={{
-                              width: '24px',
-                              height: '24px',
-                              borderRadius: '4px',
-                              backgroundColor: getColorForShade(row.color),
-                              border: '1px solid #ccc',
-                            }}
-                          />
-                        ) : (
-                          <span style={{ fontSize: '16px', color: '#6c757d' }}>—</span>
-                        )}
-                      </div>
-                    </td>
-                    <td>
-                      <input
-                        type="text"
-                        value={row.zip_code || ''}
-                        onChange={(e) => updateProductionData(index, 'zip_code', e.target.value)}
-                        placeholder="Zip Code"
-                        className="tbd-input"
-                      />
-                    </td>
-                    <td>
-                      <input
-                        type="text"
-                        value={row.thread_code || ''}
-                        onChange={(e) => updateProductionData(index, 'thread_code', e.target.value)}
-                        placeholder="Thread Code"
-                        className="tbd-input"
-                      />
-                    </td>
-                    <td>
-                      <button
-                        className="btn-delete"
-                        onClick={() => deleteRow(index)}
-                        disabled={productionData.length === 1}
-                      >
-                        🗑️
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div className="card">
-          <h2>Summary & Calculations</h2>
-          <div className="tukda-inputs">
-            <div className="form-group">
-              <label># Tukda</label>
-              <input
-                type="text"
-                value={tukda.count}
-                onChange={(e) => {
-                  const value = e.target.value
-                  if (value === '' || /^[0-9]+$/.test(value)) {
-                    setTukda({ ...tukda, count: value === '' ? 0 : Number(value) })
-                  }
-                }}
-                onBlur={(e) => {
-                  const value = e.target.value
-                  const numValue = Number(value)
-                  if (value === '' || isNaN(numValue) || numValue < 0) {
-                    setTukda({ ...tukda, count: 0 })
-                  } else {
-                    setTukda({ ...tukda, count: Math.floor(numValue) })
-                  }
-                }}
-                inputMode="numeric"
-                pattern="[0-9]*"
-                placeholder="0"
-              />
-            </div>
-            <div className="form-group">
-              <label>Tukda Size</label>
-              <select
-                value={tukda.size}
-                onChange={(e) => setTukda({ ...tukda, size: e.target.value })}
-                className="tukda-size-select"
-              >
-                {tukdaSizes.map((size) => (
-                  <option key={size} value={size}>
-                    {size}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-          <div className="summary-cards-row">
-            <div className="summary-card">
-              <div className="summary-icon">📏</div>
-              <div className="summary-content">
-                <div className="summary-label">Total Meter</div>
-                <div className="summary-value">{totalMeter.toFixed(2)}</div>
-              </div>
-            </div>
-            <div className="summary-card">
-              <div className="summary-icon">📄</div>
-              <div className="summary-content">
-                <div className="summary-label">Total Pieces</div>
-                <div className="summary-value">{totalPieces.toFixed(2)}</div>
-              </div>
-            </div>
-            <div className="summary-card">
-              <div className="summary-icon">📊</div>
-              <div className="summary-content">
-                <div className="summary-label">Grand Total Pieces</div>
-                <div className="summary-value">{totalPiecesWithTukda.toFixed(2)}</div>
-              </div>
-            </div>
-            <div className="summary-card">
-              <div className="summary-icon">🧮</div>
-              <div className="summary-content">
-                <div className="summary-label">Average</div>
-                <div className="summary-value average-value">{average.toFixed(4)}</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
       </div>
     </>
   )

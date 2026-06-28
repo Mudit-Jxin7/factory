@@ -1,0 +1,57 @@
+.tukda-inputs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.summary-cards-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 24px;
+}
+
+.summary-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e9ecef;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s ease;
+}
+
+.summary-card:hover { box-shadow: 0 4px 8px rgba(0, 0, 0, 0.06); border-color: #ffeaa7; }
+
+.summary-icon {
+  font-size: 36px;
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff9e6;
+  border-radius: 12px;
+  border: 1px solid #ffeaa7;
+}
+
+.summary-content { flex: 1; }
+
+.summary-label {
+  font-size: 13px;
+  color: #6c757d;
+  margin-bottom: 6px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.summary-value { font-size: 28px; font-weight: 700; color: #1a1a1a; letter-spacing: -0.5px; }
+.average-value { color: #1a1a1a; }
+
+@media (max-width: 768px) {
+  .summary-cards-row, .tukda-inputs { grid-template-columns: 1fr; }
+  .summary-card { flex-direction: column; text-align: center; }
+}

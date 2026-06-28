@@ -1,0 +1,24 @@
+.job-card-page .card h2 { font-size: 24px; }
+.job-card-page .form-group label { font-size: 19px; }
+
+.job-card-page .form-group input,
+.job-card-page .form-group select {
+  font-size: 21px;
+  padding: 11px 14px;
+}
+
+.job-card-page .ratios-grid .form-group label { font-size: 17px; }
+.job-card-page .ratios-grid .form-group input { font-size: 19px; }
+.job-card-page .production-table th { font-size: 18px; padding: 12px 10px; }
+.job-card-page .production-table td { font-size: 20px; padding: 10px 8px; }
+
+.job-card-page .production-table input,
+.job-card-page .production-table .tbd-input,
+.job-card-page .production-table button.tbd-input {
+  font-size: 19px !important;
+}
+
+.job-card-page .color-input,
+.job-card-page .tbd-input {
+  font-size: 19px;
+}

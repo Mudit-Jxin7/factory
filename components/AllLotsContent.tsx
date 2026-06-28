@@ -2,10 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { lotsAPI, jobCardsAPI } from '@/lib/api'
+import { lotsAPI } from '@/lib/api'
+import { createJobCardFromLot } from '@/lib/jobCardUtils'
 import NavigationBar from './NavigationBar'
 import { useToast } from './ToastProvider'
 import { useConfirm } from './ConfirmProvider'
+import LotsFilters from './lots/LotsFilters'
+import LotsTable from './lots/LotsTable'
 import './dashboard.css'
 
 export default function AllLotsContent() {
@@ -15,351 +18,90 @@ export default function AllLotsContent() {
   const [allLots, setAllLots] = useState<any[]>([])
   const [loadingLots, setLoadingLots] = useState(true)
   const [deletingLot, setDeletingLot] = useState<string | null>(null)
-  const [filterDate, setFilterDate] = useState<string>('')
-  const [filterLotNumber, setFilterLotNumber] = useState<string>('')
-  const [filterFabric, setFilterFabric] = useState<string>('')
-  const [filterPattern, setFilterPattern] = useState<string>('')
-  const [filterBrand, setFilterBrand] = useState<string>('')
-
-  useEffect(() => {
-    fetchAllLots()
-  }, [])
-
-  useEffect(() => {
-    if (allLots.length > 0) {
-      ensureJobCardsForAllLots()
-    }
-  }, [allLots])
-
-  const ensureJobCardsForAllLots = async () => {
-    // Check all lots in parallel and create missing job cards
-    const promises = allLots.map(async (lot) => {
-      try {
-        const result = await jobCardsAPI.getJobCardByLotNumber(lot.lotNumber)
-        if (!result.success || !result.jobCard) {
-          // Job card doesn't exist, create it automatically
-          await createJobCardFromLot(lot)
-        }
-      } catch (error) {
-        // If check fails, try to create job card
-        await createJobCardFromLot(lot)
-      }
-    })
-    
-    await Promise.all(promises)
-  }
-
-  const createJobCardFromLot = async (lotData: any) => {
-    try {
-      const jobCardData = {
-        lotNumber: lotData.lotNumber,
-        date: lotData.date || new Date().toISOString().split('T')[0],
-        brand: lotData.brand || '',
-        worker: '',
-        rate: '',
-        ratios: lotData.ratios || {
-          r28: 0, r30: 0, r32: 0, r34: 0, r36: 0,
-          r38: 0, r40: 0, r42: 0, r44: 0,
-        },
-        productionData: (lotData.productionData || []).map((row: any, index: number) => ({
-          serialNumber: index + 1,
-          layer: Number(row.layer) || 1,
-          pieces: Number(row.pieces) || 0,
-          color: row.color || '',
-          shade: row.shade || '',
-          front: '',
-          back: '',
-          zip_code: '',
-          thread_code: '',
-        })),
-        flyWidth: '',
-        additionalInfo: {
-          belt: '',
-          bottom: '',
-          pasting: '',
-          bone: '',
-          hala: '',
-          ticketPocket: '',
-        },
-      }
-
-      await jobCardsAPI.createJobCard(jobCardData)
-    } catch (error) {
-      console.error(`Error auto-creating job card for lot ${lotData.lotNumber}:`, error)
-    }
-  }
+  const [filterDate, setFilterDate] = useState('')
+  const [filterLotNumber, setFilterLotNumber] = useState('')
+  const [filterFabric, setFilterFabric] = useState('')
+  const [filterPattern, setFilterPattern] = useState('')
+  const [filterBrand, setFilterBrand] = useState('')
 
   const fetchAllLots = async () => {
     setLoadingLots(true)
     try {
       const result = await lotsAPI.getAllLots()
-      if (result.success) {
-        setAllLots(result.lots || [])
-      } else {
-        toast.showToast('Error fetching lots: ' + result.error, 'error')
-      }
+      if (result.success) setAllLots(result.lots || [])
+      else toast.showToast('Error fetching lots: ' + result.error, 'error')
     } catch (error: any) {
-      console.error('Error fetching lots:', error)
       toast.showToast('Error fetching lots: ' + error.message, 'error')
-    } finally {
-      setLoadingLots(false)
+    } finally { setLoadingLots(false) }
+  }
+
+  useEffect(() => { fetchAllLots() }, [])
+
+  useEffect(() => {
+    if (allLots.length > 0) {
+      Promise.all(allLots.map((lot) => createJobCardFromLot(lot))).catch(() => {})
     }
-  }
-
-  const handleViewLot = (lotNumber: string) => {
-    router.push(`/lot/${lotNumber}`)
-  }
-
+  }, [allLots])
 
   const handleDeleteLot = async (lotNumber: string) => {
     const confirmed = await showConfirm({
       title: 'Delete Lot',
       message: `Are you sure you want to delete lot "${lotNumber}"? This action cannot be undone.`,
-      confirmText: 'Delete',
-      cancelText: 'Cancel',
-      type: 'danger',
+      confirmText: 'Delete', cancelText: 'Cancel', type: 'danger',
     })
-
-    if (!confirmed) {
-      return
-    }
-
+    if (!confirmed) return
     setDeletingLot(lotNumber)
     try {
       const result = await lotsAPI.deleteLot(lotNumber)
-      if (result.success) {
-        toast.showToast('Lot deleted successfully!', 'success')
-        // Refresh the list
-        fetchAllLots()
-      } else {
-        toast.showToast('Error deleting lot: ' + result.error, 'error')
-      }
+      if (result.success) { toast.showToast('Lot deleted successfully!', 'success'); fetchAllLots() }
+      else toast.showToast('Error deleting lot: ' + result.error, 'error')
     } catch (error: any) {
-      console.error('Error deleting lot:', error)
       toast.showToast('Error deleting lot: ' + error.message, 'error')
-    } finally {
-      setDeletingLot(null)
-    }
+    } finally { setDeletingLot(null) }
   }
 
-  // Filter lots based on all active filters
-  const filteredLots = allLots.filter((lot: any) => {
-    const matchesDate      = !filterDate      || (lot.date      && lot.date === filterDate)
-    const matchesLotNumber = !filterLotNumber || (lot.lotNumber && lot.lotNumber.toLowerCase().includes(filterLotNumber.toLowerCase()))
-    const matchesFabric    = !filterFabric    || (lot.fabric    && lot.fabric    === filterFabric)
-    const matchesPattern   = !filterPattern   || (lot.pattern   && lot.pattern   === filterPattern)
-    const matchesBrand     = !filterBrand     || (lot.brand     && lot.brand     === filterBrand)
-    return matchesDate && matchesLotNumber && matchesFabric && matchesPattern && matchesBrand
-  })
+  const filteredLots = allLots.filter((lot: any) =>
+    (!filterDate      || lot.date      === filterDate) &&
+    (!filterLotNumber || lot.lotNumber?.toLowerCase().includes(filterLotNumber.toLowerCase())) &&
+    (!filterFabric    || lot.fabric    === filterFabric) &&
+    (!filterPattern   || lot.pattern   === filterPattern) &&
+    (!filterBrand     || lot.brand     === filterBrand)
+  )
 
-  // Unique option lists derived from actual lot data
-  const fabricOptions  = [...new Set(allLots.map((l: any) => l.fabric).filter(Boolean))].sort()
-  const patternOptions = [...new Set(allLots.map((l: any) => l.pattern).filter(Boolean))].sort()
-  const brandOptions   = [...new Set(allLots.map((l: any) => l.brand).filter(Boolean))].sort()
-
-  const clearFilters = () => {
-    setFilterDate('')
-    setFilterLotNumber('')
-    setFilterFabric('')
-    setFilterPattern('')
-    setFilterBrand('')
-  }
+  const fabricOptions  = [...new Set(allLots.map((l: any) => l.fabric).filter(Boolean))].sort() as string[]
+  const patternOptions = [...new Set(allLots.map((l: any) => l.pattern).filter(Boolean))].sort() as string[]
+  const brandOptions   = [...new Set(allLots.map((l: any) => l.brand).filter(Boolean))].sort() as string[]
 
   return (
     <>
       <NavigationBar />
       <div className="dashboard-container">
         <div className="dashboard-header">
-          <div className="header-title">
-            <h1>All Lots</h1>
-            <p>View and manage all production lots</p>
-          </div>
+          <div className="header-title"><h1>All Lots</h1><p>View and manage all production lots</p></div>
           <div className="header-actions">
-            <button className="btn btn-secondary" onClick={fetchAllLots}>
-              <span className="btn-icon">🔄</span>
-              Refresh
-            </button>
+            <button className="btn btn-secondary" onClick={fetchAllLots}><span className="btn-icon">🔄</span>Refresh</button>
           </div>
         </div>
-
-      <div className="dashboard-content">
-        <div className="card">
-          {loadingLots ? (
-            <>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                <h2>All Lots</h2>
-              </div>
-              <div style={{ overflowX: 'auto' }}>
-                <table className="production-table" style={{ width: '100%' }}>
-                  <thead>
-                    <tr>
-                      <th>Lot Number</th>
-                      <th>Date</th>
-                      <th>Fabric</th>
-                      <th>Pattern</th>
-                      <th>Brand</th>
-                      <th style={{ textAlign: 'center' }}>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {Array.from({ length: 6 }).map((_, i) => (
-                      <tr key={i} className="skeleton-row">
-                        <td><div className="skeleton-cell" style={{ width: '80%' }} /></td>
-                        <td><div className="skeleton-cell" style={{ width: '70%' }} /></td>
-                        <td><div className="skeleton-cell" style={{ width: '60%' }} /></td>
-                        <td><div className="skeleton-cell" style={{ width: '65%' }} /></td>
-                        <td><div className="skeleton-cell" style={{ width: '55%' }} /></td>
-                        <td><div className="skeleton-cell" style={{ width: '90%', margin: '0 auto' }} /></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </>
-          ) : (
-            <>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', flexWrap: 'wrap', gap: '15px' }}>
-                <h2>All Lots ({filteredLots.length} of {allLots.length})</h2>
-              </div>
-              
-              {/* Filters */}
-              <div className="card" style={{ marginBottom: '20px', padding: '20px', background: '#fff9e6' }}>
-                <h3 style={{ marginTop: 0, marginBottom: '15px', fontSize: '18px', fontWeight: '600', color: '#1a1a1a' }}>Filters</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px', alignItems: 'end' }}>
-                  <div className="form-group" style={{ marginBottom: 0 }}>
-                    <label style={{ marginBottom: '8px', display: 'block', fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>Date</label>
-                    <input
-                      type="date"
-                      value={filterDate}
-                      onChange={(e) => setFilterDate(e.target.value)}
-                      style={{ width: '100%', padding: '8px 10px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', backgroundColor: '#fff' }}
-                    />
-                  </div>
-                  <div className="form-group" style={{ marginBottom: 0 }}>
-                    <label style={{ marginBottom: '8px', display: 'block', fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>Lot Number</label>
-                    <input
-                      type="text"
-                      value={filterLotNumber}
-                      onChange={(e) => setFilterLotNumber(e.target.value)}
-                      placeholder="Search lot number…"
-                      style={{ width: '100%', padding: '8px 10px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', backgroundColor: '#fff' }}
-                    />
-                  </div>
-                  <div className="form-group" style={{ marginBottom: 0 }}>
-                    <label style={{ marginBottom: '8px', display: 'block', fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>Fabric</label>
-                    <select
-                      value={filterFabric}
-                      onChange={(e) => setFilterFabric(e.target.value)}
-                      style={{ width: '100%', padding: '8px 10px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', backgroundColor: '#fff' }}
-                    >
-                      <option value="">All Fabrics</option>
-                      {fabricOptions.map((f: string) => <option key={f} value={f}>{f}</option>)}
-                    </select>
-                  </div>
-                  <div className="form-group" style={{ marginBottom: 0 }}>
-                    <label style={{ marginBottom: '8px', display: 'block', fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>Pattern</label>
-                    <select
-                      value={filterPattern}
-                      onChange={(e) => setFilterPattern(e.target.value)}
-                      style={{ width: '100%', padding: '8px 10px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', backgroundColor: '#fff' }}
-                    >
-                      <option value="">All Patterns</option>
-                      {patternOptions.map((p: string) => <option key={p} value={p}>{p}</option>)}
-                    </select>
-                  </div>
-                  <div className="form-group" style={{ marginBottom: 0 }}>
-                    <label style={{ marginBottom: '8px', display: 'block', fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>Brand</label>
-                    <select
-                      value={filterBrand}
-                      onChange={(e) => setFilterBrand(e.target.value)}
-                      style={{ width: '100%', padding: '8px 10px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', backgroundColor: '#fff' }}
-                    >
-                      <option value="">All Brands</option>
-                      {brandOptions.map((b: string) => <option key={b} value={b}>{b}</option>)}
-                    </select>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'end' }}>
-                    <button
-                      className="btn btn-secondary"
-                      onClick={clearFilters}
-                      style={{ padding: '8px 16px', fontSize: '14px', whiteSpace: 'nowrap' }}
-                    >
-                      Clear Filters
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <div style={{ overflowX: 'auto' }}>
-                <table className="production-table" style={{ width: '100%' }}>
-                  <thead>
-                    <tr>
-                      <th>Lot Number</th>
-                      <th>Date</th>
-                      <th>Fabric</th>
-                      <th>Pattern</th>
-                      <th>Brand</th>
-                      <th style={{ textAlign: 'center' }}>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredLots.length === 0 ? (
-                      <tr>
-                        <td colSpan={6} style={{ padding: '40px', textAlign: 'center', color: '#6c757d', fontSize: '18px' }}>
-                          {allLots.length === 0 ? 'No lots found' : 'No lots match the filters'}
-                        </td>
-                      </tr>
-                    ) : (
-                      filteredLots.map((lot: any) => (
-                        <tr key={lot._id || lot.lotNumber}>
-                          <td style={{ fontWeight: '600', color: '#1a1a1a' }}>{lot.lotNumber || '-'}</td>
-                          <td>{lot.date || '-'}</td>
-                          <td>{lot.fabric || '-'}</td>
-                          <td>{lot.pattern || '-'}</td>
-                          <td>{lot.brand || '-'}</td>
-                          <td style={{ textAlign: 'center' }}>
-                            <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
-                              <button
-                                className="btn btn-secondary"
-                                onClick={() => handleViewLot(lot.lotNumber)}
-                                style={{ padding: '8px 16px', fontSize: '14px' }}
-                              >
-                                View
-                              </button>
-                              <button
-                                className="btn btn-primary"
-                                onClick={() => router.push(`/dashboard?edit=${encodeURIComponent(lot.lotNumber)}`)}
-                                style={{ padding: '8px 16px', fontSize: '14px' }}
-                              >
-                                Edit
-                              </button>
-                              <button
-                                className="btn btn-secondary"
-                                onClick={() => router.push(`/jobcard/${encodeURIComponent(lot.lotNumber)}?edit=true`)}
-                                style={{ padding: '8px 16px', fontSize: '14px' }}
-                              >
-                                Job Card
-                              </button>
-                              <button
-                                className="btn btn-logout"
-                                onClick={() => handleDeleteLot(lot.lotNumber)}
-                                disabled={deletingLot === lot.lotNumber}
-                                style={{ padding: '8px 16px', fontSize: '14px' }}
-                              >
-                                {deletingLot === lot.lotNumber ? 'Deleting...' : 'Delete'}
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </>
-          )}
+        <div className="dashboard-content">
+          <div className="card">
+            {!loadingLots && (
+              <LotsFilters
+                filterDate={filterDate} filterLotNumber={filterLotNumber}
+                filterFabric={filterFabric} filterPattern={filterPattern} filterBrand={filterBrand}
+                fabricOptions={fabricOptions} patternOptions={patternOptions} brandOptions={brandOptions}
+                onDateChange={setFilterDate} onLotNumberChange={setFilterLotNumber}
+                onFabricChange={setFilterFabric} onPatternChange={setFilterPattern} onBrandChange={setFilterBrand}
+                onClear={() => { setFilterDate(''); setFilterLotNumber(''); setFilterFabric(''); setFilterPattern(''); setFilterBrand('') }}
+              />
+            )}
+            <LotsTable
+              lots={filteredLots} allCount={allLots.length} loading={loadingLots}
+              deletingLot={deletingLot}
+              onView={(lotNumber) => router.push(`/lot/${lotNumber}`)}
+              onDelete={handleDeleteLot}
+            />
+          </div>
         </div>
-      </div>
       </div>
     </>
   )

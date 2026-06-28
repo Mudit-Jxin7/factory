@@ -5,24 +5,18 @@ import { jobCardsAPI, workersAPI } from '@/lib/api'
 import NavigationBar from './NavigationBar'
 import { useToast } from './ToastProvider'
 import ActionBar from './ActionBar'
-import jsPDF from 'jspdf'
-import autoTable from 'jspdf-autotable'
+import AnalyticsFilters from './analytics/AnalyticsFilters'
+import AnalyticsTable from './analytics/AnalyticsTable'
+import { exportAnalyticsToPDF, exportAnalyticsToExcel } from './analytics/exportUtils'
 import './dashboard.css'
 
 type SectionType = 'Front' | 'Back' | 'Zip'
 
-interface AnalyticsRow {
-  worker_id: number
-  worker_name: string
-  worker_full_name: string
-  section: SectionType
-  date: string
-  rate: number
-  lotNumber: string
-  layer: number
-  pieces: number
-  total_amount: number
-}
+const SECTIONS: { key: SectionType; workerKey: string; dateKey: string; rateKey: string }[] = [
+  { key: 'Front', workerKey: 'frontWorker', dateKey: 'frontDate', rateKey: 'frontRate' },
+  { key: 'Back',  workerKey: 'backWorker',  dateKey: 'backDate',  rateKey: 'backRate'  },
+  { key: 'Zip',   workerKey: 'zipWorker',   dateKey: 'zipDate',   rateKey: 'zipRate'   },
+]
 
 export default function WorkerAnalyticsContent() {
   const toast = useToast()
@@ -31,307 +25,77 @@ export default function WorkerAnalyticsContent() {
   const [loading, setLoading] = useState(true)
   const [generatingPDF, setGeneratingPDF] = useState(false)
   const [generatingExcel, setGeneratingExcel] = useState(false)
-  
   const [fromDate, setFromDate] = useState('')
   const [toDate, setToDate] = useState('')
   const [selectedWorker, setSelectedWorker] = useState('')
 
   useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true)
+      try {
+        const [jcResult, wResult] = await Promise.all([jobCardsAPI.getAllJobCards(), workersAPI.getAllWorkers()])
+        if (jcResult.success) setJobCards(jcResult.jobCards || [])
+        else toast.showToast('Error fetching job cards: ' + jcResult.error, 'error')
+        if (wResult.success) setWorkers(wResult.workers || [])
+        else toast.showToast('Error fetching workers: ' + wResult.error, 'error')
+      } catch (error: any) {
+        toast.showToast('Error fetching data: ' + error.message, 'error')
+      } finally { setLoading(false) }
+    }
     fetchData()
   }, [])
 
-  const fetchData = async () => {
-    setLoading(true)
-    try {
-      const [jobCardsResult, workersResult] = await Promise.all([
-        jobCardsAPI.getAllJobCards(),
-        workersAPI.getAllWorkers(),
-      ])
-
-      if (jobCardsResult.success) {
-        setJobCards(jobCardsResult.jobCards || [])
-      } else {
-        toast.showToast('Error fetching job cards: ' + jobCardsResult.error, 'error')
-      }
-
-      if (workersResult.success) {
-        setWorkers(workersResult.workers || [])
-      } else {
-        toast.showToast('Error fetching workers: ' + workersResult.error, 'error')
-      }
-    } catch (error: any) {
-      console.error('Error fetching data:', error)
-      toast.showToast('Error fetching data: ' + error.message, 'error')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // Process job cards to create analytics rows (from frontWorker, backWorker, zipWorker + date/rate)
   const analyticsData = useMemo(() => {
-    const rows: AnalyticsRow[] = []
-    const sections: { key: SectionType; workerKey: string; dateKey: string; rateKey: string }[] = [
-      { key: 'Front', workerKey: 'frontWorker', dateKey: 'frontDate', rateKey: 'frontRate' },
-      { key: 'Back', workerKey: 'backWorker', dateKey: 'backDate', rateKey: 'backRate' },
-      { key: 'Zip', workerKey: 'zipWorker', dateKey: 'zipDate', rateKey: 'zipRate' },
-    ]
-
+    const rows: any[] = []
     jobCards.forEach((jobCard: any) => {
-      if (!jobCard.productionData || !Array.isArray(jobCard.productionData)) {
-        return
-      }
-
+      if (!Array.isArray(jobCard.productionData)) return
       jobCard.productionData.forEach((row: any) => {
         const pieces = Number(row.pieces) || 0
         const layer = Number(row.layer) || 0
-
-        sections.forEach(({ key, workerKey, dateKey, rateKey }) => {
+        SECTIONS.forEach(({ key, workerKey, dateKey, rateKey }) => {
           const workerId = row[workerKey]
           const date = row[dateKey]
           const rateVal = row[rateKey]
-          if (!workerId || !date || rateVal === undefined || rateVal === null || rateVal === '') {
-            return
-          }
-
+          if (!workerId || !date || rateVal === undefined || rateVal === null || rateVal === '') return
           const worker = workers.find((w: any) => w._id === workerId)
-          if (!worker) {
-            return
-          }
-
+          if (!worker) return
           const rate = Number(rateVal) || 0
-          const total_amount = pieces * rate
-
           rows.push({
-            worker_id: worker.worker_id,
-            worker_name: worker.worker_full_name,
-            worker_full_name: worker.worker_full_name,
-            section: key,
-            date: String(date).split('T')[0],
-            rate: rate,
-            lotNumber: jobCard.lotNumber || '',
-            layer: layer,
-            pieces: pieces,
-            total_amount: total_amount,
+            worker_id: worker.worker_id, worker_name: worker.worker_full_name,
+            worker_full_name: worker.worker_full_name, section: key,
+            date: String(date).split('T')[0], rate, lotNumber: jobCard.lotNumber || '',
+            layer, pieces, total_amount: pieces * rate,
           })
         })
       })
     })
-
     return rows
   }, [jobCards, workers])
 
-  // Filter analytics data
   const filteredData = useMemo(() => {
     let filtered = [...analyticsData]
-
-    // Filter by date range
-    if (fromDate) {
-      filtered = filtered.filter((row) => row.date >= fromDate)
-    }
-    if (toDate) {
-      filtered = filtered.filter((row) => row.date <= toDate)
-    }
-
-    // Filter by worker
+    if (fromDate) filtered = filtered.filter((row) => row.date >= fromDate)
+    if (toDate) filtered = filtered.filter((row) => row.date <= toDate)
     if (selectedWorker) {
-      filtered = filtered.filter((row) => {
-        const worker = workers.find((w: any) => w._id === selectedWorker)
-        return worker && row.worker_id === worker.worker_id
-      })
+      const worker = workers.find((w: any) => w._id === selectedWorker)
+      if (worker) filtered = filtered.filter((row) => row.worker_id === worker.worker_id)
     }
-
-    // Sort by date (newest first), then by worker_id
-    return filtered.sort((a, b) => {
-      if (a.date !== b.date) {
-        return b.date.localeCompare(a.date)
-      }
-      return a.worker_id - b.worker_id
-    })
+    return filtered.sort((a, b) => a.date !== b.date ? b.date.localeCompare(a.date) : a.worker_id - b.worker_id)
   }, [analyticsData, fromDate, toDate, selectedWorker, workers])
 
-  // Calculate totals
-  const totals = useMemo(() => {
-    return filteredData.reduce(
-      (acc, row) => ({
-        totalPieces: acc.totalPieces + row.pieces,
-        totalAmount: acc.totalAmount + row.total_amount,
-      }),
-      { totalPieces: 0, totalAmount: 0 }
-    )
-  }, [filteredData])
+  const totals = useMemo(() => filteredData.reduce(
+    (acc, row) => ({ totalPieces: acc.totalPieces + row.pieces, totalAmount: acc.totalAmount + row.total_amount }),
+    { totalPieces: 0, totalAmount: 0 }
+  ), [filteredData])
 
-  const clearFilters = () => {
-    setFromDate('')
-    setToDate('')
-    setSelectedWorker('')
-  }
-
-  const exportToPDF = () => {
-    setGeneratingPDF(true)
-    try {
-      const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
-      const pageW = pdf.internal.pageSize.getWidth()
-      const margin = 10
-
-      // ── Title ──────────────────────────────────────────────────────────────
-      pdf.setFontSize(16)
-      pdf.setFont('helvetica', 'bold')
-      pdf.text('Worker Analytics', pageW / 2, 14, { align: 'center' })
-
-      // Subtitle with active filters
-      pdf.setFontSize(9)
-      pdf.setFont('helvetica', 'normal')
-      const filterParts: string[] = []
-      if (fromDate) filterParts.push(`From: ${fromDate}`)
-      if (toDate) filterParts.push(`To: ${toDate}`)
-      if (selectedWorker) {
-        const w = workers.find((w: any) => w._id === selectedWorker)
-        if (w) filterParts.push(`Worker: ${w.worker_full_name}`)
-      }
-      if (filterParts.length > 0) {
-        pdf.text(filterParts.join('   |   '), pageW / 2, 20, { align: 'center' })
-      }
-
-      // ── Analytics Table ────────────────────────────────────────────────────
-      const head = [['Worker ID', 'Worker Name', 'Section', 'Date', 'Rate', 'Lot Number', 'Layer', 'Pieces', 'Total Amount']]
-      const body = filteredData.map(row => [
-        row.worker_id,
-        row.worker_full_name,
-        row.section,
-        row.date,
-        row.rate.toFixed(2),
-        row.lotNumber,
-        row.layer,
-        row.pieces.toFixed(2),
-        row.total_amount.toFixed(2),
-      ])
-
-      // Totals row
-      body.push(['', 'TOTAL', '', '', '', '', '', totals.totalPieces.toFixed(2), totals.totalAmount.toFixed(2)] as any)
-
-      autoTable(pdf, {
-        startY: filterParts.length > 0 ? 24 : 18,
-        margin: { left: margin, right: margin },
-        head,
-        body,
-        styles: { fontSize: 8, cellPadding: 2, halign: 'center' },
-        headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
-        alternateRowStyles: { fillColor: [240, 247, 255] },
-        didParseCell: (data) => {
-          // Highlight totals row
-          if (data.row.index === body.length - 1) {
-            data.cell.styles.fontStyle = 'bold'
-            data.cell.styles.fillColor = [255, 249, 230]
-          }
-        },
-        theme: 'grid',
-      })
-
-      const dateRange = fromDate && toDate ? `_${fromDate}_to_${toDate}` : ''
-      const workerSuffix = selectedWorker
-        ? `_${workers.find((w: any) => w._id === selectedWorker)?.worker_full_name || 'worker'}`
-        : ''
-      pdf.save(`WorkerAnalytics${dateRange}${workerSuffix}.pdf`)
-      toast.showToast('PDF exported successfully!', 'success')
-    } catch (error: any) {
-      console.error('Error generating PDF:', error)
-      toast.showToast('Error generating PDF: ' + error.message, 'error')
-    } finally {
-      setGeneratingPDF(false)
-    }
-  }
-
-  const exportToExcel = () => {
-    try {
-      setGeneratingExcel(true)
-
-      const selectedWorkerName = selectedWorker
-        ? workers.find((w: any) => w._id === selectedWorker)?.worker_full_name || ''
-        : 'All Workers'
-
-      // Filter summary rows at the top
-      const filterRows = [
-        ['From Date', fromDate || 'All'],
-        ['To Date', toDate || 'All'],
-        ['Worker', selectedWorkerName],
-        [],
-      ]
-
-      // Create CSV content
-      const headers = [
-        'Worker ID',
-        'Worker Name',
-        'Front / Back / Zip',
-        'Date',
-        'Rate',
-        'Lot Number',
-        'Layer',
-        'Pieces',
-        'Total Amount',
-      ]
-
-      const rows = filteredData.map((row) => [
-        row.worker_id.toString(),
-        row.worker_full_name,
-        row.section,
-        row.date,
-        row.rate.toString(),
-        row.lotNumber,
-        row.layer.toString(),
-        row.pieces.toString(),
-        row.total_amount.toFixed(2),
-      ])
-
-      // Add totals row
-      rows.push([
-        '',
-        'TOTAL',
-        '',
-        '',
-        '',
-        '',
-        '',
-        totals.totalPieces.toFixed(2),
-        totals.totalAmount.toFixed(2),
-      ])
-
-      const csvContent = [
-        ...filterRows.map((r) => r.map((cell) => `"${cell}"`).join(',')),
-        headers.join(','),
-        ...rows.map((row) => row.map((cell) => `"${cell}"`).join(',')),
-      ].join('\n')
-
-      // Create blob and download
-      const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' })
-      const link = document.createElement('a')
-      const url = URL.createObjectURL(blob)
-
-      link.setAttribute('href', url)
-      const dateRange = fromDate && toDate ? `_${fromDate}_to_${toDate}` : ''
-      const workerName = selectedWorker
-        ? `_${workers.find((w: any) => w._id === selectedWorker)?.worker_full_name || 'worker'}`
-        : ''
-      link.setAttribute('download', `WorkerAnalytics${dateRange}${workerName}.csv`)
-      link.style.visibility = 'hidden'
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-
-      toast.showToast('Excel file exported successfully!', 'success')
-    } catch (error: any) {
-      console.error('Error generating Excel:', error)
-      toast.showToast('Error generating Excel: ' + error.message, 'error')
-    } finally {
-      setGeneratingExcel(false)
-    }
-  }
+  const exportParams = { filteredData, workers, fromDate, toDate, selectedWorker, totals }
 
   return (
     <>
       <NavigationBar />
       <ActionBar actions={[
-        { label: 'Download PDF',   shortLabel: 'PDF',   icon: '📄', onClick: exportToPDF,   loading: generatingPDF,   loadingLabel: '…', disabled: filteredData.length === 0 },
-        { label: 'Download Excel', shortLabel: 'Excel', icon: '📊', onClick: exportToExcel, loading: generatingExcel, loadingLabel: '…', disabled: filteredData.length === 0 },
+        { label: 'Download PDF', shortLabel: 'PDF', icon: '📄', loading: generatingPDF, loadingLabel: '…', disabled: filteredData.length === 0, onClick: () => { setGeneratingPDF(true); try { exportAnalyticsToPDF(exportParams); toast.showToast('PDF exported!', 'success') } catch (e: any) { toast.showToast('Error: ' + e.message, 'error') } finally { setGeneratingPDF(false) } } },
+        { label: 'Download Excel', shortLabel: 'Excel', icon: '📊', loading: generatingExcel, loadingLabel: '…', disabled: filteredData.length === 0, onClick: () => { setGeneratingExcel(true); try { exportAnalyticsToExcel(exportParams); toast.showToast('Excel exported!', 'success') } catch (e: any) { toast.showToast('Error: ' + e.message, 'error') } finally { setGeneratingExcel(false) } } },
       ]} />
       <div className="dashboard-container">
         <div className="dashboard-header">
@@ -340,178 +104,14 @@ export default function WorkerAnalyticsContent() {
             <p>Analyze worker performance and earnings</p>
           </div>
         </div>
-
         <div className="dashboard-content">
-          {/* Filters */}
-          <div className="card filters-section" style={{ marginBottom: '20px', padding: '20px', background: '#fff9e6' }}>
-            <h3 style={{ marginTop: 0, marginBottom: '15px', fontSize: '18px', fontWeight: '600' }}>Filters</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '15px', alignItems: 'end' }}>
-              <div className="form-group" style={{ marginBottom: 0 }}>
-                <label>From Date</label>
-                <input
-                  type="date"
-                  value={fromDate}
-                  onChange={(e) => setFromDate(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    border: '1px solid #ddd',
-                    borderRadius: '6px',
-                    fontSize: '16px',
-                    backgroundColor: '#fff',
-                  }}
-                />
-              </div>
-              <div className="form-group" style={{ marginBottom: 0 }}>
-                <label>To Date</label>
-                <input
-                  type="date"
-                  value={toDate}
-                  onChange={(e) => setToDate(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    border: '1px solid #ddd',
-                    borderRadius: '6px',
-                    fontSize: '16px',
-                    backgroundColor: '#fff',
-                  }}
-                />
-              </div>
-              <div className="form-group" style={{ marginBottom: 0 }}>
-                <label>Worker</label>
-                <select
-                  value={selectedWorker}
-                  onChange={(e) => setSelectedWorker(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    border: '1px solid #ddd',
-                    borderRadius: '6px',
-                    fontSize: '16px',
-                    backgroundColor: '#fff',
-                  }}
-                >
-                  <option value="">All Workers</option>
-                  {workers.map((worker: any) => (
-                    <option key={worker._id} value={worker._id}>
-                      {worker.worker_id} - {worker.worker_full_name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'end' }}>
-                <button
-                  className="btn btn-secondary"
-                  onClick={clearFilters}
-                  style={{ padding: '10px 20px', fontSize: '16px', whiteSpace: 'nowrap' }}
-                >
-                  Clear Filters
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Analytics Table */}
+          <AnalyticsFilters
+            workers={workers} fromDate={fromDate} toDate={toDate} selectedWorker={selectedWorker}
+            onFromDateChange={setFromDate} onToDateChange={setToDate} onWorkerChange={setSelectedWorker}
+            onClearFilters={() => { setFromDate(''); setToDate(''); setSelectedWorker('') }}
+          />
           <div className="card">
-            {loading ? (
-              <>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                  <h2>Worker Analytics</h2>
-                </div>
-                <div style={{ overflowX: 'auto' }}>
-                  <table className="production-table" style={{ width: '100%' }}>
-                    <thead>
-                      <tr>
-                        <th>Worker ID</th>
-                        <th>Worker Name</th>
-                        <th>Front / Back / Zip</th>
-                        <th>Date</th>
-                        <th>Rate</th>
-                        <th>Lot Number</th>
-                        <th>Layer</th>
-                        <th>Pieces</th>
-                        <th>Total Amount</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {Array.from({ length: 7 }).map((_, i) => (
-                        <tr key={i} className="skeleton-row">
-                          <td><div className="skeleton-cell" style={{ width: '50%' }} /></td>
-                          <td><div className="skeleton-cell" style={{ width: '80%' }} /></td>
-                          <td><div className="skeleton-cell" style={{ width: '60%' }} /></td>
-                          <td><div className="skeleton-cell" style={{ width: '70%' }} /></td>
-                          <td><div className="skeleton-cell" style={{ width: '55%' }} /></td>
-                          <td><div className="skeleton-cell" style={{ width: '65%' }} /></td>
-                          <td><div className="skeleton-cell" style={{ width: '40%' }} /></td>
-                          <td><div className="skeleton-cell" style={{ width: '55%' }} /></td>
-                          <td><div className="skeleton-cell" style={{ width: '60%' }} /></td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </>
-            ) : (
-              <>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                  <h2>Worker Analytics ({filteredData.length} records)</h2>
-                </div>
-
-                {filteredData.length === 0 ? (
-                  <div style={{ padding: '40px', textAlign: 'center', color: '#6c757d' }}>
-                    No data found matching the filters
-                  </div>
-                ) : (
-                  <>
-                    <div style={{ overflowX: 'auto' }}>
-                      <table className="production-table" style={{ width: '100%' }}>
-                        <thead>
-                          <tr>
-                            <th>Worker ID</th>
-                            <th>Worker Name</th>
-                            <th>Front / Back / Zip</th>
-                            <th>Date</th>
-                            <th>Rate</th>
-                            <th>Lot Number</th>
-                            <th>Layer</th>
-                            <th>Pieces</th>
-                            <th>Total Amount</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {filteredData.map((row, index) => (
-                            <tr key={index}>
-                              <td style={{ fontWeight: '600', color: '#1a1a1a' }}>{row.worker_id}</td>
-                              <td>{row.worker_full_name}</td>
-                              <td>{row.section}</td>
-                              <td>{row.date}</td>
-                              <td>{row.rate.toFixed(2)}</td>
-                              <td style={{ fontWeight: '600', color: '#1a1a1a' }}>{row.lotNumber}</td>
-                              <td>{row.layer}</td>
-                              <td>{row.pieces.toFixed(2)}</td>
-                              <td style={{ fontWeight: '600', color: '#1a1a1a' }}>
-                                {row.total_amount.toFixed(2)}
-                              </td>
-                            </tr>
-                          ))}
-                          {/* Totals Row */}
-                          <tr style={{ backgroundColor: '#fff9e6', fontWeight: '600' }}>
-                            <td colSpan={7} style={{ textAlign: 'right', padding: '12px' }}>
-                              TOTAL:
-                            </td>
-                            <td style={{ padding: '12px' }}>{totals.totalPieces.toFixed(2)}</td>
-                            <td style={{ padding: '12px', color: '#1a1a1a' }}>
-                              {totals.totalAmount.toFixed(2)}
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  </>
-                )}
-              </>
-            )}
+            <AnalyticsTable loading={loading} filteredData={filteredData} allCount={analyticsData.length} totals={totals} />
           </div>
         </div>
       </div>

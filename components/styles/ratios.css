@@ -1,0 +1,88 @@
+.tukda-size-select { width: 100%; }
+
+.ratios-grid {
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.ratios-grid .form-group {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #dee2e6;
+  border-radius: 10px;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ratios-grid .form-group label { font-size: 13px; margin-bottom: 0; text-align: center; }
+.ratios-grid .form-group input { padding: 10px 12px; font-size: 16px; width: 100%; text-align: center; box-sizing: border-box; }
+
+.ratios-summary {
+  padding: 18px 24px;
+  background: #fff9e6;
+  border-radius: 12px;
+  text-align: center;
+  color: #1a1a1a;
+  font-size: 16px;
+  font-weight: 600;
+  border: 1px solid #ffeaa7;
+}
+
+.pdf-export-clone .card {
+  background: #ffffff !important;
+  border: 1px solid #e9ecef !important;
+  border-radius: 16px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+  padding: 28px !important;
+}
+
+.pdf-export-clone .ratios-grid .form-group {
+  background: #ffffff !important;
+  border: 1px solid #dee2e6 !important;
+  border-radius: 10px !important;
+  padding: 12px !important;
+}
+
+.pdf-export-clone .ratios-summary {
+  background: #fff9e6 !important;
+  border: 1px solid #ffeaa7 !important;
+  border-radius: 12px !important;
+  padding: 18px 24px !important;
+  text-align: center !important;
+}
+
+.pdf-export-clone [data-pdf-input="true"] {
+  border: 1px solid #dee2e6 !important;
+  background-color: #ffffff !important;
+  border-radius: 10px !important;
+  min-height: 36px !important;
+  display: inline-block !important;
+  box-sizing: border-box !important;
+}
+
+.pdf-export-clone .dashboard-header {
+  background: #ffffff !important;
+  border: 1px solid #e9ecef !important;
+  border-radius: 16px !important;
+}
+
+@media (max-width: 1400px) {
+  .ratios-grid { gap: 10px; }
+  .ratios-grid .form-group input { padding: 8px 10px; font-size: 15px; }
+}
+
+@media (max-width: 1200px) {
+  .ratios-grid { grid-template-columns: repeat(5, 1fr); gap: 12px; }
+}
+
+@media (max-width: 768px) {
+  .ratios-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 480px) {
+  .ratios-grid { grid-template-columns: repeat(2, 1fr); }
+}
