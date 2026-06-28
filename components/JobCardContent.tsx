@@ -451,10 +451,10 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
           { content: row.serialNumber, rowSpan: SPAN, styles: { valign: 'middle', halign: 'center' } },
           { content: row.layer,        rowSpan: SPAN, styles: { valign: 'middle', halign: 'center' } },
           { content: row.pieces,       rowSpan: SPAN, styles: { valign: 'middle', halign: 'center' } },
-          { content: row.color || '—', rowSpan: SPAN, styles: { valign: 'middle', halign: 'center' } },
-          getWorkerName(row.frontWorker ?? '') || '—',
-          row.frontDate || '—',
-          row.frontRate || '—',
+          { content: row.color || '', rowSpan: SPAN, styles: { valign: 'middle', halign: 'center' } },
+          getWorkerName(row.frontWorker ?? '') || '',
+          row.frontDate || '',
+          row.frontRate || '',
         ])
 
         // Sub-rows for remaining worker sections (label then value)
@@ -465,9 +465,9 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
             { content: `${s.label} Rate`,   styles: labelCellStyle },
           ])
           prodBody.push([
-            getWorkerName((row as any)[s.workerKey] ?? '') || '—',
-            (row as any)[s.dateKey] || '—',
-            (row as any)[s.rateKey] || '—',
+            getWorkerName((row as any)[s.workerKey] ?? '') || '',
+            (row as any)[s.dateKey] || '',
+            (row as any)[s.rateKey] || '',
           ])
         })
 
@@ -478,8 +478,8 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
           '',
         ])
         prodBody.push([
-          (row as any).zip_code    || '—',
-          (row as any).thread_code || '—',
+          (row as any).zip_code    || '',
+          (row as any).thread_code || '',
           '',
         ])
       })
