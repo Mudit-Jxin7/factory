@@ -100,8 +100,13 @@ export default function AllLotsContent() {
     })
   }
 
-  const handleSelectAll = (checked: boolean) => {
-    setSelectedLotIds(checked ? new Set(filteredLots.map(l => l._id)) : new Set())
+  const handleSelectAll = (pageIds: string[], checked: boolean) => {
+    setSelectedLotIds(prev => {
+      const next = new Set(prev)
+      if (checked) pageIds.forEach(id => next.add(id))
+      else pageIds.forEach(id => next.delete(id))
+      return next
+    })
   }
 
   const filteredLots = allLots.filter((lot: any) =>
@@ -117,6 +122,7 @@ export default function AllLotsContent() {
   const brandOptions   = [...new Set(allLots.map((l: any) => l.brand).filter(Boolean))].sort() as string[]
 
   const selectedCount = filteredLots.filter(l => selectedLotIds.has(l._id)).length
+
 
   return (
     <>

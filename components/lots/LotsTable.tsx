@@ -1,7 +1,10 @@
 'use client'
 
-import { useRef, useEffect } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Pagination from '@/components/Pagination'
+
+const PAGE_SIZE = 15
 
 interface LotsTableProps {
   lots: any[]
@@ -11,7 +14,7 @@ interface LotsTableProps {
   bulkDeleting?: boolean
   selectedIds: Set<string>
   onSelectId: (id: string, checked: boolean) => void
-  onSelectAll: (checked: boolean) => void
+  onSelectAll: (pageIds: string[], checked: boolean) => void
   onDeleteSelected?: () => void
   onView: (lotNumber: string) => void
   onDelete: (lotNumber: string) => void
@@ -19,16 +22,26 @@ interface LotsTableProps {
 
 export default function LotsTable({ lots, allCount, loading, deletingLot, bulkDeleting, selectedIds, onSelectId, onSelectAll, onDeleteSelected, onView, onDelete }: LotsTableProps) {
   const router = useRouter()
+  const [page, setPage] = useState(1)
   const selectAllRef = useRef<HTMLInputElement>(null)
 
-  const allSelected = lots.length > 0 && lots.every(l => selectedIds.has(l._id))
-  const someSelected = lots.some(l => selectedIds.has(l._id))
+  // Reset to page 1 when the filtered list changes
+  useEffect(() => { setPage(1) }, [lots.length])
+
+  const totalPages = Math.max(1, Math.ceil(lots.length / PAGE_SIZE))
+  const safePage = Math.min(page, totalPages)
+  const pageLots = lots.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
+  const pageIds = pageLots.map(l => l._id)
+
+  const allPageSelected = pageLots.length > 0 && pageLots.every(l => selectedIds.has(l._id))
+  const somePageSelected = pageLots.some(l => selectedIds.has(l._id))
+  const totalSelected = lots.filter(l => selectedIds.has(l._id)).length
 
   useEffect(() => {
     if (selectAllRef.current) {
-      selectAllRef.current.indeterminate = someSelected && !allSelected
+      selectAllRef.current.indeterminate = somePageSelected && !allPageSelected
     }
-  }, [someSelected, allSelected])
+  }, [somePageSelected, allPageSelected])
 
   if (loading) {
     return (
@@ -64,10 +77,10 @@ export default function LotsTable({ lots, allCount, loading, deletingLot, bulkDe
     <>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', flexWrap: 'wrap', gap: '15px' }}>
         <h2>All Lots ({lots.length} of {allCount})</h2>
-        {someSelected && (
+        {totalSelected > 0 && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <span style={{ fontSize: '14px', color: '#495057', fontWeight: 500 }}>
-              {selectedIds.size} selected
+              {totalSelected} selected
             </span>
             {onDeleteSelected && (
               <button
@@ -90,11 +103,11 @@ export default function LotsTable({ lots, allCount, loading, deletingLot, bulkDe
                 <input
                   ref={selectAllRef}
                   type="checkbox"
-                  checked={allSelected}
-                  onChange={e => onSelectAll(e.target.checked)}
-                  disabled={lots.length === 0}
+                  checked={allPageSelected}
+                  onChange={e => onSelectAll(pageIds, e.target.checked)}
+                  disabled={pageLots.length === 0}
                   style={{ cursor: 'pointer', width: '16px', height: '16px' }}
-                  title="Select all visible lots"
+                  title="Select all on this page"
                 />
               </th>
               <th>Lot Number</th><th>Date</th><th>Fabric</th><th>Pattern</th><th>Brand</th>
@@ -102,11 +115,11 @@ export default function LotsTable({ lots, allCount, loading, deletingLot, bulkDe
             </tr>
           </thead>
           <tbody>
-            {lots.length === 0 ? (
+            {pageLots.length === 0 ? (
               <tr><td colSpan={7} style={{ padding: '40px', textAlign: 'center', color: '#6c757d', fontSize: '18px' }}>
                 {allCount === 0 ? 'No lots found' : 'No lots match the filters'}
               </td></tr>
-            ) : lots.map((lot: any) => {
+            ) : pageLots.map((lot: any) => {
               const id = lot._id
               const isSelected = selectedIds.has(id)
               return (
@@ -138,6 +151,7 @@ export default function LotsTable({ lots, allCount, loading, deletingLot, bulkDe
           </tbody>
         </table>
       </div>
+      <Pagination page={safePage} totalPages={totalPages} totalItems={lots.length} pageSize={PAGE_SIZE} onPageChange={setPage} />
     </>
   )
 }

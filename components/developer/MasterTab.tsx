@@ -1,8 +1,12 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { useToast } from '../ToastProvider'
 import { useConfirm } from '../ConfirmProvider'
 import { MasterTab, MasterItem, MASTER_TAB_CONFIG } from './types'
+import Pagination from '../Pagination'
+
+const PAGE_SIZE = 15
 
 interface MasterTabProps {
   tab: MasterTab
@@ -26,6 +30,13 @@ export default function MasterTabComponent({
   const toast = useToast()
   const { confirm: showConfirm } = useConfirm()
   const config = MASTER_TAB_CONFIG[tab]
+  const [page, setPage] = useState(1)
+
+  useEffect(() => { setPage(1) }, [tab, items.length])
+
+  const totalPages = Math.max(1, Math.ceil(items.length / PAGE_SIZE))
+  const safePage = Math.min(page, totalPages)
+  const pageItems = items.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
 
   const handleCreate = async () => {
     if (!newValue.trim()) { toast.showToast(`Please enter a ${config.singular.toLowerCase()} name`, 'warning'); return }
@@ -67,13 +78,14 @@ export default function MasterTabComponent({
       {loading ? (
         <div className="card-loading"><div className="spinner" /><p>Loading {config.title.toLowerCase()}&hellip;</p></div>
       ) : (
+        <>
         <div style={{ overflowX: 'auto' }}>
           <table className="production-table" style={{ width: '100%' }}>
             <thead><tr><th>{config.singular} Name</th><th style={{ textAlign: 'center' }}>Actions</th></tr></thead>
             <tbody>
-              {items.length === 0
+              {pageItems.length === 0
                 ? <tr><td colSpan={2} style={{ padding: '40px', textAlign: 'center', color: '#6c757d' }}>No {config.title.toLowerCase()} found</td></tr>
-                : items.map((item) => (
+                : pageItems.map((item) => (
                   <tr key={item._id}>
                     <td>
                       {editingId === item._id
@@ -100,6 +112,8 @@ export default function MasterTabComponent({
             </tbody>
           </table>
         </div>
+        <Pagination page={safePage} totalPages={totalPages} totalItems={items.length} pageSize={PAGE_SIZE} onPageChange={setPage} />
+        </>
       )}
     </div>
   )

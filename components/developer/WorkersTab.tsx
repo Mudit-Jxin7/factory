@@ -1,8 +1,12 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { workersAPI } from '@/lib/api'
 import { useToast } from '../ToastProvider'
 import { useConfirm } from '../ConfirmProvider'
+import Pagination from '../Pagination'
+
+const PAGE_SIZE = 15
 
 type WorkerForm = { worker_full_name: string; tbd1: string; tbd2: string; tbd3: string }
 
@@ -28,6 +32,13 @@ export default function WorkersTab({
 }: WorkersTabProps) {
   const toast = useToast()
   const { confirm: showConfirm } = useConfirm()
+  const [page, setPage] = useState(1)
+
+  useEffect(() => { setPage(1) }, [workers.length])
+
+  const totalPages = Math.max(1, Math.ceil(workers.length / PAGE_SIZE))
+  const safePage = Math.min(page, totalPages)
+  const pageWorkers = workers.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
 
   const handleCreate = async () => {
     if (!newWorker.worker_full_name.trim()) { toast.showToast('Please enter worker full name', 'warning'); return }
@@ -76,6 +87,7 @@ export default function WorkersTab({
       {loading ? (
         <div className="card-loading"><div className="spinner" /><p>Loading workers&hellip;</p></div>
       ) : (
+        <>
         <div style={{ overflowX: 'auto' }}>
           <table className="production-table" style={{ width: '100%' }}>
             <thead>
@@ -85,9 +97,9 @@ export default function WorkersTab({
               </tr>
             </thead>
             <tbody>
-              {workers.length === 0
+              {pageWorkers.length === 0
                 ? <tr><td colSpan={6} style={{ padding: '40px', textAlign: 'center', color: '#6c757d' }}>No workers found</td></tr>
-                : workers.map((worker: any) => (
+                : pageWorkers.map((worker: any) => (
                   <tr key={worker._id}>
                     <td style={{ fontWeight: '600', color: '#1a1a1a' }}>{worker.worker_id}</td>
                     {(['worker_full_name', 'tbd1', 'tbd2', 'tbd3'] as const).map((key) => (
@@ -117,6 +129,8 @@ export default function WorkersTab({
             </tbody>
           </table>
         </div>
+        <Pagination page={safePage} totalPages={totalPages} totalItems={workers.length} pageSize={PAGE_SIZE} onPageChange={setPage} />
+        </>
       )}
     </div>
   )

@@ -91,8 +91,13 @@ export default function AllJobCardsContent() {
     })
   }
 
-  const handleSelectAll = (checked: boolean) => {
-    setSelectedJobCardIds(checked ? new Set(filteredJobCards.map(j => j._id)) : new Set())
+  const handleSelectAll = (pageIds: string[], checked: boolean) => {
+    setSelectedJobCardIds(prev => {
+      const next = new Set(prev)
+      if (checked) pageIds.forEach(id => next.add(id))
+      else pageIds.forEach(id => next.delete(id))
+      return next
+    })
   }
 
   const brandOptions = [...new Set(allJobCards.map((j: any) => j.brand).filter(Boolean))].sort() as string[]

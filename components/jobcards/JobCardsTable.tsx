@@ -1,7 +1,10 @@
 'use client'
 
-import { useRef, useEffect } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Pagination from '@/components/Pagination'
+
+const PAGE_SIZE = 15
 
 interface JobCardsTableProps {
   jobCards: any[]
@@ -11,7 +14,7 @@ interface JobCardsTableProps {
   bulkDeleting?: boolean
   selectedIds: Set<string>
   onSelectId: (id: string, checked: boolean) => void
-  onSelectAll: (checked: boolean) => void
+  onSelectAll: (pageIds: string[], checked: boolean) => void
   onDeleteSelected?: () => void
   onView: (lotNumber: string) => void
   onDelete: (lotNumber: string) => void
@@ -19,16 +22,25 @@ interface JobCardsTableProps {
 
 export default function JobCardsTable({ jobCards, allCount, loading, deletingJobCard, bulkDeleting, selectedIds, onSelectId, onSelectAll, onDeleteSelected, onView, onDelete }: JobCardsTableProps) {
   const router = useRouter()
+  const [page, setPage] = useState(1)
   const selectAllRef = useRef<HTMLInputElement>(null)
 
-  const allSelected = jobCards.length > 0 && jobCards.every(j => selectedIds.has(j._id))
-  const someSelected = jobCards.some(j => selectedIds.has(j._id))
+  useEffect(() => { setPage(1) }, [jobCards.length])
+
+  const totalPages = Math.max(1, Math.ceil(jobCards.length / PAGE_SIZE))
+  const safePage = Math.min(page, totalPages)
+  const pageCards = jobCards.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
+  const pageIds = pageCards.map(j => j._id)
+
+  const allPageSelected = pageCards.length > 0 && pageCards.every(j => selectedIds.has(j._id))
+  const somePageSelected = pageCards.some(j => selectedIds.has(j._id))
+  const totalSelected = jobCards.filter(j => selectedIds.has(j._id)).length
 
   useEffect(() => {
     if (selectAllRef.current) {
-      selectAllRef.current.indeterminate = someSelected && !allSelected
+      selectAllRef.current.indeterminate = somePageSelected && !allPageSelected
     }
-  }, [someSelected, allSelected])
+  }, [somePageSelected, allPageSelected])
 
   if (loading) {
     return (
@@ -60,10 +72,10 @@ export default function JobCardsTable({ jobCards, allCount, loading, deletingJob
     <>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
         <h2>All Job Cards ({jobCards.length} of {allCount})</h2>
-        {someSelected && (
+        {totalSelected > 0 && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <span style={{ fontSize: '14px', color: '#495057', fontWeight: 500 }}>
-              {selectedIds.size} selected
+              {totalSelected} selected
             </span>
             {onDeleteSelected && (
               <button
@@ -86,11 +98,11 @@ export default function JobCardsTable({ jobCards, allCount, loading, deletingJob
                 <input
                   ref={selectAllRef}
                   type="checkbox"
-                  checked={allSelected}
-                  onChange={e => onSelectAll(e.target.checked)}
-                  disabled={jobCards.length === 0}
+                  checked={allPageSelected}
+                  onChange={e => onSelectAll(pageIds, e.target.checked)}
+                  disabled={pageCards.length === 0}
                   style={{ cursor: 'pointer', width: '16px', height: '16px' }}
-                  title="Select all visible job cards"
+                  title="Select all on this page"
                 />
               </th>
               <th>Lot Number</th><th>Date</th><th>Brand</th>
@@ -98,11 +110,11 @@ export default function JobCardsTable({ jobCards, allCount, loading, deletingJob
             </tr>
           </thead>
           <tbody>
-            {jobCards.length === 0 ? (
+            {pageCards.length === 0 ? (
               <tr><td colSpan={5} style={{ padding: '40px', textAlign: 'center', color: '#6c757d', fontSize: '18px' }}>
                 {allCount === 0 ? 'No job cards found' : 'No job cards match the filters'}
               </td></tr>
-            ) : jobCards.map((jobCard: any) => {
+            ) : pageCards.map((jobCard: any) => {
               const id = jobCard._id
               const isSelected = selectedIds.has(id)
               return (
@@ -133,6 +145,7 @@ export default function JobCardsTable({ jobCards, allCount, loading, deletingJob
           </tbody>
         </table>
       </div>
+      <Pagination page={safePage} totalPages={totalPages} totalItems={jobCards.length} pageSize={PAGE_SIZE} onPageChange={setPage} />
     </>
   )
 }

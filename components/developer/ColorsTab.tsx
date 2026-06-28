@@ -1,8 +1,12 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { colorsAPI } from '@/lib/api'
 import { useToast } from '../ToastProvider'
 import { useConfirm } from '../ConfirmProvider'
+import Pagination from '../Pagination'
+
+const PAGE_SIZE = 15
 
 interface ColorsTabProps {
   colors: any[]
@@ -24,6 +28,13 @@ export default function ColorsTab({
 }: ColorsTabProps) {
   const toast = useToast()
   const { confirm: showConfirm } = useConfirm()
+  const [page, setPage] = useState(1)
+
+  useEffect(() => { setPage(1) }, [colors.length])
+
+  const totalPages = Math.max(1, Math.ceil(colors.length / PAGE_SIZE))
+  const safePage = Math.min(page, totalPages)
+  const pageColors = colors.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
 
   const handleCreate = async () => {
     if (!newColorName.trim()) { toast.showToast('Please enter a color name', 'warning'); return }
@@ -65,39 +76,42 @@ export default function ColorsTab({
       {loading ? (
         <div className="card-loading"><div className="spinner" /><p>Loading colors&hellip;</p></div>
       ) : (
-        <div style={{ overflowX: 'auto' }}>
-          <table className="production-table" style={{ width: '100%' }}>
-            <thead><tr><th>Color Name</th><th style={{ textAlign: 'center' }}>Actions</th></tr></thead>
-            <tbody>
-              {colors.length === 0
-                ? <tr><td colSpan={2} style={{ padding: '40px', textAlign: 'center', color: '#6c757d' }}>No colors found</td></tr>
-                : colors.map((color: any) => (
-                  <tr key={color._id}>
-                    <td>
-                      {editingColor === color._id
-                        ? <input type="text" value={editColorName} onChange={(e) => onEditColorNameChange(e.target.value)} style={{ width: '100%', padding: '8px' }} onKeyPress={(e) => e.key === 'Enter' && handleUpdate(color._id)} />
-                        : <span style={{ fontWeight: '600', color: '#1a1a1a' }}>{color.name}</span>}
-                    </td>
-                    <td style={{ textAlign: 'center' }}>
-                      {editingColor === color._id ? (
-                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                          <button className="btn btn-primary" onClick={() => handleUpdate(color._id)} style={{ padding: '6px 12px', fontSize: '14px' }}>Save</button>
-                          <button className="btn btn-secondary" onClick={() => onSetEditingColor(null)} style={{ padding: '6px 12px', fontSize: '14px' }}>Cancel</button>
-                        </div>
-                      ) : (
-                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                          <button className="btn btn-primary" onClick={() => { onSetEditingColor(color._id); onEditColorNameChange(color.name) }} style={{ padding: '6px 12px', fontSize: '14px' }}>Edit</button>
-                          <button className="btn btn-logout" onClick={() => handleDelete(color._id)} disabled={deletingColor === color._id} style={{ padding: '6px 12px', fontSize: '14px' }}>
-                            {deletingColor === color._id ? 'Deleting...' : 'Delete'}
-                          </button>
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
-        </div>
+        <>
+          <div style={{ overflowX: 'auto' }}>
+            <table className="production-table" style={{ width: '100%' }}>
+              <thead><tr><th>Color Name</th><th style={{ textAlign: 'center' }}>Actions</th></tr></thead>
+              <tbody>
+                {pageColors.length === 0
+                  ? <tr><td colSpan={2} style={{ padding: '40px', textAlign: 'center', color: '#6c757d' }}>No colors found</td></tr>
+                  : pageColors.map((color: any) => (
+                    <tr key={color._id}>
+                      <td>
+                        {editingColor === color._id
+                          ? <input type="text" value={editColorName} onChange={(e) => onEditColorNameChange(e.target.value)} style={{ width: '100%', padding: '8px' }} onKeyPress={(e) => e.key === 'Enter' && handleUpdate(color._id)} />
+                          : <span style={{ fontWeight: '600', color: '#1a1a1a' }}>{color.name}</span>}
+                      </td>
+                      <td style={{ textAlign: 'center' }}>
+                        {editingColor === color._id ? (
+                          <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                            <button className="btn btn-primary" onClick={() => handleUpdate(color._id)} style={{ padding: '6px 12px', fontSize: '14px' }}>Save</button>
+                            <button className="btn btn-secondary" onClick={() => onSetEditingColor(null)} style={{ padding: '6px 12px', fontSize: '14px' }}>Cancel</button>
+                          </div>
+                        ) : (
+                          <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                            <button className="btn btn-primary" onClick={() => { onSetEditingColor(color._id); onEditColorNameChange(color.name) }} style={{ padding: '6px 12px', fontSize: '14px' }}>Edit</button>
+                            <button className="btn btn-logout" onClick={() => handleDelete(color._id)} disabled={deletingColor === color._id} style={{ padding: '6px 12px', fontSize: '14px' }}>
+                              {deletingColor === color._id ? 'Deleting...' : 'Delete'}
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+          <Pagination page={safePage} totalPages={totalPages} totalItems={colors.length} pageSize={PAGE_SIZE} onPageChange={setPage} />
+        </>
       )}
     </div>
   )
