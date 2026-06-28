@@ -1,12 +1,11 @@
 'use client'
 
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { jobCardsAPI, workersAPI } from '@/lib/api'
 import NavigationBar from './NavigationBar'
 import { useToast } from './ToastProvider'
-import { prepareCloneForPDF, replaceInputsForPDF, scaleCloneFontsForPDF } from '@/lib/pdfUtils'
 import jsPDF from 'jspdf'
-import html2canvas from 'html2canvas'
+import autoTable from 'jspdf-autotable'
 import './dashboard.css'
 
 type SectionType = 'Front' | 'Back' | 'Zip'
@@ -26,7 +25,6 @@ interface AnalyticsRow {
 
 export default function WorkerAnalyticsContent() {
   const toast = useToast()
-  const analyticsRef = useRef<HTMLDivElement>(null)
   const [jobCards, setJobCards] = useState<any[]>([])
   const [workers, setWorkers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -167,108 +165,72 @@ export default function WorkerAnalyticsContent() {
     setSelectedWorker('')
   }
 
-  const exportToPDF = async () => {
-    if (!analyticsRef.current) return
-
+  const exportToPDF = () => {
     setGeneratingPDF(true)
-
     try {
-      // Hide navigation bar temporarily
-      const navBar = document.querySelector('.main-navbar') as HTMLElement
-      const originalDisplay = navBar?.style.display
-      if (navBar) {
-        navBar.style.display = 'none'
+      const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
+      const pageW = pdf.internal.pageSize.getWidth()
+      const margin = 10
+
+      // ── Title ──────────────────────────────────────────────────────────────
+      pdf.setFontSize(16)
+      pdf.setFont('helvetica', 'bold')
+      pdf.text('Worker Analytics', pageW / 2, 14, { align: 'center' })
+
+      // Subtitle with active filters
+      pdf.setFontSize(9)
+      pdf.setFont('helvetica', 'normal')
+      const filterParts: string[] = []
+      if (fromDate) filterParts.push(`From: ${fromDate}`)
+      if (toDate) filterParts.push(`To: ${toDate}`)
+      if (selectedWorker) {
+        const w = workers.find((w: any) => w._id === selectedWorker)
+        if (w) filterParts.push(`Worker: ${w.worker_full_name}`)
+      }
+      if (filterParts.length > 0) {
+        pdf.text(filterParts.join('   |   '), pageW / 2, 20, { align: 'center' })
       }
 
-      // Clone the element for PDF generation
-      const clone = analyticsRef.current.cloneNode(true) as HTMLElement
-      clone.style.position = 'absolute'
-      clone.style.left = '-9999px'
-      clone.style.top = '0'
-      document.body.appendChild(clone)
-      prepareCloneForPDF(clone, analyticsRef.current)
+      // ── Analytics Table ────────────────────────────────────────────────────
+      const head = [['Worker ID', 'Worker Name', 'Section', 'Date', 'Rate', 'Lot Number', 'Layer', 'Pieces', 'Total Amount']]
+      const body = filteredData.map(row => [
+        row.worker_id,
+        row.worker_full_name,
+        row.section,
+        row.date,
+        row.rate.toFixed(2),
+        row.lotNumber,
+        row.layer,
+        row.pieces.toFixed(2),
+        row.total_amount.toFixed(2),
+      ])
 
-      // Hide filters in PDF
-      const filters = clone.querySelector('.filters-section') as HTMLElement
-      if (filters) {
-        filters.style.display = 'none'
-      }
+      // Totals row
+      body.push(['', 'TOTAL', '', '', '', '', '', totals.totalPieces.toFixed(2), totals.totalAmount.toFixed(2)] as any)
 
-      replaceInputsForPDF(clone)
-      await new Promise((resolve) => setTimeout(resolve, 50))
-
-      // Increase font sizes for PDF readability (clone only, not the live UI)
-      scaleCloneFontsForPDF(clone)
-
-      const canvas = await html2canvas(clone, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#f8f9fa',
-        windowWidth: clone.scrollWidth,
-        windowHeight: clone.scrollHeight,
+      autoTable(pdf, {
+        startY: filterParts.length > 0 ? 24 : 18,
+        margin: { left: margin, right: margin },
+        head,
+        body,
+        styles: { fontSize: 8, cellPadding: 2, halign: 'center' },
+        headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
+        alternateRowStyles: { fillColor: [240, 247, 255] },
+        didParseCell: (data) => {
+          // Highlight totals row
+          if (data.row.index === body.length - 1) {
+            data.cell.styles.fontStyle = 'bold'
+            data.cell.styles.fillColor = [255, 249, 230]
+          }
+        },
+        theme: 'grid',
       })
 
-      document.body.removeChild(clone)
-
-      if (navBar) {
-        navBar.style.display = originalDisplay || ''
-      }
-
-      const imgData = canvas.toDataURL('image/png')
-      const imgWidth = canvas.width
-      const imgHeight = canvas.height
-
-      const pdf = new jsPDF('p', 'mm', 'a4')
-      const pdfWidth = pdf.internal.pageSize.getWidth()
-      const pdfHeight = pdf.internal.pageSize.getHeight()
-
-      const ratio = imgWidth / imgHeight
-      const pageWidth = pdfWidth - 20
-      const pageHeight = pdfHeight - 20
-
-      let finalWidth = pageWidth
-      let finalHeight = finalWidth / ratio
-
-      const marginX = (pdfWidth - finalWidth) / 2
-      let positionY = 10
-
-      if (finalHeight <= pageHeight) {
-        pdf.addImage(imgData, 'PNG', marginX, positionY, finalWidth, finalHeight)
-      } else {
-        const totalPages = Math.ceil(finalHeight / pageHeight)
-        let sourceY = 0
-
-        for (let i = 0; i < totalPages; i++) {
-          if (i > 0) {
-            pdf.addPage()
-            positionY = 10
-          }
-
-          const remainingHeight = finalHeight - (i * pageHeight)
-          const currentPageHeight = Math.min(pageHeight, remainingHeight)
-          const sourceHeight = (currentPageHeight / finalHeight) * imgHeight
-
-          const pageCanvas = document.createElement('canvas')
-          pageCanvas.width = imgWidth
-          pageCanvas.height = sourceHeight
-          const ctx = pageCanvas.getContext('2d')
-          if (ctx) {
-            ctx.drawImage(canvas, 0, sourceY, imgWidth, sourceHeight, 0, 0, imgWidth, sourceHeight)
-          }
-
-          const pageImgData = pageCanvas.toDataURL('image/png')
-          pdf.addImage(pageImgData, 'PNG', marginX, positionY, finalWidth, currentPageHeight)
-
-          sourceY += sourceHeight
-        }
-      }
-
       const dateRange = fromDate && toDate ? `_${fromDate}_to_${toDate}` : ''
-      const workerName = selectedWorker
+      const workerSuffix = selectedWorker
         ? `_${workers.find((w: any) => w._id === selectedWorker)?.worker_full_name || 'worker'}`
         : ''
-      pdf.save(`WorkerAnalytics${dateRange}${workerName}.pdf`)
+      pdf.save(`WorkerAnalytics${dateRange}${workerSuffix}.pdf`)
       toast.showToast('PDF exported successfully!', 'success')
     } catch (error: any) {
       console.error('Error generating PDF:', error)
@@ -353,7 +315,7 @@ export default function WorkerAnalyticsContent() {
   return (
     <>
       <NavigationBar />
-      <div className="dashboard-container" ref={analyticsRef}>
+      <div className="dashboard-container">
         <div className="dashboard-header">
           <div className="header-title">
             <h1>Worker Analytics</h1>

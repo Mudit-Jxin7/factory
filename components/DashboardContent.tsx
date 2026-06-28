@@ -1,12 +1,11 @@
 'use client'
 
-import { useState, useMemo, useRef, useEffect } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { lotsAPI, jobCardsAPI, colorsAPI, brandsAPI, patternsAPI, fabricsAPI } from '@/lib/api'
 import { getColorForShade } from '@/lib/colorUtils'
-import { prepareCloneForPDF, replaceInputsForPDF, scaleCloneFontsForPDF } from '@/lib/pdfUtils'
 import jsPDF from 'jspdf'
-import html2canvas from 'html2canvas'
+import autoTable from 'jspdf-autotable'
 import NavigationBar from './NavigationBar'
 import { useToast } from './ToastProvider'
 import './dashboard.css'
@@ -18,7 +17,6 @@ export default function DashboardContent() {
   const [saving, setSaving] = useState(false)
   const [generatingPDF, setGeneratingPDF] = useState(false)
   const [loadingLot, setLoadingLot] = useState(false)
-  const dashboardRef = useRef<HTMLDivElement>(null)
   const [colors, setColors] = useState<any[]>([])
   const [fabrics, setFabrics] = useState<any[]>([])
   const [patterns, setPatterns] = useState<any[]>([])
@@ -451,96 +449,103 @@ export default function DashboardContent() {
     }
   }
 
-  const exportToPDF = async () => {
-    if (!dashboardRef.current) return
-
+  const exportToPDF = () => {
     setGeneratingPDF(true)
-    
     try {
-      const headerActions = dashboardRef.current.querySelector('.header-actions') as HTMLElement
-      const originalDisplay = headerActions?.style.display
-      if (headerActions) {
-        headerActions.style.display = 'none'
-      }
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+      const pageW = pdf.internal.pageSize.getWidth()
+      const margin = 10
 
-      // Clone the element for PDF generation
-      const clone = dashboardRef.current.cloneNode(true) as HTMLElement
-      clone.style.position = 'absolute'
-      clone.style.left = '-9999px'
-      clone.style.top = '0'
-      document.body.appendChild(clone)
-      prepareCloneForPDF(clone, dashboardRef.current)
-      replaceInputsForPDF(clone)
+      // ── Title ──────────────────────────────────────────────────────────────
+      pdf.setFontSize(16)
+      pdf.setFont('helvetica', 'bold')
+      pdf.text('Lot Production', pageW / 2, 14, { align: 'center' })
 
-      await new Promise(resolve => setTimeout(resolve, 50))
+      // ── Lot Information ────────────────────────────────────────────────────
+      pdf.setFontSize(11)
+      pdf.text('Lot Information', margin, 24)
 
-      // Increase font sizes for PDF readability (clone only, not the live UI)
-      scaleCloneFontsForPDF(clone)
-
-      const canvas = await html2canvas(clone, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#f8f9fa',
-        windowWidth: clone.scrollWidth,
-        windowHeight: clone.scrollHeight,
+      autoTable(pdf, {
+        startY: 26,
+        margin: { left: margin, right: margin },
+        body: [
+          ['Lot Number', lotNumber || '—', 'Date', date || '—'],
+          ['Fabric', fabric || '—', 'Pattern', pattern || '—'],
+          ['Brand', brand || '—', '', ''],
+        ],
+        styles: { fontSize: 9, cellPadding: 2 },
+        columnStyles: { 0: { fontStyle: 'bold', cellWidth: 35 }, 2: { fontStyle: 'bold', cellWidth: 35 } },
+        theme: 'grid',
       })
 
-      // Remove clone
-      document.body.removeChild(clone)
+      // ── Ratios ─────────────────────────────────────────────────────────────
+      const afterInfo = (pdf as any).lastAutoTable.finalY + 6
+      pdf.setFontSize(11)
+      pdf.setFont('helvetica', 'bold')
+      pdf.text('Ratios', margin, afterInfo)
 
-      if (headerActions) {
-        headerActions.style.display = originalDisplay || ''
-      }
+      autoTable(pdf, {
+        startY: afterInfo + 2,
+        margin: { left: margin, right: margin },
+        head: [Object.keys(ratios).map(k => k.toUpperCase())],
+        body: [Object.values(ratios).map(v => String(v))],
+        styles: { fontSize: 8, cellPadding: 2, halign: 'center' },
+        headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
+        theme: 'grid',
+      })
 
-      const imgData = canvas.toDataURL('image/png')
-      const imgWidth = canvas.width
-      const imgHeight = canvas.height
+      const afterRatios = (pdf as any).lastAutoTable.finalY + 2
+      pdf.setFontSize(9)
+      pdf.setFont('helvetica', 'normal')
+      pdf.text(`Sum of Ratios: ${sumOfRatios.toFixed(2)}`, margin, afterRatios + 4)
 
-      const pdf = new jsPDF('p', 'mm', 'a4')
-      const pdfWidth = pdf.internal.pageSize.getWidth()
-      const pdfHeight = pdf.internal.pageSize.getHeight()
-      
-      const ratio = imgWidth / imgHeight
-      const pageWidth = pdfWidth - 20
-      const pageHeight = pdfHeight - 20
-      
-      let finalWidth = pageWidth
-      let finalHeight = finalWidth / ratio
+      // ── Production Data ────────────────────────────────────────────────────
+      const afterRatioSum = afterRatios + 10
+      pdf.setFontSize(11)
+      pdf.setFont('helvetica', 'bold')
+      pdf.text('Production Data', margin, afterRatioSum)
 
-      const marginX = (pdfWidth - finalWidth) / 2
-      let positionY = 10
+      autoTable(pdf, {
+        startY: afterRatioSum + 2,
+        margin: { left: margin, right: margin },
+        head: [['S.No', 'Meter', 'Layer', 'Pieces', 'Color', 'Zip Code', 'Thread Code']],
+        body: productionData.map(row => [
+          row.serialNumber,
+          row.meter || '0',
+          row.layer,
+          Number(row.pieces).toFixed(2),
+          row.color || '—',
+          (row as any).zip_code || '—',
+          (row as any).thread_code || '—',
+        ]),
+        styles: { fontSize: 8, cellPadding: 2, halign: 'center' },
+        headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
+        alternateRowStyles: { fillColor: [240, 247, 255] },
+        theme: 'grid',
+      })
 
-      if (finalHeight <= pageHeight) {
-        pdf.addImage(imgData, 'PNG', marginX, positionY, finalWidth, finalHeight)
-      } else {
-        const totalPages = Math.ceil(finalHeight / pageHeight)
-        let sourceY = 0
+      // ── Summary ────────────────────────────────────────────────────────────
+      const afterProd = (pdf as any).lastAutoTable.finalY + 6
+      pdf.setFontSize(11)
+      pdf.setFont('helvetica', 'bold')
+      pdf.text('Summary & Calculations', margin, afterProd)
 
-        for (let i = 0; i < totalPages; i++) {
-          if (i > 0) {
-            pdf.addPage()
-            positionY = 10
-          }
-
-          const remainingHeight = finalHeight - (i * pageHeight)
-          const currentPageHeight = Math.min(pageHeight, remainingHeight)
-          const sourceHeight = (currentPageHeight / finalHeight) * imgHeight
-
-          const pageCanvas = document.createElement('canvas')
-          pageCanvas.width = imgWidth
-          pageCanvas.height = sourceHeight
-          const ctx = pageCanvas.getContext('2d')
-          if (ctx) {
-            ctx.drawImage(canvas, 0, sourceY, imgWidth, sourceHeight, 0, 0, imgWidth, sourceHeight)
-          }
-
-          const pageImgData = pageCanvas.toDataURL('image/png')
-          pdf.addImage(pageImgData, 'PNG', marginX, positionY, finalWidth, currentPageHeight)
-
-          sourceY += sourceHeight
-        }
-      }
+      autoTable(pdf, {
+        startY: afterProd + 2,
+        margin: { left: margin, right: margin },
+        head: [['# Tukda', 'Tukda Size', 'Total Meter', 'Total Pieces', 'Grand Total Pieces', 'Average']],
+        body: [[
+          tukda.count,
+          tukda.size,
+          totalMeter.toFixed(2),
+          totalPieces.toFixed(2),
+          totalPiecesWithTukda.toFixed(2),
+          average.toFixed(4),
+        ]],
+        styles: { fontSize: 8, cellPadding: 2, halign: 'center' },
+        headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
+        theme: 'grid',
+      })
 
       pdf.save(`Lot_${lotNumber || 'Production'}_${date || 'Report'}.pdf`)
     } catch (error: any) {
@@ -567,7 +572,7 @@ export default function DashboardContent() {
   return (
     <>
       <NavigationBar />
-      <div className="dashboard-container" ref={dashboardRef}>
+      <div className="dashboard-container">
         <div className="dashboard-header">
           <div className="header-title">
             <h1>{searchParams?.get('edit') ? 'Edit Lot' : 'Lot Production Dashboard'}</h1>
