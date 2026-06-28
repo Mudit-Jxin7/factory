@@ -416,82 +416,117 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
       })
 
       // ── Production Data ────────────────────────────────────────────────────
+      // Layout (6 columns):
+      //   Row 1 – info header : S.No | Layer | Pieces | Color | Zip Code | Thread Code
+      //   Row 2 – info values
+      //   Row 3 – blank
+      //   Row 4 – label pair : Front Worker | Front Date | Front Rate | Back Worker  | Back Date  | Back Rate
+      //   Row 5 – values
+      //   Row 6 – blank
+      //   Row 7 – label pair : Zip Worker   | Zip Date   | Zip Rate   | Astar Worker | Astar Date | Astar Rate
+      //   Row 8 – values
+      //   Row 9 – blank
+      //   Row 10 – label pair: Belt Worker  | Belt Date  | Belt Rate  | Add1 Worker  | Add1 Date  | Add1 Rate
+      //   Row 11 – values
+      //   Row 12 – blank
+      //   Row 13 – label     : Add2 Worker  | Add2 Date  | Add2 Rate  | (blank x3)
+      //   Row 14 – values
       const afterRatios = (pdf as any).lastAutoTable.finalY + 6
       pdf.setFontSize(11)
       pdf.setFont('helvetica', 'bold')
       pdf.text('Production Data', margin, afterRatios)
 
-      // Each production row expands into sub-rows:
-      //   1 row  – Front worker value (header columns serve as the label)
-      //   2 rows – Back worker  (label + value)
-      //   2 rows – Zip worker   (label + value)
-      //   2 rows – Astar worker (label + value)
-      //   2 rows – Belt worker  (label + value)
-      //   2 rows – Add1 worker  (label + value)
-      //   2 rows – Add2 worker  (label + value)
-      //   2 rows – Zip Code / Thread Code (label + value)
-      // Total = 15 sub-rows; first 4 columns span all 15
-      const SPAN = 15
+      type CellDef = { content: string | number; styles?: Record<string, unknown> } | string | number
+      const infoHdr  = { fontStyle: 'bold' as const, fillColor: [41, 128, 185] as [number,number,number], textColor: [255,255,255] as [number,number,number] }
+      const labelSty = { fontStyle: 'bold' as const, fillColor: [230, 238, 255] as [number,number,number] }
+      const blankRow: CellDef[] = ['', '', '', '', '', '']
 
-      const workerSections = [
-        { label: 'Back',  workerKey: 'backWorker',     dateKey: 'backDate',     rateKey: 'backRate'     },
-        { label: 'Zip',   workerKey: 'zipWorker',      dateKey: 'zipDate',      rateKey: 'zipRate'      },
-        { label: 'Astar', workerKey: 'astarWorker',    dateKey: 'astarDate',    rateKey: 'astarRate'    },
-        { label: 'Belt',  workerKey: 'beltProdWorker', dateKey: 'beltProdDate', rateKey: 'beltProdRate' },
-        { label: 'Add1',  workerKey: 'add1Worker',     dateKey: 'add1Date',     rateKey: 'add1Rate'     },
-        { label: 'Add2',  workerKey: 'add2Worker',     dateKey: 'add2Date',     rateKey: 'add2Rate'     },
+      const workerPairs: [string, string | null][] = [
+        ['Front', 'Back'],
+        ['Zip',   'Astar'],
+        ['Belt',  'Add1'],
+        ['Add2',  null],
       ]
+      const workerMeta: Record<string, { workerKey: string; dateKey: string; rateKey: string }> = {
+        Front: { workerKey: 'frontWorker',    dateKey: 'frontDate',    rateKey: 'frontRate'    },
+        Back:  { workerKey: 'backWorker',     dateKey: 'backDate',     rateKey: 'backRate'     },
+        Zip:   { workerKey: 'zipWorker',      dateKey: 'zipDate',      rateKey: 'zipRate'      },
+        Astar: { workerKey: 'astarWorker',    dateKey: 'astarDate',    rateKey: 'astarRate'    },
+        Belt:  { workerKey: 'beltProdWorker', dateKey: 'beltProdDate', rateKey: 'beltProdRate' },
+        Add1:  { workerKey: 'add1Worker',     dateKey: 'add1Date',     rateKey: 'add1Rate'     },
+        Add2:  { workerKey: 'add2Worker',     dateKey: 'add2Date',     rateKey: 'add2Rate'     },
+      }
 
-      const labelCellStyle = { fontStyle: 'bold' as const, fillColor: [230, 238, 255] as [number, number, number] }
-
-      const prodBody: any[] = []
-      productionData.forEach(row => {
-        // Sub-row 1: spanned identity cells + Front worker value
+      const prodBody: CellDef[][] = []
+      productionData.forEach((row, idx) => {
+        // Info header + data
         prodBody.push([
-          { content: row.serialNumber, rowSpan: SPAN, styles: { valign: 'middle', halign: 'center' } },
-          { content: row.layer,        rowSpan: SPAN, styles: { valign: 'middle', halign: 'center' } },
-          { content: row.pieces,       rowSpan: SPAN, styles: { valign: 'middle', halign: 'center' } },
-          { content: row.color || '', rowSpan: SPAN, styles: { valign: 'middle', halign: 'center' } },
-          getWorkerName(row.frontWorker ?? '') || '',
-          row.frontDate || '',
-          row.frontRate || '',
-        ])
-
-        // Sub-rows for remaining worker sections (label then value)
-        workerSections.forEach(s => {
-          prodBody.push([
-            { content: `${s.label} Worker`, styles: labelCellStyle },
-            { content: `${s.label} Date`,   styles: labelCellStyle },
-            { content: `${s.label} Rate`,   styles: labelCellStyle },
-          ])
-          prodBody.push([
-            getWorkerName((row as any)[s.workerKey] ?? '') || '',
-            (row as any)[s.dateKey] || '',
-            (row as any)[s.rateKey] || '',
-          ])
-        })
-
-        // Zip Code / Thread Code label + value
-        prodBody.push([
-          { content: 'Zip Code',    styles: labelCellStyle },
-          { content: 'Thread Code', styles: labelCellStyle },
-          '',
+          { content: 'S.No',        styles: infoHdr },
+          { content: 'Layer',       styles: infoHdr },
+          { content: 'Pieces',      styles: infoHdr },
+          { content: 'Color',       styles: infoHdr },
+          { content: 'Zip Code',    styles: infoHdr },
+          { content: 'Thread Code', styles: infoHdr },
         ])
         prodBody.push([
+          row.serialNumber,
+          row.layer,
+          row.pieces,
+          row.color || '',
           (row as any).zip_code    || '',
           (row as any).thread_code || '',
-          '',
         ])
+        prodBody.push(blankRow)
+
+        // Worker pairs
+        workerPairs.forEach(([w1, w2], pIdx) => {
+          const m1 = workerMeta[w1]
+          const m2 = w2 ? workerMeta[w2] : null
+          // Label row
+          prodBody.push([
+            { content: `${w1} Worker`, styles: labelSty },
+            { content: `${w1} Date`,   styles: labelSty },
+            { content: `${w1} Rate`,   styles: labelSty },
+            { content: w2 ? `${w2} Worker` : '', styles: w2 ? labelSty : {} },
+            { content: w2 ? `${w2} Date`   : '', styles: w2 ? labelSty : {} },
+            { content: w2 ? `${w2} Rate`   : '', styles: w2 ? labelSty : {} },
+          ])
+          // Value row
+          prodBody.push([
+            getWorkerName((row as any)[m1.workerKey] ?? '') || '',
+            (row as any)[m1.dateKey] || '',
+            (row as any)[m1.rateKey] || '',
+            m2 ? getWorkerName((row as any)[m2.workerKey] ?? '') || '' : '',
+            m2 ? (row as any)[m2.dateKey] || '' : '',
+            m2 ? (row as any)[m2.rateKey] || '' : '',
+          ])
+          // Blank between pairs (not after the last one within an item)
+          if (pIdx < workerPairs.length - 1) prodBody.push(blankRow)
+        })
+
+        // Separator between multiple production items
+        if (idx < productionData.length - 1) {
+          prodBody.push(blankRow)
+          prodBody.push(blankRow)
+        }
       })
 
       autoTable(pdf, {
         startY: afterRatios + 2,
         margin: { left: margin, right: margin },
-        head: [['S.No', 'Layer', 'Pieces', 'Color', 'Front Worker', 'Front Date', 'Front Rate']],
+        head: [],
+        showHead: 'never',
         body: prodBody,
-        styles: { fontSize: 7, cellPadding: 1.5, halign: 'center', overflow: 'linebreak' },
-        headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
+        styles: { fontSize: 7, cellPadding: 1.5, halign: 'left', overflow: 'linebreak' },
         theme: 'grid',
+        columnStyles: {
+          0: { cellWidth: 38 },
+          1: { cellWidth: 25 },
+          2: { cellWidth: 18 },
+          3: { cellWidth: 38 },
+          4: { cellWidth: 25 },
+          5: { cellWidth: 'auto' },
+        },
       })
 
       // ── Additional Information ─────────────────────────────────────────────
@@ -564,47 +599,60 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
         [],
       ]
 
-      // Header matches the PDF layout: 7 columns
-      const prodHeader = ['S.No', 'Layer', 'Pieces', 'Color', 'Front Worker', 'Front Date', 'Front Rate']
-
-      const workerSections = [
-        { label: 'Back',  workerKey: 'backWorker',     dateKey: 'backDate',     rateKey: 'backRate'     },
-        { label: 'Zip',   workerKey: 'zipWorker',      dateKey: 'zipDate',      rateKey: 'zipRate'      },
-        { label: 'Astar', workerKey: 'astarWorker',    dateKey: 'astarDate',    rateKey: 'astarRate'    },
-        { label: 'Belt',  workerKey: 'beltProdWorker', dateKey: 'beltProdDate', rateKey: 'beltProdRate' },
-        { label: 'Add1',  workerKey: 'add1Worker',     dateKey: 'add1Date',     rateKey: 'add1Rate'     },
-        { label: 'Add2',  workerKey: 'add2Worker',     dateKey: 'add2Date',     rateKey: 'add2Rate'     },
+      // 6-column layout matching the PDF:
+      //   Col 1-3: left worker / info
+      //   Col 4-6: right worker / info
+      const workerPairs: [string, string | null][] = [
+        ['Front', 'Back'],
+        ['Zip',   'Astar'],
+        ['Belt',  'Add1'],
+        ['Add2',  null],
       ]
+      const workerMeta: Record<string, { workerKey: string; dateKey: string; rateKey: string }> = {
+        Front: { workerKey: 'frontWorker',    dateKey: 'frontDate',    rateKey: 'frontRate'    },
+        Back:  { workerKey: 'backWorker',     dateKey: 'backDate',     rateKey: 'backRate'     },
+        Zip:   { workerKey: 'zipWorker',      dateKey: 'zipDate',      rateKey: 'zipRate'      },
+        Astar: { workerKey: 'astarWorker',    dateKey: 'astarDate',    rateKey: 'astarRate'    },
+        Belt:  { workerKey: 'beltProdWorker', dateKey: 'beltProdDate', rateKey: 'beltProdRate' },
+        Add1:  { workerKey: 'add1Worker',     dateKey: 'add1Date',     rateKey: 'add1Rate'     },
+        Add2:  { workerKey: 'add2Worker',     dateKey: 'add2Date',     rateKey: 'add2Rate'     },
+      }
 
-      // Each production row expands into sub-rows matching the PDF vertical layout.
-      // S.No/Layer/Pieces/Color are repeated (CSV has no merged cells) only on the first
-      // sub-row; remaining sub-rows leave those columns blank for visual clarity.
       const prodRows: any[][] = []
-      productionData.forEach(row => {
-        const id = [row.serialNumber, row.layer, row.pieces, row.color || '']
-        const blank4 = ['', '', '', '']
-
-        // Sub-row 1: Front worker value
-        prodRows.push([...id,
-          getWorkerName(row.frontWorker ?? '') || '—',
-          row.frontDate || '—',
-          row.frontRate || '—',
+      productionData.forEach((row, idx) => {
+        // Info header + data rows
+        prodRows.push(['S.No', 'Layer', 'Pieces', 'Color', 'Zip Code', 'Thread Code'])
+        prodRows.push([
+          row.serialNumber, row.layer, row.pieces, row.color || '',
+          (row as any).zip_code || '', (row as any).thread_code || '',
         ])
+        prodRows.push([]) // blank
 
-        // Sub-rows for remaining workers
-        workerSections.forEach(s => {
-          prodRows.push([...blank4, `${s.label} Worker`, `${s.label} Date`, `${s.label} Rate`])
-          prodRows.push([...blank4,
-            getWorkerName((row as any)[s.workerKey] ?? '') || '—',
-            (row as any)[s.dateKey] || '—',
-            (row as any)[s.rateKey] || '—',
+        // Worker pair rows
+        workerPairs.forEach(([w1, w2], pIdx) => {
+          const m1 = workerMeta[w1]
+          const m2 = w2 ? workerMeta[w2] : null
+          // Label row
+          prodRows.push([
+            `${w1} Worker`, `${w1} Date`, `${w1} Rate`,
+            w2 ? `${w2} Worker` : '', w2 ? `${w2} Date` : '', w2 ? `${w2} Rate` : '',
           ])
+          // Value row
+          prodRows.push([
+            getWorkerName((row as any)[m1.workerKey] ?? '') || '',
+            (row as any)[m1.dateKey] || '',
+            (row as any)[m1.rateKey] || '',
+            m2 ? getWorkerName((row as any)[m2.workerKey] ?? '') || '' : '',
+            m2 ? (row as any)[m2.dateKey] || '' : '',
+            m2 ? (row as any)[m2.rateKey] || '' : '',
+          ])
+          if (pIdx < workerPairs.length - 1) prodRows.push([]) // blank between pairs
         })
 
-        // Zip Code / Thread Code
-        prodRows.push([...blank4, 'Zip Code', 'Thread Code', ''])
-        prodRows.push([...blank4, (row as any).zip_code || '—', (row as any).thread_code || '—', ''])
-        prodRows.push([]) // blank separator between production items
+        if (idx < productionData.length - 1) {
+          prodRows.push([])
+          prodRows.push([]) // extra separator between items
+        }
       })
 
       const addlHeader = ['Field', 'Value']
@@ -623,7 +671,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
 
       const allRows = [
         ...infoRows,
-        prodHeader, ...prodRows,
+        ...prodRows,
         [], ['Additional Information'], addlHeader, ...addlRows,
       ]
 
