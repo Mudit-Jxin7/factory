@@ -106,9 +106,9 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
   const [popupRate, setPopupRate] = useState('')
 
   const getWorkerName = (workerId: string) => {
-    if (!workerId) return '—'
+    if (!workerId) return ''
     const w = workers.find((x: { _id: string }) => x._id === workerId)
-    return w ? (w.worker_full_name || String(w.worker_id)) : '—'
+    return w ? (w.worker_full_name || String(w.worker_id)) : ''
   }
 
   const openWorkerPopup = (rowIndex: number, field: 'front' | 'back' | 'zip' | 'astar' | 'beltProd' | 'add1' | 'add2') => {
@@ -568,7 +568,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
       const col2 = addlFields.slice(third, third * 2)
       const col3 = addlFields.slice(third * 2)
       const addlBody = col1.map((item, i) => [
-        item[0], item[1] || '—',
+        item[0], item[1] || '',
         col2[i]?.[0] ?? '', col2[i]?.[1] ?? '',
         col3[i]?.[0] ?? '', col3[i]?.[1] ?? '',
       ])
