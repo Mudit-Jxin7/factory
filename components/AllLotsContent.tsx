@@ -155,9 +155,11 @@ export default function AllLotsContent() {
             <LotsTable
               lots={filteredLots} allCount={allLots.length} loading={loadingLots}
               deletingLot={deletingLot}
+              bulkDeleting={bulkDeleting}
               selectedIds={selectedLotIds}
               onSelectId={handleSelectId}
               onSelectAll={handleSelectAll}
+              onDeleteSelected={handleDeleteSelected}
               onView={(lotNumber) => router.push(`/lot/${lotNumber}`)}
               onDelete={handleDeleteLot}
             />

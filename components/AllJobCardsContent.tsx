@@ -140,9 +140,11 @@ export default function AllJobCardsContent() {
             <JobCardsTable
               jobCards={filteredJobCards} allCount={allJobCards.length} loading={loadingJobCards}
               deletingJobCard={deletingJobCard}
+              bulkDeleting={bulkDeleting}
               selectedIds={selectedJobCardIds}
               onSelectId={handleSelectId}
               onSelectAll={handleSelectAll}
+              onDeleteSelected={handleDeleteSelected}
               onView={(lotNumber) => router.push(`/jobcard/${encodeURIComponent(lotNumber)}`)}
               onDelete={handleDeleteJobCard}
             />

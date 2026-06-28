@@ -8,14 +8,16 @@ interface LotsTableProps {
   allCount: number
   loading: boolean
   deletingLot: string | null
+  bulkDeleting?: boolean
   selectedIds: Set<string>
   onSelectId: (id: string, checked: boolean) => void
   onSelectAll: (checked: boolean) => void
+  onDeleteSelected?: () => void
   onView: (lotNumber: string) => void
   onDelete: (lotNumber: string) => void
 }
 
-export default function LotsTable({ lots, allCount, loading, deletingLot, selectedIds, onSelectId, onSelectAll, onView, onDelete }: LotsTableProps) {
+export default function LotsTable({ lots, allCount, loading, deletingLot, bulkDeleting, selectedIds, onSelectId, onSelectAll, onDeleteSelected, onView, onDelete }: LotsTableProps) {
   const router = useRouter()
   const selectAllRef = useRef<HTMLInputElement>(null)
 
@@ -63,9 +65,21 @@ export default function LotsTable({ lots, allCount, loading, deletingLot, select
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', flexWrap: 'wrap', gap: '15px' }}>
         <h2>All Lots ({lots.length} of {allCount})</h2>
         {someSelected && (
-          <span style={{ fontSize: '14px', color: '#495057', fontWeight: 500 }}>
-            {selectedIds.size} selected
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <span style={{ fontSize: '14px', color: '#495057', fontWeight: 500 }}>
+              {selectedIds.size} selected
+            </span>
+            {onDeleteSelected && (
+              <button
+                className="btn btn-logout"
+                onClick={onDeleteSelected}
+                disabled={bulkDeleting}
+                style={{ padding: '6px 14px', fontSize: '14px' }}
+              >
+                {bulkDeleting ? 'Deleting...' : 'Delete Selected'}
+              </button>
+            )}
+          </div>
         )}
       </div>
       <div style={{ overflowX: 'auto' }}>

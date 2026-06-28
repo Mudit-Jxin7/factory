@@ -8,14 +8,16 @@ interface JobCardsTableProps {
   allCount: number
   loading: boolean
   deletingJobCard: string | null
+  bulkDeleting?: boolean
   selectedIds: Set<string>
   onSelectId: (id: string, checked: boolean) => void
   onSelectAll: (checked: boolean) => void
+  onDeleteSelected?: () => void
   onView: (lotNumber: string) => void
   onDelete: (lotNumber: string) => void
 }
 
-export default function JobCardsTable({ jobCards, allCount, loading, deletingJobCard, selectedIds, onSelectId, onSelectAll, onView, onDelete }: JobCardsTableProps) {
+export default function JobCardsTable({ jobCards, allCount, loading, deletingJobCard, bulkDeleting, selectedIds, onSelectId, onSelectAll, onDeleteSelected, onView, onDelete }: JobCardsTableProps) {
   const router = useRouter()
   const selectAllRef = useRef<HTMLInputElement>(null)
 
@@ -59,9 +61,21 @@ export default function JobCardsTable({ jobCards, allCount, loading, deletingJob
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
         <h2>All Job Cards ({jobCards.length} of {allCount})</h2>
         {someSelected && (
-          <span style={{ fontSize: '14px', color: '#495057', fontWeight: 500 }}>
-            {selectedIds.size} selected
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <span style={{ fontSize: '14px', color: '#495057', fontWeight: 500 }}>
+              {selectedIds.size} selected
+            </span>
+            {onDeleteSelected && (
+              <button
+                className="btn btn-logout"
+                onClick={onDeleteSelected}
+                disabled={bulkDeleting}
+                style={{ padding: '6px 14px', fontSize: '14px' }}
+              >
+                {bulkDeleting ? 'Deleting...' : 'Delete Selected'}
+              </button>
+            )}
+          </div>
         )}
       </div>
       <div style={{ overflowX: 'auto' }}>
