@@ -69,10 +69,12 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
     }).catch((err) => { setError('Error loading job card: ' + err.message); setLoading(false) })
   }, [lotNumber])
 
+  const today = new Date().toISOString().split('T')[0]
+
   const openWorkerPopup = (rowIndex: number, field: WorkerField) => {
     const row = productionData[rowIndex]
     setPopupWorker(String((row as any)[`${field}Worker`] ?? ''))
-    setPopupDate(String((row as any)[`${field}Date`] ?? ''))
+    setPopupDate(String((row as any)[`${field}Date`] ?? '') || today)
     setPopupRate(String((row as any)[`${field}Rate`] ?? ''))
     setEditingWorkerCell({ rowIndex, field })
   }

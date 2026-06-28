@@ -25,6 +25,15 @@ export default function WorkerPopupModal({
   field, workers, popupWorker, popupDate, popupRate,
   onWorkerChange, onDateChange, onRateChange, onSave, onCancel,
 }: WorkerPopupModalProps) {
+  const today = new Date().toISOString().split('T')[0]
+
+  const handleWorkerChange = (value: string) => {
+    onWorkerChange(value)
+    if (value && !popupDate) {
+      onDateChange(today)
+    }
+  }
+
   return (
     <div
       style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}
@@ -40,7 +49,7 @@ export default function WorkerPopupModal({
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div className="form-group" style={{ marginBottom: 0 }}>
             <label>Worker</label>
-            <select value={popupWorker} onChange={(e) => onWorkerChange(e.target.value)} style={inputStyle}>
+            <select value={popupWorker} onChange={(e) => handleWorkerChange(e.target.value)} style={inputStyle}>
               <option value="">Select worker</option>
               {workers.map((w) => (
                 <option key={w._id} value={w._id}>

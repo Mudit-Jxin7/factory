@@ -33,6 +33,20 @@ export default function JobCardProductionTable({
     return w ? (w.worker_full_name || String(w.worker_id)) : ''
   }
 
+  const getWorkerCellLabel = (row: JobCardProductionRow, field: WorkerField) => {
+    const workerKey = `${field}Worker` as keyof JobCardProductionRow
+    const rateKey = `${field}Rate` as keyof JobCardProductionRow
+    const dateKey = `${field}Date` as keyof JobCardProductionRow
+    const name = getWorkerName(String(row[workerKey] ?? ''))
+    if (!name) return ''
+    const rate = String(row[rateKey] ?? '')
+    const date = String(row[dateKey] ?? '')
+    const parts = [name]
+    if (rate) parts.push(rate)
+    if (date) parts.push(date)
+    return parts.join(' - ')
+  }
+
   return (
     <div className="card">
       <div className="card-header"><h2>Production Data</h2></div>
@@ -72,22 +86,19 @@ export default function JobCardProductionTable({
                     ) : <span style={{ fontSize: '16px', color: '#6c757d' }}>—</span>}
                   </div>
                 </td>
-                {WORKER_FIELDS.map((field) => {
-                  const workerKey = `${field}Worker` as keyof JobCardProductionRow
-                  return (
-                    <td key={field} style={{ width: '240px', minWidth: '240px' }}>
-                      <button
-                        type="button"
-                        onClick={() => isEditMode && onOpenWorkerPopup(index, field)}
-                        disabled={!isEditMode}
-                        className="tbd-input"
-                        style={workerBtnStyle(isEditMode)}
-                      >
-                        {getWorkerName(String(row[workerKey] ?? ''))}
-                      </button>
-                    </td>
-                  )
-                })}
+                {WORKER_FIELDS.map((field) => (
+                  <td key={field} style={{ width: '240px', minWidth: '240px' }}>
+                    <button
+                      type="button"
+                      onClick={() => isEditMode && onOpenWorkerPopup(index, field)}
+                      disabled={!isEditMode}
+                      className="tbd-input"
+                      style={workerBtnStyle(isEditMode)}
+                    >
+                      {getWorkerCellLabel(row, field) || <span style={{ color: '#aaa' }}>—</span>}
+                    </button>
+                  </td>
+                ))}
                 <td style={{ width: '70px', minWidth: '70px' }}>
                   <input type="text" value={row.zip_code ?? ''} readOnly disabled className="tbd-input"
                     style={{ background: '#f8f9fa', cursor: 'not-allowed', width: '100%' }} placeholder="Zip Code" />
