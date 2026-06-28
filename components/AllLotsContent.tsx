@@ -17,6 +17,9 @@ export default function AllLotsContent() {
   const [deletingLot, setDeletingLot] = useState<string | null>(null)
   const [filterDate, setFilterDate] = useState<string>('')
   const [filterLotNumber, setFilterLotNumber] = useState<string>('')
+  const [filterFabric, setFilterFabric] = useState<string>('')
+  const [filterPattern, setFilterPattern] = useState<string>('')
+  const [filterBrand, setFilterBrand] = useState<string>('')
 
   useEffect(() => {
     fetchAllLots()
@@ -139,17 +142,27 @@ export default function AllLotsContent() {
     }
   }
 
-  // Filter lots based on date and lot number
+  // Filter lots based on all active filters
   const filteredLots = allLots.filter((lot: any) => {
-    const matchesDate = !filterDate || (lot.date && lot.date === filterDate)
-    const matchesLotNumber = !filterLotNumber || 
-      (lot.lotNumber && lot.lotNumber.toLowerCase().includes(filterLotNumber.toLowerCase()))
-    return matchesDate && matchesLotNumber
+    const matchesDate      = !filterDate      || (lot.date      && lot.date === filterDate)
+    const matchesLotNumber = !filterLotNumber || (lot.lotNumber && lot.lotNumber.toLowerCase().includes(filterLotNumber.toLowerCase()))
+    const matchesFabric    = !filterFabric    || (lot.fabric    && lot.fabric    === filterFabric)
+    const matchesPattern   = !filterPattern   || (lot.pattern   && lot.pattern   === filterPattern)
+    const matchesBrand     = !filterBrand     || (lot.brand     && lot.brand     === filterBrand)
+    return matchesDate && matchesLotNumber && matchesFabric && matchesPattern && matchesBrand
   })
+
+  // Unique option lists derived from actual lot data
+  const fabricOptions  = [...new Set(allLots.map((l: any) => l.fabric).filter(Boolean))].sort()
+  const patternOptions = [...new Set(allLots.map((l: any) => l.pattern).filter(Boolean))].sort()
+  const brandOptions   = [...new Set(allLots.map((l: any) => l.brand).filter(Boolean))].sort()
 
   const clearFilters = () => {
     setFilterDate('')
     setFilterLotNumber('')
+    setFilterFabric('')
+    setFilterPattern('')
+    setFilterBrand('')
   }
 
   return (
@@ -184,45 +197,64 @@ export default function AllLotsContent() {
               {/* Filters */}
               <div className="card" style={{ marginBottom: '20px', padding: '20px', background: '#fff9e6' }}>
                 <h3 style={{ marginTop: 0, marginBottom: '15px', fontSize: '18px', fontWeight: '600', color: '#1a1a1a' }}>Filters</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '15px', alignItems: 'end' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px', alignItems: 'end' }}>
                   <div className="form-group" style={{ marginBottom: 0 }}>
-                    <label style={{ marginBottom: '8px', display: 'block', fontSize: '16px', fontWeight: '500', color: '#1a1a1a' }}>Filter by Date</label>
+                    <label style={{ marginBottom: '8px', display: 'block', fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>Date</label>
                     <input
                       type="date"
                       value={filterDate}
                       onChange={(e) => setFilterDate(e.target.value)}
-                      style={{
-                        width: '100%',
-                        padding: '10px',
-                        border: '1px solid #ddd',
-                        borderRadius: '6px',
-                        fontSize: '16px',
-                        backgroundColor: '#fff'
-                      }}
+                      style={{ width: '100%', padding: '8px 10px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', backgroundColor: '#fff' }}
                     />
                   </div>
                   <div className="form-group" style={{ marginBottom: 0 }}>
-                    <label style={{ marginBottom: '8px', display: 'block', fontSize: '16px', fontWeight: '500', color: '#1a1a1a' }}>Filter by Lot Number</label>
+                    <label style={{ marginBottom: '8px', display: 'block', fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>Lot Number</label>
                     <input
                       type="text"
                       value={filterLotNumber}
                       onChange={(e) => setFilterLotNumber(e.target.value)}
-                      placeholder="Enter lot number..."
-                      style={{
-                        width: '100%',
-                        padding: '10px',
-                        border: '1px solid #ddd',
-                        borderRadius: '6px',
-                        fontSize: '16px',
-                        backgroundColor: '#fff'
-                      }}
+                      placeholder="Search lot number…"
+                      style={{ width: '100%', padding: '8px 10px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', backgroundColor: '#fff' }}
                     />
+                  </div>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label style={{ marginBottom: '8px', display: 'block', fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>Fabric</label>
+                    <select
+                      value={filterFabric}
+                      onChange={(e) => setFilterFabric(e.target.value)}
+                      style={{ width: '100%', padding: '8px 10px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', backgroundColor: '#fff' }}
+                    >
+                      <option value="">All Fabrics</option>
+                      {fabricOptions.map((f: string) => <option key={f} value={f}>{f}</option>)}
+                    </select>
+                  </div>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label style={{ marginBottom: '8px', display: 'block', fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>Pattern</label>
+                    <select
+                      value={filterPattern}
+                      onChange={(e) => setFilterPattern(e.target.value)}
+                      style={{ width: '100%', padding: '8px 10px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', backgroundColor: '#fff' }}
+                    >
+                      <option value="">All Patterns</option>
+                      {patternOptions.map((p: string) => <option key={p} value={p}>{p}</option>)}
+                    </select>
+                  </div>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label style={{ marginBottom: '8px', display: 'block', fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>Brand</label>
+                    <select
+                      value={filterBrand}
+                      onChange={(e) => setFilterBrand(e.target.value)}
+                      style={{ width: '100%', padding: '8px 10px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', backgroundColor: '#fff' }}
+                    >
+                      <option value="">All Brands</option>
+                      {brandOptions.map((b: string) => <option key={b} value={b}>{b}</option>)}
+                    </select>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'end' }}>
                     <button
                       className="btn btn-secondary"
                       onClick={clearFilters}
-                      style={{ padding: '10px 20px', fontSize: '16px', whiteSpace: 'nowrap' }}
+                      style={{ padding: '8px 16px', fontSize: '14px', whiteSpace: 'nowrap' }}
                     >
                       Clear Filters
                     </button>
