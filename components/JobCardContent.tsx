@@ -306,6 +306,22 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
         zipRate: '',
         zip_code: '',
         thread_code: '',
+        astar: '',
+        astarWorker: '',
+        astarDate: '',
+        astarRate: '',
+        beltProd: '',
+        beltProdWorker: '',
+        beltProdDate: '',
+        beltProdRate: '',
+        add1: '',
+        add1Worker: '',
+        add1Date: '',
+        add1Rate: '',
+        add2: '',
+        add2Worker: '',
+        add2Date: '',
+        add2Rate: '',
       }
     ])
   }
