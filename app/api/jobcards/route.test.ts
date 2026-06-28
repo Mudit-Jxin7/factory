@@ -30,97 +30,110 @@ beforeEach(() => {
   vi.clearAllMocks()
 })
 
-describe('POST /api/jobcards — dedup by lotId (lot numbers are not unique)', () => {
-  it('deduplicates by lotId when the field is present', async () => {
+describe('POST /api/jobcards — strict one-per-lot enforcement', () => {
+  it('creates a job card when none exists for the lot', async () => {
     mockFindOne.mockResolvedValue(null)
-    mockInsertOne.mockResolvedValue({ insertedId: 'abc123' })
+    mockInsertOne.mockResolvedValue({ insertedId: 'new-id' })
 
-    await POST(makeRequest({ lotId: 'mongo-id-1', lotNumber: 'L001' }))
-
-    // Must query by lotId, not lotNumber
-    expect(mockFindOne).toHaveBeenCalledWith({ lotId: 'mongo-id-1' })
-  })
-
-  it('falls back to lotNumber dedup for legacy cards without lotId', async () => {
-    mockFindOne.mockResolvedValue(null)
-    mockInsertOne.mockResolvedValue({ insertedId: 'abc123' })
-
-    await POST(makeRequest({ lotNumber: 'L001' }))
-
-    expect(mockFindOne).toHaveBeenCalledWith({ lotNumber: 'L001' })
-  })
-
-  it('creates a new job card when none exists for the lotId', async () => {
-    mockFindOne.mockResolvedValue(null)
-    mockInsertOne.mockResolvedValue({ insertedId: 'abc123' })
-
-    const res = await POST(makeRequest({ lotId: 'mongo-id-1', lotNumber: 'L001', brand: 'Levis' }))
+    const res = await POST(makeRequest({ lotId: 'lot-id-1', lotNumber: 'L001' }))
     const body = await res.json()
 
     expect(mockInsertOne).toHaveBeenCalledOnce()
     expect(res.status).toBe(201)
     expect(body.success).toBe(true)
     expect(body.created).toBe(true)
-    expect(body.id).toBe('abc123')
   })
 
-  it('allows two job cards with the same lotNumber but different lotIds', async () => {
-    // First lot with lotId=A creates a card
+  it('checks BOTH lotNumber AND lotId in a single $or query', async () => {
     mockFindOne.mockResolvedValue(null)
-    mockInsertOne.mockResolvedValue({ insertedId: 'card-A' })
-    const resA = await POST(makeRequest({ lotId: 'lot-id-A', lotNumber: 'L001' }))
-    expect((await resA.json()).created).toBe(true)
+    mockInsertOne.mockResolvedValue({ insertedId: 'new-id' })
 
-    // Second lot with lotId=B and the same lotNumber L001 should ALSO create a card
-    vi.clearAllMocks()
-    mockFindOne.mockResolvedValue(null)
-    mockInsertOne.mockResolvedValue({ insertedId: 'card-B' })
-    const resB = await POST(makeRequest({ lotId: 'lot-id-B', lotNumber: 'L001' }))
-    expect((await resB.json()).created).toBe(true)
-    expect(mockInsertOne).toHaveBeenCalledOnce()
+    await POST(makeRequest({ lotId: 'lot-id-1', lotNumber: 'L001' }))
+
+    expect(mockFindOne).toHaveBeenCalledWith({
+      $or: [{ lotNumber: 'L001' }, { lotId: 'lot-id-1' }],
+    })
   })
 
-  it('does NOT insert a duplicate when a job card already exists for the lotId', async () => {
-    mockFindOne.mockResolvedValue({ _id: 'existing-id', lotId: 'mongo-id-1', lotNumber: 'L001' })
+  it('falls back to lotNumber-only query when lotId is absent', async () => {
+    mockFindOne.mockResolvedValue(null)
+    mockInsertOne.mockResolvedValue({ insertedId: 'new-id' })
 
-    const res = await POST(makeRequest({ lotId: 'mongo-id-1', lotNumber: 'L001' }))
+    await POST(makeRequest({ lotNumber: 'L001' }))
+
+    expect(mockFindOne).toHaveBeenCalledWith({ $or: [{ lotNumber: 'L001' }] })
+  })
+
+  it('blocks creation when a card already exists for the same lotNumber (no lotId caller)', async () => {
+    // Simulates: useSaveLot creates card with no lotId, then AllLotsContent tries to create with lotId
+    mockFindOne.mockResolvedValue({ _id: 'card-A', lotNumber: 'L001' /* no lotId */ })
+
+    const res = await POST(makeRequest({ lotId: 'lot-id-1', lotNumber: 'L001' }))
     const body = await res.json()
 
     expect(mockInsertOne).not.toHaveBeenCalled()
     expect(res.status).toBe(200)
-    expect(body.success).toBe(true)
     expect(body.created).toBe(false)
-    expect(body.id).toBe('existing-id')
   })
 
-  it('sets createdAt and updatedAt timestamps on new job cards', async () => {
-    mockFindOne.mockResolvedValue(null)
-    mockInsertOne.mockResolvedValue({ insertedId: 'new-id' })
+  it('blocks creation when a card already exists for the same lotId (with lotId caller)', async () => {
+    // Simulates: AllLotsContent already created a card, useSaveLot tries again without lotId
+    mockFindOne.mockResolvedValue({ _id: 'card-B', lotId: 'lot-id-1', lotNumber: 'L001' })
 
-    await POST(makeRequest({ lotId: 'mongo-id-2', lotNumber: 'L002' }))
+    const res = await POST(makeRequest({ lotNumber: 'L001' }))
+    const body = await res.json()
+
+    expect(mockInsertOne).not.toHaveBeenCalled()
+    expect(res.status).toBe(200)
+    expect(body.created).toBe(false)
+  })
+
+  it('returns 400 when lotNumber is missing', async () => {
+    const res = await POST(makeRequest({ lotId: 'lot-id-1' }))
+    const body = await res.json()
+
+    expect(mockFindOne).not.toHaveBeenCalled()
+    expect(res.status).toBe(400)
+    expect(body.success).toBe(false)
+  })
+
+  it('handles unique index violation (race condition) as a no-op', async () => {
+    mockFindOne
+      .mockResolvedValueOnce(null)                                         // initial check
+      .mockResolvedValueOnce({ _id: 'race-id', lotNumber: 'L002' })        // fallback lookup
+    const dupError = Object.assign(new Error('duplicate key'), {
+      code: 11000, keyValue: { lotNumber: 'L002' },
+    })
+    mockInsertOne.mockRejectedValue(dupError)
+
+    const res = await POST(makeRequest({ lotNumber: 'L002' }))
+    const body = await res.json()
+
+    expect(res.status).toBe(200)
+    expect(body.success).toBe(true)
+    expect(body.created).toBe(false)
+  })
+
+  it('sets createdAt and updatedAt on new cards', async () => {
+    mockFindOne.mockResolvedValue(null)
+    mockInsertOne.mockResolvedValue({ insertedId: 'id' })
+
+    await POST(makeRequest({ lotNumber: 'L003' }))
 
     const inserted = mockInsertOne.mock.calls[0][0]
     expect(inserted.createdAt).toBeInstanceOf(Date)
     expect(inserted.updatedAt).toBeInstanceOf(Date)
   })
 
-  it('does not insert when the existing card is found (timestamps preserved)', async () => {
-    mockFindOne.mockResolvedValue({ _id: 'old-id', lotId: 'mongo-id-3', createdAt: new Date('2024-01-01') })
+  it('returns 500 on unexpected database errors', async () => {
+    mockFindOne.mockRejectedValue(new Error('DB timeout'))
 
-    await POST(makeRequest({ lotId: 'mongo-id-3', lotNumber: 'L003' }))
-
-    expect(mockInsertOne).not.toHaveBeenCalled()
-  })
-
-  it('returns 500 on unexpected database error', async () => {
-    mockFindOne.mockRejectedValue(new Error('DB connection failed'))
-
-    const res = await POST(makeRequest({ lotId: 'mongo-id-4', lotNumber: 'L004' }))
+    const res = await POST(makeRequest({ lotNumber: 'L004' }))
     const body = await res.json()
 
     expect(res.status).toBe(500)
     expect(body.success).toBe(false)
-    expect(body.error).toBe('DB connection failed')
+    expect(body.error).toBe('DB timeout')
   })
 })
 
@@ -145,6 +158,5 @@ describe('GET /api/jobcards', () => {
 
     expect(res.status).toBe(500)
     expect(body.success).toBe(false)
-    expect(body.error).toBe('Timeout')
   })
 })

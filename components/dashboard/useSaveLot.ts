@@ -73,6 +73,7 @@ export function useSaveLot() {
         if (result.success) {
           try {
             await jobCardsAPI.createJobCard({
+              lotId: result.id ? String(result.id) : undefined,
               lotNumber, date, brand, worker: '', rate: '', ratios,
               productionData: productionData.map(row => ({ serialNumber: row.serialNumber, layer: Number(row.layer) || 1, pieces: Number(row.pieces) || 0, color: row.color || '', shade: row.shade || '', front: '', back: '', zip_code: row.zip_code || '', thread_code: row.thread_code || '' })),
               flyWidth: '', additionalInfo: { belt: '', bottom: '', pasting: '', bone: '', hala: '', ticketPocket: '' },
