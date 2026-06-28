@@ -17,7 +17,7 @@ beforeEach(() => {
 
 describe('createJobCardFromLot', () => {
   it('creates a job card with the correct lot number and brand', async () => {
-    const lotData = { lotNumber: 'L001', brand: 'Levis', date: '2024-01-15' }
+    const lotData = { _id: 'lot-abc', lotNumber: 'L001', brand: 'Levis', date: '2024-01-15' }
 
     await createJobCardFromLot(lotData)
 
@@ -26,6 +26,20 @@ describe('createJobCardFromLot', () => {
     expect(payload.lotNumber).toBe('L001')
     expect(payload.brand).toBe('Levis')
     expect(payload.date).toBe('2024-01-15')
+  })
+
+  it('stores lotId (stringified lot _id) so dedup works when lot numbers repeat', async () => {
+    await createJobCardFromLot({ _id: 'mongo-object-id-123', lotNumber: 'L001' })
+
+    const [payload] = mockCreateJobCard.mock.calls[0]
+    expect(payload.lotId).toBe('mongo-object-id-123')
+  })
+
+  it('sets lotId to undefined when lot has no _id', async () => {
+    await createJobCardFromLot({ lotNumber: 'L001' })
+
+    const [payload] = mockCreateJobCard.mock.calls[0]
+    expect(payload.lotId).toBeUndefined()
   })
 
   it('defaults worker and rate to empty strings', async () => {

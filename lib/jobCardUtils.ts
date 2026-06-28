@@ -3,6 +3,7 @@ import { jobCardsAPI } from './api'
 export const createJobCardFromLot = async (lotData: any) => {
   try {
     const jobCardData = {
+      lotId: lotData._id ? String(lotData._id) : undefined,
       lotNumber: lotData.lotNumber,
       date: lotData.date || new Date().toISOString().split('T')[0],
       brand: lotData.brand || '',

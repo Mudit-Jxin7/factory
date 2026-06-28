@@ -21,7 +21,9 @@ export async function GET() {
   }
 }
 
-// POST create a new job card (no-op if one already exists for the same lotNumber)
+// POST create a new job card (no-op if one already exists for the same lot).
+// Deduplication uses lotId (the lot's _id) when available — because lot numbers
+// are not unique and the same number can appear on multiple lots.
 export async function POST(request: NextRequest) {
   try {
     const jobCardData = await request.json()
@@ -29,7 +31,12 @@ export async function POST(request: NextRequest) {
     const db = client.db(DB_NAME)
     const collection = db.collection('jobcards')
 
-    const existing = await collection.findOne({ lotNumber: jobCardData.lotNumber })
+    // Prefer lotId for the existence check; fall back to lotNumber for legacy data
+    const query = jobCardData.lotId
+      ? { lotId: jobCardData.lotId }
+      : { lotNumber: jobCardData.lotNumber }
+
+    const existing = await collection.findOne(query)
     if (existing) {
       return NextResponse.json(
         { success: true, id: existing._id, lotNumber: existing.lotNumber, created: false },
@@ -47,15 +54,6 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     )
   } catch (error: any) {
-    // Unique index violation — another request already created the job card (race condition)
-    if (error.code === 11000) {
-      const existing = await clientPromise
-        .then(c => c.db(DB_NAME).collection('jobcards').findOne({ lotNumber: error.keyValue?.lotNumber }))
-      return NextResponse.json(
-        { success: true, id: existing?._id, lotNumber: error.keyValue?.lotNumber, created: false },
-        { status: 200 }
-      )
-    }
     console.error('Error creating job card:', error)
     return NextResponse.json(
       { success: false, error: error.message },

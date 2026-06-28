@@ -1,6 +1,11 @@
 /**
- * One-time cleanup script: keeps the oldest job card per lotNumber,
- * deletes all duplicates, then adds a unique index to prevent recurrence.
+ * One-time cleanup script: for each lot (_id), keeps the oldest job card
+ * and deletes all duplicates that were created by repeated page visits.
+ *
+ * NOTE: lot numbers are NOT unique — the same number can appear on multiple
+ * lots. Deduplication is therefore done by lotId (the lot's MongoDB _id)
+ * for new job cards, and by lotNumber only for legacy cards that pre-date
+ * the lotId field.
  *
  * Usage:
  *   MONGODB_URI=<your-uri> DB_NAME=factory_db node scripts/dedup-jobcards.mjs
@@ -23,32 +28,40 @@ try {
   const db = client.db(dbName)
   const col = db.collection('jobcards')
 
-  // Find every lotNumber that has more than one document
-  const duplicates = await col.aggregate([
-    { $sort: { createdAt: 1 } },           // oldest first
-    { $group: {
-        _id: '$lotNumber',
-        ids: { $push: '$_id' },
-        count: { $sum: 1 },
-    }},
+  let totalDeleted = 0
+
+  // --- Pass 1: dedup by lotId (job cards that have the field) ---
+  const dupsByLotId = await col.aggregate([
+    { $match: { lotId: { $exists: true, $ne: null } } },
+    { $sort: { createdAt: 1 } },
+    { $group: { _id: '$lotId', ids: { $push: '$_id' }, count: { $sum: 1 } } },
     { $match: { count: { $gt: 1 } } },
   ]).toArray()
 
-  let totalDeleted = 0
-
-  for (const { _id: lotNumber, ids } of duplicates) {
-    // ids are already sorted oldest-first; keep ids[0], delete the rest
+  for (const { _id: lotId, ids } of dupsByLotId) {
     const toDelete = ids.slice(1)
     const result = await col.deleteMany({ _id: { $in: toDelete } })
-    console.log(`  ${lotNumber}: kept 1, deleted ${result.deletedCount} duplicate(s)`)
+    console.log(`  lotId ${lotId}: kept 1, deleted ${result.deletedCount} duplicate(s)`)
+    totalDeleted += result.deletedCount
+  }
+
+  // --- Pass 2: dedup by lotNumber for legacy cards without lotId ---
+  const dupsByLotNumber = await col.aggregate([
+    { $match: { lotId: { $exists: false } } },
+    { $sort: { createdAt: 1 } },
+    { $group: { _id: '$lotNumber', ids: { $push: '$_id' }, count: { $sum: 1 } } },
+    { $match: { count: { $gt: 1 } } },
+  ]).toArray()
+
+  for (const { _id: lotNumber, ids } of dupsByLotNumber) {
+    const toDelete = ids.slice(1)
+    const result = await col.deleteMany({ _id: { $in: toDelete } })
+    console.log(`  lotNumber "${lotNumber}" (legacy): kept 1, deleted ${result.deletedCount} duplicate(s)`)
     totalDeleted += result.deletedCount
   }
 
   console.log(`\nTotal duplicates removed: ${totalDeleted}`)
-
-  // Add unique index so this can never happen again
-  await col.createIndex({ lotNumber: 1 }, { unique: true, name: 'lotNumber_unique' })
-  console.log('Unique index on lotNumber created (or already exists).')
+  console.log('No unique index added — lot numbers are not unique across lots.')
 } finally {
   await client.close()
 }
