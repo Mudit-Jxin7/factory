@@ -469,13 +469,14 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
           { content: 'Zip Code',    styles: infoHdr },
           { content: 'Thread Code', styles: infoHdr },
         ])
+        const infoVal = { fontStyle: 'bold' as const, fontSize: 8 }
         prodBody.push([
-          row.serialNumber,
-          row.layer,
-          row.pieces,
-          row.color || '',
-          (row as any).zip_code    || '',
-          (row as any).thread_code || '',
+          { content: row.serialNumber,                    styles: infoVal },
+          { content: row.layer,                           styles: infoVal },
+          { content: row.pieces,                          styles: infoVal },
+          { content: row.color || '',                     styles: infoVal },
+          { content: (row as any).zip_code    || '',      styles: infoVal },
+          { content: (row as any).thread_code || '',      styles: infoVal },
         ])
         prodBody.push(blankRow)
 
