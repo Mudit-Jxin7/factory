@@ -32,8 +32,8 @@ export default function NavigationBar() {
             className={`navbar-link ${isActive('/dashboard') ? 'active' : ''}`}
             onClick={() => router.push('/dashboard')}
           >
-            <span className="navbar-link-icon">📊</span>
-            Dashboard
+            <span className="navbar-link-icon">➕</span>
+            Create Lot
           </button>
           <button
             className={`navbar-link ${isActive('/lots') ? 'active' : ''}`}
