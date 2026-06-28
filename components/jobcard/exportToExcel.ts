@@ -52,11 +52,17 @@ export const exportJobCardToExcel = (params: {
     if (idx < productionData.length - 1) { prodRows.push([]); prodRows.push([]) }
   })
 
+  const ADDL_FIELD_KEYS: (keyof AdditionalInfo)[] = [
+    'belt', 'bottom', 'pasting', 'bone', 'hala', 'ticketPocket',
+    'cutting', 'number', 'buttonTake', 'assembly', 'sealStitch', 'label',
+    'tanki', 'kaajButton', 'finishing', 'addition1', 'addition2', 'addition3',
+  ]
   const addlRows = [
     ['Fly Width', flyWidth],
-    ...Object.entries(additionalInfo).map(([k, v]) => [
-      k.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase()), v
-    ])
+    ...ADDL_FIELD_KEYS.map(k => [
+      k.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase()),
+      additionalInfo[k] ?? '',
+    ]),
   ]
 
   const allRows = [...infoRows, ...prodRows, [], ['Additional Information'], ['Field', 'Value'], ...addlRows]

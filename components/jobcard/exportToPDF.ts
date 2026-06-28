@@ -106,11 +106,17 @@ export const exportJobCardToPDF = (params: {
   pdf.setFontSize(11); pdf.setFont('helvetica', 'bold')
   pdf.text('Additional Information', margin, afterProd)
 
+  const ADDL_FIELD_KEYS: (keyof AdditionalInfo)[] = [
+    'belt', 'bottom', 'pasting', 'bone', 'hala', 'ticketPocket',
+    'cutting', 'number', 'buttonTake', 'assembly', 'sealStitch', 'label',
+    'tanki', 'kaajButton', 'finishing', 'addition1', 'addition2', 'addition3',
+  ]
   const addlFields: [string, string][] = [
     ['Fly Width', flyWidth],
-    ...Object.entries(additionalInfo).map(([k, v]) => [
-      k.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase()), v
-    ] as [string, string])
+    ...ADDL_FIELD_KEYS.map(k => [
+      k.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase()),
+      additionalInfo[k] ?? '',
+    ] as [string, string]),
   ]
   const third = Math.ceil(addlFields.length / 3)
   const col1 = addlFields.slice(0, third)

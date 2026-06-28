@@ -61,7 +61,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
         setRatios(jc.ratios || DEFAULT_RATIOS)
         setProductionData(jc.productionData || productionData)
         setFlyWidth(jc.flyWidth || '')
-        setAdditionalInfo(jc.additionalInfo || DEFAULT_ADDITIONAL_INFO)
+        setAdditionalInfo({ ...DEFAULT_ADDITIONAL_INFO, ...(jc.additionalInfo || {}) })
       } else {
         setError('Job card not found. Job cards are automatically created when a lot is saved.')
       }
