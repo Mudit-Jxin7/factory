@@ -28,9 +28,9 @@ export default function DeveloperContent() {
 
   const [workers, setWorkers] = useState<any[]>([])
   const [loadingWorkers, setLoadingWorkers] = useState(true)
-  const [newWorker, setNewWorker] = useState({ worker_full_name: '', tbd1: '', tbd2: '', tbd3: '' })
+  const [newWorker, setNewWorker] = useState({ worker_full_name: '', role: '', tbd2: '', tbd3: '' })
   const [editingWorker, setEditingWorker] = useState<string | null>(null)
-  const [editWorker, setEditWorker] = useState({ worker_full_name: '', tbd1: '', tbd2: '', tbd3: '' })
+  const [editWorker, setEditWorker] = useState({ worker_full_name: '', role: '', tbd2: '', tbd3: '' })
   const [deletingWorker, setDeletingWorker] = useState<string | null>(null)
 
   const [itemsByTab, setItemsByTab] = useState<Record<MasterTab, MasterItem[]>>({ brands: [], patterns: [], fabrics: [] })

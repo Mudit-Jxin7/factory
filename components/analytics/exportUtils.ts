@@ -53,7 +53,8 @@ export const exportAnalyticsToPDF = (params: ExportParams) => {
       `Worker ID: ${selectedWorkerObj.worker_id}   |   Name: ${selectedWorkerObj.worker_full_name}`,
     ]
     const tbdParts: string[] = []
-    if (selectedWorkerObj.tbd1) tbdParts.push(`TBD1: ${selectedWorkerObj.tbd1}`)
+    const workerRole = selectedWorkerObj.role || selectedWorkerObj.tbd1
+    if (workerRole) tbdParts.push(`Role: ${workerRole}`)
     if (selectedWorkerObj.tbd2) tbdParts.push(`TBD2: ${selectedWorkerObj.tbd2}`)
     if (selectedWorkerObj.tbd3) tbdParts.push(`TBD3: ${selectedWorkerObj.tbd3}`)
     if (tbdParts.length > 0) detailLines.push(tbdParts.join('   |   '))
@@ -101,7 +102,8 @@ export const exportAnalyticsToExcel = (params: ExportParams) => {
 
   if (selectedWorkerObj) {
     filterRows.push(['Worker ID', String(selectedWorkerObj.worker_id)])
-    if (selectedWorkerObj.tbd1) filterRows.push(['TBD1', selectedWorkerObj.tbd1])
+    const workerRole = selectedWorkerObj.role || selectedWorkerObj.tbd1
+    if (workerRole) filterRows.push(['Role', workerRole])
     if (selectedWorkerObj.tbd2) filterRows.push(['TBD2', selectedWorkerObj.tbd2])
     if (selectedWorkerObj.tbd3) filterRows.push(['TBD3', selectedWorkerObj.tbd3])
   }

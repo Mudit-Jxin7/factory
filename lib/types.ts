@@ -69,10 +69,14 @@ export interface JobCardProductionRow {
   add2Rate: string
 }
 
+export const WORKER_ROLES = ['FRONT', 'BACK', 'ZIP', 'ASTAR', 'BELT'] as const
+export type WorkerRole = typeof WORKER_ROLES[number]
+
 export interface Worker {
   _id: string
   worker_id: number
   worker_full_name: string
+  role?: WorkerRole | string
   tbd1?: string
   tbd2?: string
   tbd3?: string
