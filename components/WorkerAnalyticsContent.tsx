@@ -92,6 +92,19 @@ export default function WorkerAnalyticsContent() {
     setAppliedWorker(selectedWorker)
   }
 
+  const handleDateRangePreset = (days: number) => {
+    const to = new Date()
+    const from = new Date()
+    from.setDate(from.getDate() - (days - 1))
+    const toStr = to.toISOString().split('T')[0]
+    const fromStr = from.toISOString().split('T')[0]
+    setFromDate(fromStr)
+    setToDate(toStr)
+    setAppliedFromDate(fromStr)
+    setAppliedToDate(toStr)
+    setAppliedWorker(selectedWorker)
+  }
+
   const handleClearFilters = () => {
     setFromDate('')
     setToDate('')
@@ -128,6 +141,7 @@ export default function WorkerAnalyticsContent() {
             onFromDateChange={setFromDate} onToDateChange={setToDate} onWorkerChange={setSelectedWorker}
             onApplyFilters={handleApplyFilters}
             onClearFilters={handleClearFilters}
+            onDateRangePreset={handleDateRangePreset}
           />
           <div className="card">
             <AnalyticsTable loading={loading} filteredData={filteredData} allCount={analyticsData.length} totals={totals} />
