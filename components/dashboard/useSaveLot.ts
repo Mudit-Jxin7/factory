@@ -1,6 +1,5 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
 import { lotsAPI, jobCardsAPI } from '@/lib/api'
 import { Ratios, AdditionalInfo, DEFAULT_ADDITIONAL_INFO } from '@/lib/types'
 import { useToast } from '../ToastProvider'
@@ -36,7 +35,6 @@ interface SaveLotParams {
 }
 
 export function useSaveLot() {
-  const router = useRouter()
   const toast = useToast()
 
   const saveLot = async (params: SaveLotParams, setSaving: (v: boolean) => void) => {
@@ -90,7 +88,6 @@ export function useSaveLot() {
       if (result.success) {
         const isNew = !editLotNumber || decodeURIComponent(editLotNumber) !== lotNumber
         toast.showToast(isNew ? 'Lot saved successfully!' : 'Lot updated successfully!', 'success')
-        router.push(isNew ? `/jobcard/${encodeURIComponent(lotNumber)}?edit=true` : `/lot/${lotNumber}`)
       } else {
         toast.showToast('Error saving lot: ' + result.error, 'error')
       }
