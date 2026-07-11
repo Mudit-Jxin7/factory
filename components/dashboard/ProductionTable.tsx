@@ -9,6 +9,7 @@ interface ProductionRow {
   pieces: number
   color: string
   shade: string
+  tukda?: string
   zip_code?: string
   thread_code?: string
 }
@@ -19,12 +20,13 @@ interface ProductionTableProps {
   onUpdate: (index: number, field: string, value: string) => void
   onBlurMeter: (index: number, value: string) => void
   onBlurLayer: (index: number, value: string) => void
+  onBlurTukda: (index: number, value: string) => void
   onAddRow: () => void
   onDeleteRow: (index: number) => void
 }
 
 export default function ProductionTable({
-  productionData, colors, onUpdate, onBlurMeter, onBlurLayer, onAddRow, onDeleteRow,
+  productionData, colors, onUpdate, onBlurMeter, onBlurLayer, onBlurTukda, onAddRow, onDeleteRow,
 }: ProductionTableProps) {
   return (
     <div className="card">
@@ -38,7 +40,7 @@ export default function ProductionTable({
         <table className="production-table">
           <thead>
             <tr>
-              <th>Serial Number</th><th>Meter</th><th>Layer</th><th>Pieces</th>
+              <th>Serial Number</th><th>Meter</th><th>Layer</th><th>Pieces</th><th>Tukda</th>
               <th>Color</th><th>Shade</th><th>Zip Code</th><th>Thread Code</th><th>Actions</th>
             </tr>
           </thead>
@@ -63,6 +65,14 @@ export default function ProductionTable({
                   />
                 </td>
                 <td className="pieces-cell">{row.pieces.toFixed(2)}</td>
+                <td>
+                  <input
+                    type="text" value={row.tukda ?? ''}
+                    onChange={(e) => onUpdate(index, 'tukda', e.target.value)}
+                    onBlur={(e) => onBlurTukda(index, e.target.value)}
+                    inputMode="numeric" pattern="[0-9]*" placeholder="0"
+                  />
+                </td>
                 <td>
                   <select
                     value={row.color || ''}

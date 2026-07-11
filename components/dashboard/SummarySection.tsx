@@ -8,14 +8,12 @@ interface SummarySectionProps {
   totalPieces: number
   totalPiecesWithTukda: number
   average: number
-  onTukdaCountChange: (value: string) => void
-  onTukdaCountBlur: (value: string) => void
   onTukdaSizeChange: (value: string) => void
 }
 
 export default function SummarySection({
   tukda, totalMeter, totalPieces, totalPiecesWithTukda, average,
-  onTukdaCountChange, onTukdaCountBlur, onTukdaSizeChange,
+  onTukdaSizeChange,
 }: SummarySectionProps) {
   return (
     <div className="card">
@@ -25,9 +23,8 @@ export default function SummarySection({
           <label># Tukda</label>
           <input
             type="text" value={tukda.count}
-            onChange={(e) => onTukdaCountChange(e.target.value)}
-            onBlur={(e) => onTukdaCountBlur(e.target.value)}
-            inputMode="numeric" pattern="[0-9]*" placeholder="0"
+            readOnly disabled
+            style={{ background: '#f8f9fa', cursor: 'not-allowed' }}
           />
         </div>
         <div className="form-group">

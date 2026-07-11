@@ -12,7 +12,7 @@ export default function LotProductionTable({ productionData }: LotProductionTabl
         <table className="production-table">
           <thead>
             <tr>
-              <th>Serial Number</th><th>Meter</th><th>Layer</th><th>Pieces</th>
+              <th>Serial Number</th><th>Meter</th><th>Layer</th><th>Pieces</th><th>Tukda</th>
               <th>Color</th><th>Shade</th><th>TBD2</th><th>TBD3</th>
             </tr>
           </thead>
@@ -24,6 +24,7 @@ export default function LotProductionTable({ productionData }: LotProductionTabl
                   <td>{Number(row.meter) || 0}</td>
                   <td>{Number(row.layer) || 1}</td>
                   <td className="pieces-cell">{Number(row.pieces || 0).toFixed(2)}</td>
+                  <td>{Number(row.tukda || 0)}</td>
                   <td>{row.color || 'N/A'}</td>
                   <td>{row.shade || 'N/A'}</td>
                   <td>{row.tbd2 || 'N/A'}</td>
@@ -32,7 +33,7 @@ export default function LotProductionTable({ productionData }: LotProductionTabl
               ))
             ) : (
               <tr>
-                <td colSpan={8} style={{ textAlign: 'center', color: '#6c757d', padding: '40px' }}>
+                <td colSpan={9} style={{ textAlign: 'center', color: '#6c757d', padding: '40px' }}>
                   No production data available
                 </td>
               </tr>

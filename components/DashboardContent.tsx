@@ -16,7 +16,7 @@ import { exportLotToPDF, exportLotToExcel } from './dashboard/exportUtils'
 import { useSaveLot } from './dashboard/useSaveLot'
 import './dashboard.css'
 
-const BLANK_ROW = { serialNumber: 1, meter: '', layer: '1', pieces: 0, color: '', shade: '', zip_code: '', thread_code: '' }
+const BLANK_ROW = { serialNumber: 1, meter: '', layer: '1', pieces: 0, color: '', shade: '', zip_code: '', thread_code: '', tukda: '' }
 
 export default function DashboardContent() {
   const searchParams = useSearchParams()
@@ -39,7 +39,7 @@ export default function DashboardContent() {
   const [brand, setBrand] = useState('')
   const [ratios, setRatios] = useState<Ratios>(DEFAULT_RATIOS)
   const [productionData, setProductionData] = useState([BLANK_ROW])
-  const [tukda, setTukda] = useState({ count: 0, size: '28' })
+  const [tukdaSize, setTukdaSize] = useState('28')
   const [flyWidth, setFlyWidth] = useState('')
   const [additionalInfo, setAdditionalInfo] = useState<AdditionalInfo>(DEFAULT_ADDITIONAL_INFO)
 
@@ -69,9 +69,14 @@ export default function DashboardContent() {
         setFabric(lot.fabric || ''); setPattern(lot.pattern || ''); setBrand(lot.brand || '')
         setRatios(lot.ratios || DEFAULT_RATIOS)
         setProductionData(lot.productionData?.length > 0
-          ? lot.productionData.map((row: any) => ({ ...row, meter: String(row.meter || ''), layer: String(row.layer || '1') }))
+          ? lot.productionData.map((row: any) => ({
+            ...row,
+            meter: String(row.meter || ''),
+            layer: String(row.layer || '1'),
+            tukda: row.tukda !== undefined && row.tukda !== null ? String(row.tukda) : '',
+          }))
           : [BLANK_ROW])
-        setTukda(lot.tukda || { count: 0, size: '28' })
+        setTukdaSize(lot.tukda?.size || '28')
         setFlyWidth(lot.flyWidth || '')
         setAdditionalInfo({ ...DEFAULT_ADDITIONAL_INFO, ...(lot.additionalInfo || {}) })
         if (!lot.flyWidth && !lot.additionalInfo) {
@@ -92,11 +97,13 @@ export default function DashboardContent() {
   const sumOfRatios = useMemo(() => Object.values(ratios).reduce((sum, val) => sum + (Number(val) || 0), 0), [ratios])
   const totalMeter = useMemo(() => productionData.reduce((sum, row) => sum + (Number(row.meter) || 0), 0), [productionData])
   const totalPieces = useMemo(() => productionData.reduce((sum, row) => sum + (Number(row.pieces) || 0), 0), [productionData])
-  const totalPiecesWithTukda = useMemo(() => totalPieces + (Number(tukda.count) || 0), [totalPieces, tukda.count])
+  const totalTukda = useMemo(() => productionData.reduce((sum, row) => sum + (Number(row.tukda) || 0), 0), [productionData])
+  const tukda = useMemo(() => ({ count: totalTukda, size: tukdaSize }), [totalTukda, tukdaSize])
+  const totalPiecesWithTukda = useMemo(() => totalPieces + totalTukda, [totalPieces, totalTukda])
   const average = useMemo(() => {
-    const denom = totalPieces + (Number(tukda.count) || 0)
+    const denom = totalPieces + totalTukda
     return denom === 0 ? 0 : totalMeter / denom
-  }, [totalMeter, totalPieces, tukda.count])
+  }, [totalMeter, totalPieces, totalTukda])
 
   const updateRatio = (ratioKey: string, value: string) => {
     let num = Number(value) || 0
@@ -120,6 +127,10 @@ export default function DashboardContent() {
       newData[index] = { ...newData[index], meter: value }
     } else if (field === 'color') {
       newData[index] = { ...newData[index], color: value, shade: value }
+    } else if (field === 'tukda') {
+      if (value === '') { newData[index] = { ...newData[index], tukda: '' }; setProductionData(newData); return }
+      if (!/^[0-9]+$/.test(value)) return
+      newData[index] = { ...newData[index], tukda: value }
     } else {
       newData[index] = { ...newData[index], [field]: value }
     }
@@ -136,6 +147,11 @@ export default function DashboardContent() {
     const num = Number(value)
     const natural = value === '' || isNaN(num) || num < 1 ? '1' : Math.max(1, Math.floor(num)).toString()
     updateProductionData(index, 'layer', natural)
+  }
+
+  const handleBlurTukda = (index: number, value: string) => {
+    const num = Number(value)
+    updateProductionData(index, 'tukda', value === '' || isNaN(num) || num < 0 ? '' : Math.floor(num).toString())
   }
 
   const addRow = () => {
@@ -205,14 +221,13 @@ export default function DashboardContent() {
           <ProductionTable
             productionData={productionData} colors={colors}
             onUpdate={updateProductionData} onBlurMeter={handleBlurMeter} onBlurLayer={handleBlurLayer}
+            onBlurTukda={handleBlurTukda}
             onAddRow={addRow} onDeleteRow={deleteRow}
           />
           <SummarySection
             tukda={tukda} totalMeter={totalMeter} totalPieces={totalPieces}
             totalPiecesWithTukda={totalPiecesWithTukda} average={average}
-            onTukdaCountChange={(v) => { if (v === '' || /^[0-9]+$/.test(v)) setTukda({ ...tukda, count: v === '' ? 0 : Number(v) }) }}
-            onTukdaCountBlur={(v) => { const n = Number(v); setTukda({ ...tukda, count: v === '' || isNaN(n) || n < 0 ? 0 : Math.floor(n) }) }}
-            onTukdaSizeChange={(v) => setTukda({ ...tukda, size: v })}
+            onTukdaSizeChange={setTukdaSize}
           />
           <JobCardAdditionalInfo
             flyWidth={flyWidth} additionalInfo={additionalInfo} isEditMode

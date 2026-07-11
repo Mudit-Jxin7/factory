@@ -62,11 +62,11 @@ export const exportLotToPDF = (params: ExportParams) => {
   pdf.text('Production Data', margin, afterRatioSum)
   autoTable(pdf, {
     startY: afterRatioSum + 2, margin: { left: margin, right: margin },
-    head: [['S.No', 'Meter', 'Layer', 'Pieces', 'Color', 'Zip Code', 'Thread Code']],
+    head: [['S.No', 'Meter', 'Layer', 'Pieces', 'Tukda', 'Color', 'Zip Code', 'Thread Code']],
     body: productionData.map(row => [
       row.serialNumber, row.meter || '0', row.layer,
-      Number(row.pieces).toFixed(2), row.color || '—',
-      row.zip_code || '—', row.thread_code || '—',
+      Number(row.pieces).toFixed(2), Number(row.tukda || 0),
+      row.color || '—', row.zip_code || '—', row.thread_code || '—',
     ]),
     styles: { fontSize: 8, cellPadding: 2, halign: 'center' },
     headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
@@ -94,9 +94,9 @@ export const exportLotToExcel = (params: ExportParams) => {
     ['Lot Number', lotNumber], ['Date', date], ['Fabric', fabric], ['Pattern', pattern], ['Brand', brand], [],
     ['Ratios'], Object.keys(ratios).map(k => k.toUpperCase()), Object.values(ratios).map(v => String(v)), [],
   ]
-  const prodHeaders = ['S.No', 'Meter', 'Layer', 'Pieces', 'Color', 'Zip Code', 'Thread Code']
+  const prodHeaders = ['S.No', 'Meter', 'Layer', 'Pieces', 'Tukda', 'Color', 'Zip Code', 'Thread Code']
   const prodRows = productionData.map(row => [
-    row.serialNumber, row.meter || '0', row.layer, Number(row.pieces).toFixed(2),
+    row.serialNumber, row.meter || '0', row.layer, Number(row.pieces).toFixed(2), Number(row.tukda || 0),
     row.color || '', row.zip_code || '', row.thread_code || '',
   ])
   const summaryRow = [tukda.count, tukda.size, totalMeter.toFixed(2), totalPieces.toFixed(2), totalPiecesWithTukda.toFixed(2), average.toFixed(4)]

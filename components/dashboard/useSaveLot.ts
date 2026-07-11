@@ -14,6 +14,7 @@ interface ProductionRow {
   shade: string
   zip_code: string
   thread_code: string
+  tukda?: string | number
 }
 
 interface SaveLotParams {
@@ -48,6 +49,7 @@ export function useSaveLot() {
         productionData: productionData.map(row => ({
           ...row, meter: Number(row.meter) || 0, layer: Number(row.layer) || 1,
           color: row.color || '', shade: row.shade || '', zip_code: row.zip_code || '', thread_code: row.thread_code || '',
+          tukda: Number(row.tukda) || 0,
         })),
         tukda, totalMeter, totalPieces, totalPiecesWithTukda, average,
         flyWidth, additionalInfo,

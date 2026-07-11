@@ -5,8 +5,10 @@ interface LotSummarySectionProps {
 }
 
 export default function LotSummarySection({ lot }: LotSummarySectionProps) {
+  const totalTukda = (lot.productionData || []).reduce((sum: number, row: any) => sum + (Number(row.tukda) || 0), 0)
+  const tukdaCount = totalTukda || Number(lot.tukda?.count || 0)
   const grandTotal = Number(
-    lot.totalPiecesWithTukda ?? (Number(lot.totalPieces || 0) + Number(lot.tukda?.count || 0))
+    lot.totalPiecesWithTukda ?? (Number(lot.totalPieces || 0) + tukdaCount)
   ).toFixed(2)
 
   const summaryCards = [
@@ -22,7 +24,7 @@ export default function LotSummarySection({ lot }: LotSummarySectionProps) {
       <div className="summary-grid">
         <div className="info-item">
           <label># Tukda</label>
-          <div className="info-value">{lot.tukda?.count || 0}</div>
+          <div className="info-value">{tukdaCount}</div>
         </div>
         <div className="info-item">
           <label>Tukda Size</label>
