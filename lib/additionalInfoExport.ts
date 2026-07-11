@@ -1,5 +1,14 @@
 import { AdditionalInfo, DEFAULT_ADDITIONAL_INFO } from './types'
 
+export const isAdditionalInfoEmpty = (
+  additionalInfo?: Partial<AdditionalInfo> | null,
+  flyWidth?: string,
+): boolean => {
+  if (flyWidth?.trim()) return false
+  if (!additionalInfo) return true
+  return Object.values(additionalInfo).every((value) => !String(value || '').trim())
+}
+
 export const ADDITIONAL_INFO_FIELDS: { key: keyof AdditionalInfo; label: string }[] = [
   { key: 'belt', label: 'Belt' }, { key: 'bottom', label: 'Bottom' },
   { key: 'pasting', label: 'Pasting' }, { key: 'bone', label: 'Bone' },

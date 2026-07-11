@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { jobCardsAPI, workersAPI } from '@/lib/api'
+import { jobCardsAPI, workersAPI, lotsAPI } from '@/lib/api'
 import { JobCardProductionRow, Worker, Ratios, AdditionalInfo, JobCardStatus, DEFAULT_RATIOS, DEFAULT_ADDITIONAL_INFO } from '@/lib/types'
 import { canAdminApproveJobCard, canAdminEditJobCard, canAdminViewWorkerPrices, canWorkerEditJobCard, normalizeJobCardStatus } from '@/lib/jobCardStatus'
 import { hasAllRequiredWorkerFields } from '@/lib/jobCardWorkerCompletion'
@@ -179,6 +179,19 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
       status: nextStatus,
     })
     if (result.success) {
+      try {
+        const lotResult = await lotsAPI.getLotByNumber(lotNumber)
+        if (lotResult.success && lotResult.lot) {
+          const { _id, ...lotWithoutId } = lotResult.lot
+          await lotsAPI.updateLot(lotNumber, {
+            ...lotWithoutId,
+            flyWidth,
+            additionalInfo,
+          })
+        }
+      } catch (err) {
+        console.error('Error syncing additional info to lot:', err)
+      }
       setStatus(nextStatus)
       toast.showToast(options?.successMessage || 'Job card updated successfully!', 'success')
       router.push(`${jobCardBasePath}/${encodeURIComponent(lotNumber)}`)

@@ -12,6 +12,7 @@ import RatiosForm from './dashboard/RatiosForm'
 import ProductionTable from './dashboard/ProductionTable'
 import SummarySection from './dashboard/SummarySection'
 import JobCardAdditionalInfo from './jobcard/JobCardAdditionalInfo'
+import { isAdditionalInfoEmpty } from '@/lib/additionalInfoExport'
 import { exportLotToPDF, exportLotToExcel } from './dashboard/exportUtils'
 import { useSaveLot } from './dashboard/useSaveLot'
 import './dashboard.css'
@@ -79,9 +80,9 @@ export default function DashboardContent() {
         setTukdaSize(lot.tukda?.size || '28')
         setFlyWidth(lot.flyWidth || '')
         setAdditionalInfo({ ...DEFAULT_ADDITIONAL_INFO, ...(lot.additionalInfo || {}) })
-        if (!lot.flyWidth && !lot.additionalInfo) {
+        if (isAdditionalInfoEmpty(lot.additionalInfo, lot.flyWidth)) {
           const jcResult = await jobCardsAPI.getJobCardByLotNumber(lot.lotNumber)
-          if (jcResult.success && jcResult.jobCard) {
+          if (jcResult.success && jcResult.jobCard && !isAdditionalInfoEmpty(jcResult.jobCard.additionalInfo, jcResult.jobCard.flyWidth)) {
             setFlyWidth(jcResult.jobCard.flyWidth || '')
             setAdditionalInfo({ ...DEFAULT_ADDITIONAL_INFO, ...(jcResult.jobCard.additionalInfo || {}) })
           }

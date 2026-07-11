@@ -12,6 +12,8 @@ import LotInfoSection from './lotview/LotInfoSection'
 import LotRatiosSection from './lotview/LotRatiosSection'
 import LotProductionTable from './lotview/LotProductionTable'
 import LotSummarySection from './lotview/LotSummarySection'
+import JobCardAdditionalInfo from './jobcard/JobCardAdditionalInfo'
+import { DEFAULT_ADDITIONAL_INFO } from '@/lib/types'
 import { exportLotViewToPDF, exportLotViewToExcel } from './lotview/exportUtils'
 import './dashboard.css'
 
@@ -109,6 +111,7 @@ export default function LotViewContent({ lotNumber }: LotViewContentProps) {
     <>
       <NavigationBar />
       <ActionBar actions={[
+        { label: 'Edit Lot', shortLabel: 'Edit', icon: '✏️', onClick: () => router.push(`/dashboard?edit=${encodeURIComponent(lot.lotNumber)}`) },
         { label: 'Download PDF', shortLabel: 'PDF', icon: '📄', onClick: handleExportPDF, loading: generatingPDF, loadingLabel: '…' },
         { label: 'Download Excel', shortLabel: 'Excel', icon: '📊', onClick: handleExportExcel, loading: generatingExcel, loadingLabel: '…' },
         { label: 'Back to Dashboard', shortLabel: 'Back', icon: '←', onClick: () => router.push('/dashboard'), variant: 'secondary' as const },
@@ -125,6 +128,13 @@ export default function LotViewContent({ lotNumber }: LotViewContentProps) {
           <LotRatiosSection ratios={lot.ratios || {}} />
           <LotProductionTable productionData={lot.productionData || []} />
           <LotSummarySection lot={lot} />
+          <JobCardAdditionalInfo
+            flyWidth={lot.flyWidth || ''}
+            additionalInfo={{ ...DEFAULT_ADDITIONAL_INFO, ...(lot.additionalInfo || {}) }}
+            isEditMode={false}
+            onFlyWidthChange={() => {}}
+            onAdditionalInfoChange={() => {}}
+          />
         </div>
       </div>
     </>
