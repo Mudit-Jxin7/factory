@@ -74,3 +74,5 @@ export const canAdminEditJobCard = (status?: string) => {
 }
 
 export const canAdminApproveJobCard = (status?: string) => normalizeJobCardStatus(status) === 'pending_approval'
+
+export const canAdminViewWorkerPrices = (status?: string) => normalizeJobCardStatus(status) === 'complete'

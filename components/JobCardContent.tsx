@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { jobCardsAPI, workersAPI } from '@/lib/api'
 import { JobCardProductionRow, Worker, Ratios, AdditionalInfo, JobCardStatus, DEFAULT_RATIOS, DEFAULT_ADDITIONAL_INFO } from '@/lib/types'
-import { canAdminApproveJobCard, canAdminEditJobCard, canWorkerEditJobCard, normalizeJobCardStatus } from '@/lib/jobCardStatus'
+import { canAdminApproveJobCard, canAdminEditJobCard, canAdminViewWorkerPrices, canWorkerEditJobCard, normalizeJobCardStatus } from '@/lib/jobCardStatus'
 import JobCardStatusBadge from './jobcards/JobCardStatusBadge'
 import NavigationBar from './NavigationBar'
 import WorkerNavigationBar from './WorkerNavigationBar'
@@ -62,9 +62,9 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
   const [savingPrices, setSavingPrices] = useState(false)
 
   const canEdit = isWorker ? canWorkerEditJobCard(status) : canAdminEditJobCard(status)
-  const canEditWorkerPrices = !isWorker
+  const showWorkerPrices = !isWorker && canAdminViewWorkerPrices(status)
   const effectiveEditMode = isEditMode && canEdit
-  const effectiveWorkerPricesEdit = canEditWorkerPrices && (effectiveEditMode || status === 'incomplete' || status === 'pending_approval')
+  const effectiveWorkerPricesEdit = showWorkerPrices
   const canApprove = !isWorker && canAdminApproveJobCard(status)
 
   const sumOfRatios = useMemo(() => Object.values(ratios).reduce((sum, val) => sum + (Number(val) || 0), 0), [ratios])
@@ -177,7 +177,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
   }
 
   const handleSaveWorkerPrices = async () => {
-    if (!canEditWorkerPrices) return
+    if (!showWorkerPrices) return
     setSavingPrices(true)
     try {
       await persistJobCard({ pricesOnly: true, successMessage: 'Worker prices saved successfully!' })
@@ -314,7 +314,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
             onFlyWidthChange={() => {}}
             onAdditionalInfoChange={() => {}}
           />
-          {!isWorker && (
+          {showWorkerPrices && (
             <JobCardWorkerPrices
               workers={assignedWorkers}
               workerPrices={workerPrices}
