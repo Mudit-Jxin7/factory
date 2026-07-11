@@ -9,6 +9,7 @@ interface JobCardProductionTableProps {
   workers: Worker[]
   isEditMode: boolean
   onOpenWorkerPopup: (rowIndex: number, field: WorkerField) => void
+  hideRate?: boolean
 }
 
 const WORKER_FIELDS: WorkerField[] = ['front', 'back', 'zip', 'astar', 'beltProd', 'add1', 'add2']
@@ -25,7 +26,7 @@ const workerBtnStyle = (isEditMode: boolean) => ({
 })
 
 export default function JobCardProductionTable({
-  productionData, workers, isEditMode, onOpenWorkerPopup,
+  productionData, workers, isEditMode, onOpenWorkerPopup, hideRate = false,
 }: JobCardProductionTableProps) {
   const getWorkerName = (workerId: string) => {
     if (!workerId) return ''
@@ -42,7 +43,7 @@ export default function JobCardProductionTable({
     const rate = String(row[rateKey] ?? '')
     const date = String(row[dateKey] ?? '')
     const parts = [name]
-    if (rate) parts.push(rate)
+    if (!hideRate && rate) parts.push(rate)
     if (date) parts.push(date)
     return parts.join(' - ')
   }

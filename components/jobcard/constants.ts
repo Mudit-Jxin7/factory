@@ -1,6 +1,28 @@
-import { JobCardProductionRow } from '@/lib/types'
+import { JobCardProductionRow, Worker, WorkerRole } from '@/lib/types'
 
 export type WorkerField = 'front' | 'back' | 'zip' | 'astar' | 'beltProd' | 'add1' | 'add2'
+
+export const FIELD_TO_ROLE: Partial<Record<WorkerField, WorkerRole>> = {
+  front: 'FRONT',
+  back: 'BACK',
+  zip: 'ZIP',
+  astar: 'ASTAR',
+  beltProd: 'BELT',
+}
+
+export const getWorkerRole = (worker: Pick<Worker, 'role' | 'tbd1'>) => worker.role || worker.tbd1 || ''
+
+export const filterWorkersForField = (workers: Worker[], field: WorkerField, selectedWorkerId = '') => {
+  const requiredRole = FIELD_TO_ROLE[field]
+  const filtered = requiredRole
+    ? workers.filter((w) => getWorkerRole(w) === requiredRole)
+    : workers
+  if (selectedWorkerId && !filtered.some((w) => w._id === selectedWorkerId)) {
+    const selected = workers.find((w) => w._id === selectedWorkerId)
+    if (selected) return [...filtered, selected]
+  }
+  return filtered
+}
 
 export const WORKER_PAIRS: [string, string | null][] = [
   ['Front', 'Back'],

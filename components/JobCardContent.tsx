@@ -80,7 +80,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
   const openWorkerPopup = (rowIndex: number, field: WorkerField) => {
     const row = productionData[rowIndex]
     setPopupWorker(String((row as any)[`${field}Worker`] ?? ''))
-    setPopupDate(String((row as any)[`${field}Date`] ?? '') || today)
+    setPopupDate(isWorker ? today : String((row as any)[`${field}Date`] ?? '') || today)
     setPopupRate(String((row as any)[`${field}Rate`] ?? ''))
     setEditingWorkerCell({ rowIndex, field })
   }
@@ -88,10 +88,16 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
   const saveWorkerPopup = () => {
     if (!editingWorkerCell) return
     const { rowIndex, field } = editingWorkerCell
-    setProductionData(prev => prev.map((row, i) => i === rowIndex
-      ? { ...row, [`${field}Worker`]: popupWorker, [`${field}Date`]: popupDate, [`${field}Rate`]: popupRate }
-      : row
-    ))
+    setProductionData(prev => prev.map((row, i) => {
+      if (i !== rowIndex) return row
+      const rateKey = `${field}Rate`
+      return {
+        ...row,
+        [`${field}Worker`]: popupWorker,
+        [`${field}Date`]: isWorker ? today : popupDate,
+        [rateKey]: isWorker ? (row as any)[rateKey] : popupRate,
+      }
+    }))
     setEditingWorkerCell(null)
   }
 
@@ -147,8 +153,10 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
       <NavBar />
       <ActionBar actions={[
         ...(isEditMode ? [{ label: 'Update Job Card', shortLabel: 'Save', icon: '💾', onClick: handleSave, disabled: saving || !lotNumber, loading: saving, loadingLabel: 'Saving…' } as ActionBarItem] : []),
-        { label: 'Download PDF', shortLabel: 'PDF', icon: '📄', onClick: handleExportPDF, loading: generatingPDF, loadingLabel: '…' },
-        { label: 'Download Excel', shortLabel: 'Excel', icon: '📊', onClick: handleExportExcel, loading: generatingExcel, loadingLabel: '…' },
+        ...(!isWorker ? [
+          { label: 'Download PDF', shortLabel: 'PDF', icon: '📄', onClick: handleExportPDF, loading: generatingPDF, loadingLabel: '…' },
+          { label: 'Download Excel', shortLabel: 'Excel', icon: '📊', onClick: handleExportExcel, loading: generatingExcel, loadingLabel: '…' },
+        ] : []),
         ...(!isEditMode ? [{ label: 'Edit Job Card', shortLabel: 'Edit', icon: '✏️', onClick: () => router.push(`${jobCardBasePath}/${encodeURIComponent(lotNumber)}?edit=true`) } as ActionBarItem] : []),
         { label: 'Back to Job Cards', shortLabel: 'Back', icon: '←', onClick: () => router.push(jobCardsListPath), variant: 'secondary' as const },
       ]} />
@@ -185,6 +193,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
           <JobCardProductionTable
             productionData={productionData} workers={workers}
             isEditMode={isEditMode} onOpenWorkerPopup={openWorkerPopup}
+            hideRate={isWorker}
           />
           <JobCardAdditionalInfo
             flyWidth={flyWidth} additionalInfo={additionalInfo} isEditMode={isEditMode}
@@ -200,6 +209,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
           popupWorker={popupWorker} popupDate={popupDate} popupRate={popupRate}
           onWorkerChange={setPopupWorker} onDateChange={setPopupDate} onRateChange={setPopupRate}
           onSave={saveWorkerPopup} onCancel={() => setEditingWorkerCell(null)}
+          hideRate={isWorker}
         />
       )}
     </>

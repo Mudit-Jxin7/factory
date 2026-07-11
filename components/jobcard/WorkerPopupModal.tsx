@@ -1,6 +1,6 @@
 'use client'
 
-import { WorkerField, FIELD_LABELS } from './constants'
+import { WorkerField, FIELD_LABELS, filterWorkersForField, getWorkerRole } from './constants'
 import { Worker } from '@/lib/types'
 
 interface WorkerPopupModalProps {
@@ -14,6 +14,7 @@ interface WorkerPopupModalProps {
   onRateChange: (value: string) => void
   onSave: () => void
   onCancel: () => void
+  hideRate?: boolean
 }
 
 const inputStyle = {
@@ -23,13 +24,14 @@ const inputStyle = {
 
 export default function WorkerPopupModal({
   field, workers, popupWorker, popupDate, popupRate,
-  onWorkerChange, onDateChange, onRateChange, onSave, onCancel,
+  onWorkerChange, onDateChange, onRateChange, onSave, onCancel, hideRate = false,
 }: WorkerPopupModalProps) {
   const today = new Date().toISOString().split('T')[0]
+  const eligibleWorkers = filterWorkersForField(workers, field, popupWorker)
 
   const handleWorkerChange = (value: string) => {
     onWorkerChange(value)
-    if (value && !popupDate) {
+    if (value && (!popupDate || hideRate)) {
       onDateChange(today)
     }
   }
@@ -44,32 +46,43 @@ export default function WorkerPopupModal({
         onClick={(e) => e.stopPropagation()}
       >
         <h3 style={{ margin: '0 0 20px', fontSize: '20px' }}>
-          {FIELD_LABELS[field]} — Worker / Date / Rate
+          {FIELD_LABELS[field]} — Worker / Date{hideRate ? '' : ' / Rate'}
         </h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div className="form-group" style={{ marginBottom: 0 }}>
             <label>Worker</label>
             <select value={popupWorker} onChange={(e) => handleWorkerChange(e.target.value)} style={inputStyle}>
               <option value="">Select worker</option>
-              {workers.map((w) => (
-                <option key={w._id} value={w._id}>
-                  {w.worker_id} - {w.worker_full_name}
-                </option>
-              ))}
+              {eligibleWorkers.map((w) => {
+                const role = getWorkerRole(w)
+                return (
+                  <option key={w._id} value={w._id}>
+                    {w.worker_id} - {w.worker_full_name}{role ? ` (${role})` : ''}
+                  </option>
+                )
+              })}
             </select>
           </div>
           <div className="form-group" style={{ marginBottom: 0 }}>
             <label>Date</label>
-            <input type="date" value={popupDate} onChange={(e) => onDateChange(e.target.value)} style={inputStyle} />
-          </div>
-          <div className="form-group" style={{ marginBottom: 0 }}>
-            <label>Rate</label>
             <input
-              type="number" value={popupRate}
-              onChange={(e) => onRateChange(e.target.value)}
-              placeholder="Rate" step="0.01" min="0" style={inputStyle}
+              type="date"
+              value={hideRate ? today : popupDate}
+              onChange={(e) => onDateChange(e.target.value)}
+              disabled={hideRate}
+              style={{ ...inputStyle, ...(hideRate ? { background: '#f8f9fa', cursor: 'not-allowed' } : {}) }}
             />
           </div>
+          {!hideRate && (
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label>Rate</label>
+              <input
+                type="number" value={popupRate}
+                onChange={(e) => onRateChange(e.target.value)}
+                placeholder="Rate" step="0.01" min="0" style={inputStyle}
+              />
+            </div>
+          )}
         </div>
         <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '20px' }}>
           <button type="button" className="btn btn-secondary" onClick={onCancel}>Cancel</button>
