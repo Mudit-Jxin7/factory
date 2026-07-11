@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
-import { Ratios } from '@/lib/types'
+import { Ratios, AdditionalInfo } from '@/lib/types'
+import { buildAdditionalInfoPdfBody, getAdditionalInfoExportRows } from '@/lib/additionalInfoExport'
 
 interface ExportParams {
   lotNumber: string
@@ -16,10 +17,12 @@ interface ExportParams {
   totalPieces: number
   totalPiecesWithTukda: number
   average: number
+  flyWidth?: string
+  additionalInfo?: AdditionalInfo
 }
 
 export const exportLotToPDF = (params: ExportParams) => {
-  const { lotNumber, date, fabric, pattern, brand, ratios, sumOfRatios, productionData, tukda, totalMeter, totalPieces, totalPiecesWithTukda, average } = params
+  const { lotNumber, date, fabric, pattern, brand, ratios, sumOfRatios, productionData, tukda, totalMeter, totalPieces, totalPiecesWithTukda, average, flyWidth, additionalInfo } = params
   const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
   const pageW = pdf.internal.pageSize.getWidth()
   const margin = 10
@@ -87,11 +90,28 @@ export const exportLotToPDF = (params: ExportParams) => {
     headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' }, theme: 'grid',
   })
 
+  const afterSummary = (pdf as any).lastAutoTable.finalY + 6
+  pdf.setFontSize(11); pdf.setFont('helvetica', 'bold')
+  pdf.text('Additional Information', margin, afterSummary)
+  autoTable(pdf, {
+    startY: afterSummary + 2, margin: { left: margin, right: margin },
+    head: [['Field', 'Value', 'Field', 'Value', 'Field', 'Value']],
+    body: buildAdditionalInfoPdfBody(getAdditionalInfoExportRows(flyWidth, additionalInfo)),
+    styles: { fontSize: 10, cellPadding: 2 },
+    headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
+    columnStyles: {
+      0: { fontStyle: 'bold', cellWidth: 28 }, 1: { cellWidth: 35 },
+      2: { fontStyle: 'bold', cellWidth: 28 }, 3: { cellWidth: 35 },
+      4: { fontStyle: 'bold', cellWidth: 28 }, 5: { cellWidth: 35 },
+    },
+    theme: 'grid',
+  })
+
   pdf.save(`Lot_${lotNumber || 'Production'}_${date || 'Report'}.pdf`)
 }
 
 export const exportLotToExcel = (params: ExportParams) => {
-  const { lotNumber, date, fabric, pattern, brand, ratios, productionData, tukda, totalMeter, totalPieces, totalPiecesWithTukda, average } = params
+  const { lotNumber, date, fabric, pattern, brand, ratios, productionData, tukda, totalMeter, totalPieces, totalPiecesWithTukda, average, flyWidth, additionalInfo } = params
 
   const infoRows = [
     ['Lot Number', lotNumber], ['Date', date], ['Fabric', fabric], ['Pattern', pattern], ['Brand', brand], [],
@@ -106,7 +126,8 @@ export const exportLotToExcel = (params: ExportParams) => {
     ]
   })
   const summaryRow = [tukda.count, tukda.size, totalMeter.toFixed(2), totalPieces.toFixed(2), totalPiecesWithTukda.toFixed(2), average.toFixed(4)]
-  const allRows = [...infoRows, prodHeaders, ...prodRows, [], ['Summary'], ['# Tukda', 'Tukda Size', 'Total Meter', 'Total Pieces', 'Grand Total', 'Average'], summaryRow]
+  const addlRows = getAdditionalInfoExportRows(flyWidth, additionalInfo)
+  const allRows = [...infoRows, prodHeaders, ...prodRows, [], ['Summary'], ['# Tukda', 'Tukda Size', 'Total Meter', 'Total Pieces', 'Grand Total', 'Average'], summaryRow, [], ['Additional Information'], ['Field', 'Value'], ...addlRows]
 
   const csvContent = allRows.map((row) =>
     (row as any[]).map((cell) => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(',')

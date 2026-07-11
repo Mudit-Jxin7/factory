@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
+import { buildAdditionalInfoPdfBody, getAdditionalInfoExportRows } from '@/lib/additionalInfoExport'
 
 export const exportLotViewToPDF = (lot: any) => {
   const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
@@ -71,6 +72,23 @@ export const exportLotViewToPDF = (lot: any) => {
     headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' }, theme: 'grid',
   })
 
+  const afterSummary = (pdf as any).lastAutoTable.finalY + 6
+  pdf.setFontSize(11); pdf.setFont('helvetica', 'bold')
+  pdf.text('Additional Information', margin, afterSummary)
+  autoTable(pdf, {
+    startY: afterSummary + 2, margin: { left: margin, right: margin },
+    head: [['Field', 'Value', 'Field', 'Value', 'Field', 'Value']],
+    body: buildAdditionalInfoPdfBody(getAdditionalInfoExportRows(lot.flyWidth, lot.additionalInfo)),
+    styles: { fontSize: 10, cellPadding: 2 },
+    headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
+    columnStyles: {
+      0: { fontStyle: 'bold', cellWidth: 28 }, 1: { cellWidth: 35 },
+      2: { fontStyle: 'bold', cellWidth: 28 }, 3: { cellWidth: 35 },
+      4: { fontStyle: 'bold', cellWidth: 28 }, 5: { cellWidth: 35 },
+    },
+    theme: 'grid',
+  })
+
   pdf.save(`Lot_${lot.lotNumber || 'Production'}_${lot.date || 'Report'}.pdf`)
 }
 
@@ -90,12 +108,14 @@ export const exportLotViewToExcel = (lot: any) => {
     const rowTotalPieces = Number(row.pieces || 0) + Number(row.tukda || 0)
     return [row.serialNumber, Number(row.meter || 0), Number(row.layer || 1), Number(row.pieces || 0).toFixed(2), Number(row.tukda || 0), rowTotalPieces.toFixed(2), row.color || '', row.shade || '', row.tbd2 || '', row.tbd3 || '']
   })
+  const addlRows = getAdditionalInfoExportRows(lot.flyWidth, lot.additionalInfo)
   const allRows = [
     ...infoRows,
     ['S.No', 'Meter', 'Layer', 'Pieces', 'Tukda', 'Total Pieces', 'Color', 'Shade', 'TBD2', 'TBD3'],
     ...prodRows, [],
     ['Summary'], ['# Tukda', 'Tukda Size', 'Total Meter', 'Total Pieces', 'Grand Total Pieces', 'Average'],
     [tukdaCount, lot.tukda?.size || '', Number(lot.totalMeter || 0).toFixed(2), Number(lot.totalPieces || 0).toFixed(2), grandTotal, Number(lot.average || 0).toFixed(4)],
+    [], ['Additional Information'], ['Field', 'Value'], ...addlRows,
   ]
   const csvContent = allRows.map((row) => (row as any[]).map((cell) => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(',')).join('\n')
   const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' })
