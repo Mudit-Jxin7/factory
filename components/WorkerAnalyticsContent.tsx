@@ -96,13 +96,8 @@ export default function WorkerAnalyticsContent() {
     const to = new Date()
     const from = new Date()
     from.setDate(from.getDate() - (days - 1))
-    const toStr = to.toISOString().split('T')[0]
-    const fromStr = from.toISOString().split('T')[0]
-    setFromDate(fromStr)
-    setToDate(toStr)
-    setAppliedFromDate(fromStr)
-    setAppliedToDate(toStr)
-    setAppliedWorker(selectedWorker)
+    setFromDate(from.toISOString().split('T')[0])
+    setToDate(to.toISOString().split('T')[0])
   }
 
   const handleClearFilters = () => {
