@@ -20,7 +20,7 @@ export const getWorkersAssignedToProduction = (
 
 export const getWorkerRateFromPrices = (
   workerMongoId: string,
-  workers: Worker[],
+  workers: Pick<Worker, '_id' | 'worker_id'>[],
   workerPrices: WorkerPrices,
 ) => {
   if (!workerMongoId) return ''
