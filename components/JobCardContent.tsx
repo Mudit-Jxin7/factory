@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { jobCardsAPI, lotsAPI, workersAPI } from '@/lib/api'
+import { jobCardsAPI, workersAPI } from '@/lib/api'
 import { JobCardProductionRow, Worker, Ratios, AdditionalInfo, JobCardStatus, DEFAULT_RATIOS, DEFAULT_ADDITIONAL_INFO } from '@/lib/types'
 import { canAdminApproveJobCard, canAdminEditJobCard, canWorkerEditJobCard, normalizeJobCardStatus } from '@/lib/jobCardStatus'
 import JobCardStatusBadge from './jobcards/JobCardStatusBadge'
@@ -15,6 +15,8 @@ import WorkerPopupModal from './jobcard/WorkerPopupModal'
 import JobCardRatios from './jobcard/JobCardRatios'
 import JobCardProductionTable from './jobcard/JobCardProductionTable'
 import JobCardAdditionalInfo from './jobcard/JobCardAdditionalInfo'
+import JobCardWorkerPrices from './jobcard/JobCardWorkerPrices'
+import { applyWorkerPricesToProduction, getWorkerRateFromPrices, WorkerPrices } from '@/lib/jobCardWorkerPrices'
 import { exportJobCardToPDF } from './jobcard/exportToPDF'
 import { exportJobCardToExcel } from './jobcard/exportToExcel'
 import './dashboard.css'
@@ -47,6 +49,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
   const [flyWidth, setFlyWidth] = useState('')
   const [additionalInfo, setAdditionalInfo] = useState<AdditionalInfo>(DEFAULT_ADDITIONAL_INFO)
   const [loading, setLoading] = useState(false)
+  const [refreshing, setRefreshing] = useState(false)
   const [saving, setSaving] = useState(false)
   const [generatingPDF, setGeneratingPDF] = useState(false)
   const [generatingExcel, setGeneratingExcel] = useState(false)
@@ -55,48 +58,74 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
   const [popupWorker, setPopupWorker] = useState('')
   const [popupDate, setPopupDate] = useState('')
   const [popupRate, setPopupRate] = useState('')
+  const [workerPrices, setWorkerPrices] = useState<WorkerPrices>({})
+  const [savingPrices, setSavingPrices] = useState(false)
 
   const canEdit = isWorker ? canWorkerEditJobCard(status) : canAdminEditJobCard(status)
+  const canEditWorkerPrices = !isWorker
   const effectiveEditMode = isEditMode && canEdit
+  const effectiveWorkerPricesEdit = canEditWorkerPrices && (effectiveEditMode || status === 'incomplete' || status === 'pending_approval')
   const canApprove = !isWorker && canAdminApproveJobCard(status)
 
   const sumOfRatios = useMemo(() => Object.values(ratios).reduce((sum, val) => sum + (Number(val) || 0), 0), [ratios])
 
-  useEffect(() => { workersAPI.getAllWorkers().then(r => { if (r.success) setWorkers(r.workers || []) }) }, [])
-
-  useEffect(() => {
+  const fetchJobCard = useCallback(async (isRefresh = false) => {
     if (!lotNumber) return
-    setLoading(true)
-    jobCardsAPI.getJobCardByLotNumber(lotNumber).then((result) => {
+    if (isRefresh) setRefreshing(true)
+    else setLoading(true)
+    try {
+      const [result, workersResult] = await Promise.all([
+        jobCardsAPI.getJobCardByLotNumber(lotNumber),
+        workersAPI.getAllWorkers(),
+      ])
+      const workerList = workersResult.success ? workersResult.workers || [] : []
+      setWorkers(workerList)
       if (result.success && result.jobCard) {
         const jc = result.jobCard
+        const prices = jc.workerPrices || {}
+        setError(null)
         setDate(jc.date || '')
         setBrand(jc.brand || '')
         setRatios(jc.ratios || DEFAULT_RATIOS)
-        setProductionData(jc.productionData || productionData)
         setFlyWidth(jc.flyWidth || '')
         setAdditionalInfo({ ...DEFAULT_ADDITIONAL_INFO, ...(jc.additionalInfo || {}) })
         setStatus(normalizeJobCardStatus(jc.status))
+        setWorkerPrices(prices)
+        setProductionData(applyWorkerPricesToProduction(
+          jc.productionData?.length ? jc.productionData : [{ serialNumber: 1, ...DEFAULT_PRODUCTION_ROW }],
+          prices,
+          workerList,
+        ))
+        if (isRefresh) toast.showToast('Job card refreshed', 'success')
       } else {
         setError('Job card not found. Job cards are automatically created when a lot is saved.')
       }
-      setLoading(false)
-    }).catch((err) => { setError('Error loading job card: ' + err.message); setLoading(false) })
-  }, [lotNumber])
+    } catch (err: any) {
+      setError('Error loading job card: ' + err.message)
+    } finally {
+      if (isRefresh) setRefreshing(false)
+      else setLoading(false)
+    }
+  }, [lotNumber, toast])
+
+  useEffect(() => { fetchJobCard() }, [fetchJobCard])
 
   const today = new Date().toISOString().split('T')[0]
 
   const openWorkerPopup = (rowIndex: number, field: WorkerField) => {
     const row = productionData[rowIndex]
-    setPopupWorker(String((row as any)[`${field}Worker`] ?? ''))
+    const workerMongoId = String((row as any)[`${field}Worker`] ?? '')
+    setPopupWorker(workerMongoId)
     setPopupDate(isWorker ? today : String((row as any)[`${field}Date`] ?? '') || today)
-    setPopupRate(String((row as any)[`${field}Rate`] ?? ''))
+    const presetRate = getWorkerRateFromPrices(workerMongoId, workers, workerPrices)
+    setPopupRate(isWorker ? '' : String((row as any)[`${field}Rate`] ?? '') || presetRate)
     setEditingWorkerCell({ rowIndex, field })
   }
 
   const saveWorkerPopup = () => {
     if (!editingWorkerCell) return
     const { rowIndex, field } = editingWorkerCell
+    const presetRate = getWorkerRateFromPrices(popupWorker, workers, workerPrices)
     setProductionData(prev => prev.map((row, i) => {
       if (i !== rowIndex) return row
       const rateKey = `${field}Rate`
@@ -104,10 +133,45 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
         ...row,
         [`${field}Worker`]: popupWorker,
         [`${field}Date`]: isWorker ? today : popupDate,
-        [rateKey]: isWorker ? (row as any)[rateKey] : popupRate,
+        [rateKey]: isWorker ? (presetRate || (row as any)[rateKey]) : (popupRate || presetRate || (row as any)[rateKey]),
       }
     }))
     setEditingWorkerCell(null)
+  }
+
+  const handleWorkerPriceChange = (workerId: string, rate: string) => {
+    const updatedPrices = { ...workerPrices, [workerId]: rate }
+    setWorkerPrices(updatedPrices)
+    setProductionData((prev) => applyWorkerPricesToProduction(prev, updatedPrices, workers))
+  }
+
+  const persistJobCard = async (options?: { pricesOnly?: boolean; nextStatus?: JobCardStatus; successMessage?: string }) => {
+    const nextStatus = options?.nextStatus ?? (isWorker ? 'pending_approval' : status)
+    const syncedProduction = applyWorkerPricesToProduction(productionData, workerPrices, workers)
+    setProductionData(syncedProduction)
+    const result = await jobCardsAPI.updateJobCard(lotNumber, {
+      lotNumber, date, brand, ratios,
+      productionData: syncedProduction.map(row => ({ ...row, layer: Number(row.layer) || 1, pieces: Number(row.pieces) || 0 })),
+      flyWidth, additionalInfo,
+      workerPrices,
+      status: nextStatus,
+    })
+    if (result.success) {
+      setStatus(nextStatus)
+      toast.showToast(options?.successMessage || 'Job card updated successfully!', 'success')
+      if (!options?.pricesOnly) router.push(`${jobCardBasePath}/${encodeURIComponent(lotNumber)}`)
+      return true
+    }
+    toast.showToast('Error updating job card: ' + result.error, 'error')
+    return false
+  }
+
+  const handleSaveWorkerPrices = async () => {
+    if (!canEditWorkerPrices) return
+    setSavingPrices(true)
+    try {
+      await persistJobCard({ pricesOnly: true, successMessage: 'Worker prices saved successfully!' })
+    } finally { setSavingPrices(false) }
   }
 
   const handleSave = async () => {
@@ -116,24 +180,10 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
     setSaving(true)
     try {
       const nextStatus: JobCardStatus = isWorker ? 'pending_approval' : status
-      const result = await jobCardsAPI.updateJobCard(lotNumber, {
-        lotNumber, date, brand, ratios,
-        productionData: productionData.map(row => ({ ...row, layer: Number(row.layer) || 1, pieces: Number(row.pieces) || 0 })),
-        flyWidth, additionalInfo,
-        status: nextStatus,
-      })
-      if (result.success) {
-        setStatus(nextStatus)
-        toast.showToast(
-          isWorker
-            ? (status === 'incomplete' ? 'Job card submitted for approval!' : 'Job card updated successfully!')
-            : 'Job card updated successfully!',
-          'success'
-        )
-        router.push(`${jobCardBasePath}/${encodeURIComponent(lotNumber)}`)
-      } else {
-        toast.showToast('Error updating job card: ' + result.error, 'error')
-      }
+      const message = isWorker
+        ? (status === 'incomplete' ? 'Job card submitted for approval!' : 'Job card updated successfully!')
+        : 'Job card updated successfully!'
+      await persistJobCard({ nextStatus, successMessage: message })
     } catch (err: any) {
       toast.showToast('Error saving job card: ' + err.message, 'error')
     } finally { setSaving(false) }
@@ -201,8 +251,19 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
             <h1>{effectiveEditMode ? 'Edit Job Card' : 'View Job Card'}</h1>
             <p>{effectiveEditMode ? 'Edit' : 'View'} job card details for lot {lotNumber}</p>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <JobCardStatusBadge status={status} />
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => fetchJobCard(true)}
+              disabled={refreshing}
+              title="Refresh job card"
+              aria-label="Refresh job card"
+              style={{ padding: '8px 12px', minWidth: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            >
+              <span className="btn-icon" style={{ display: 'inline-block', transform: refreshing ? 'rotate(360deg)' : undefined, transition: 'transform 0.6s linear' }}>🔄</span>
+            </button>
           </div>
         </div>
 
@@ -238,6 +299,16 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
             onFlyWidthChange={() => {}}
             onAdditionalInfoChange={() => {}}
           />
+          {!isWorker && (
+            <JobCardWorkerPrices
+              workers={workers}
+              workerPrices={workerPrices}
+              isEditMode={effectiveWorkerPricesEdit}
+              saving={savingPrices}
+              onPriceChange={handleWorkerPriceChange}
+              onSavePrices={handleSaveWorkerPrices}
+            />
+          )}
         </div>
       </div>
 

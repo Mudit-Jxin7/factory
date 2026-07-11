@@ -70,6 +70,7 @@ export function useSaveLot() {
               await jobCardsAPI.updateJobCard(lotNumber, {
                 lotNumber, date, brand, ratios, productionData: mergedProdData, flyWidth, additionalInfo,
                 status: existing.status ?? 'incomplete',
+                workerPrices: existing.workerPrices ?? {},
               })
             }
           } catch (err) { console.error('Error syncing job card:', err) }
@@ -84,6 +85,7 @@ export function useSaveLot() {
               productionData: productionData.map(row => ({ serialNumber: row.serialNumber, layer: Number(row.layer) || 1, pieces: Number(row.pieces) || 0, color: row.color || '', shade: row.shade || '', front: '', back: '', zip_code: row.zip_code || '', thread_code: row.thread_code || '' })),
               flyWidth, additionalInfo,
               status: 'incomplete',
+              workerPrices: {},
             })
           } catch (err) { console.error('Error auto-creating job card:', err) }
         }
