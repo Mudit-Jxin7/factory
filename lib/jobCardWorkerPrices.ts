@@ -4,18 +4,27 @@ export type WorkerPrices = Record<string, string>
 
 const WORKER_PRICE_FIELDS = ['front', 'back', 'zip', 'astar', 'beltProd', 'add1', 'add2'] as const
 
+const normalizeWorkerId = (id: unknown) => String(id ?? '').trim()
+
+export const getAssignedWorkerMongoIds = (
+  productionData: JobCardProductionRow[] = [],
+): string[] => {
+  const assignedIds = new Set<string>()
+  productionData.forEach((row) => {
+    WORKER_PRICE_FIELDS.forEach((field) => {
+      const workerMongoId = normalizeWorkerId(row[`${field}Worker` as keyof JobCardProductionRow])
+      if (workerMongoId) assignedIds.add(workerMongoId)
+    })
+  })
+  return [...assignedIds]
+}
+
 export const getWorkersAssignedToProduction = (
   productionData: JobCardProductionRow[],
   workers: Worker[],
 ): Worker[] => {
-  const assignedIds = new Set<string>()
-  productionData.forEach((row) => {
-    WORKER_PRICE_FIELDS.forEach((field) => {
-      const workerMongoId = String(row[`${field}Worker` as keyof JobCardProductionRow] ?? '')
-      if (workerMongoId) assignedIds.add(workerMongoId)
-    })
-  })
-  return workers.filter((w) => assignedIds.has(w._id))
+  const assignedIds = new Set(getAssignedWorkerMongoIds(productionData))
+  return workers.filter((w) => assignedIds.has(normalizeWorkerId(w._id)))
 }
 
 export const getWorkerRateFromPrices = (
@@ -23,8 +32,9 @@ export const getWorkerRateFromPrices = (
   workers: Pick<Worker, '_id' | 'worker_id'>[],
   workerPrices: WorkerPrices,
 ) => {
-  if (!workerMongoId) return ''
-  const worker = workers.find((w) => w._id === workerMongoId)
+  const normalizedId = normalizeWorkerId(workerMongoId)
+  if (!normalizedId) return ''
+  const worker = workers.find((w) => normalizeWorkerId(w._id) === normalizedId)
   if (!worker) return ''
   return workerPrices[String(worker.worker_id)] ?? ''
 }
@@ -50,21 +60,17 @@ export const applyWorkerPricesToProduction = (
 
 export const hasAllProductionRates = (
   productionData: JobCardProductionRow[] = [],
-  workerPrices: WorkerPrices = {},
-  workers: Pick<Worker, '_id' | 'worker_id'>[] = [],
 ): boolean => {
-  for (const row of productionData) {
-    for (const field of WORKER_PRICE_FIELDS) {
-      const workerMongoId = String(row[`${field}Worker` as keyof JobCardProductionRow] ?? '')
-      if (!workerMongoId) continue
+  const assignedIds = getAssignedWorkerMongoIds(productionData)
+  if (assignedIds.length === 0) return false
 
-      const productionRate = row[`${field}Rate` as keyof JobCardProductionRow]
-      if (productionRate !== undefined && productionRate !== null && String(productionRate).trim() !== '') continue
-
-      if (getWorkerRateFromPrices(workerMongoId, workers, workerPrices) !== '') continue
-
-      return false
-    }
-  }
-  return true
+  return assignedIds.every((workerMongoId) =>
+    productionData.some((row) =>
+      WORKER_PRICE_FIELDS.some((field) => {
+        if (normalizeWorkerId(row[`${field}Worker` as keyof JobCardProductionRow]) !== workerMongoId) return false
+        const rate = row[`${field}Rate` as keyof JobCardProductionRow]
+        return rate !== undefined && rate !== null && String(rate).trim() !== ''
+      }),
+    ),
+  )
 }

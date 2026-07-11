@@ -174,7 +174,7 @@ export default function JobCardsTable({
                   <td style={{ fontWeight: '600', color: '#1a1a1a' }}>{jobCard.lotNumber || '-'}</td>
                   <td>{jobCard.date || '-'}</td>
                   <td>{jobCard.brand || '-'}</td>
-                  <td><JobCardStatusBadge status={jobCard.status} jobCard={{ productionData: jobCard.productionData, workerPrices: jobCard.workerPrices }} variant={variant} /></td>
+                  <td><JobCardStatusBadge status={jobCard.status} jobCard={{ productionData: jobCard.productionData }} variant={variant} /></td>
                   <td style={{ textAlign: 'center' }}>
                     <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
                       <button className="btn btn-secondary" onClick={() => onView(jobCard.lotNumber)} style={{ padding: '8px 16px', fontSize: '14px' }}>View</button>

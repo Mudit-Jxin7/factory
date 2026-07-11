@@ -95,11 +95,9 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
         setAdditionalInfo({ ...DEFAULT_ADDITIONAL_INFO, ...(jc.additionalInfo || {}) })
         setStatus(normalizeJobCardStatus(jc.status))
         setWorkerPrices(prices)
-        setProductionData(applyWorkerPricesToProduction(
+        setProductionData(
           jc.productionData?.length ? jc.productionData : [{ serialNumber: 1, ...DEFAULT_PRODUCTION_ROW }],
-          prices,
-          workerList,
-        ))
+        )
         if (isRefresh) toast.showToast('Job card refreshed', 'success')
       } else {
         setError('Job card not found. Job cards are automatically created when a lot is saved.')
@@ -150,20 +148,20 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
   }
 
   const handleWorkerPriceChange = (workerId: string, rate: string) => {
-    const updatedPrices = { ...workerPrices, [workerId]: rate }
-    setWorkerPrices(updatedPrices)
-    setProductionData((prev) => applyWorkerPricesToProduction(prev, updatedPrices, workers))
+    setWorkerPrices((prev) => ({ ...prev, [workerId]: rate }))
   }
 
   const persistJobCard = async (options?: { pricesOnly?: boolean; nextStatus?: JobCardStatus; successMessage?: string }) => {
     const nextStatus = options?.nextStatus ?? (isWorker ? 'pending_approval' : status)
-    const syncedProduction = applyWorkerPricesToProduction(productionData, workerPrices, workers)
-    setProductionData(syncedProduction)
+    const productionToSave = options?.pricesOnly
+      ? applyWorkerPricesToProduction(productionData, workerPrices, workers)
+      : productionData
+    if (options?.pricesOnly) setProductionData(productionToSave)
     const result = await jobCardsAPI.updateJobCard(lotNumber, {
       lotNumber, date, brand, ratios,
-      productionData: syncedProduction.map(row => ({ ...row, layer: Number(row.layer) || 1, pieces: Number(row.pieces) || 0 })),
+      productionData: productionToSave.map(row => ({ ...row, layer: Number(row.layer) || 1, pieces: Number(row.pieces) || 0 })),
       flyWidth, additionalInfo,
-      workerPrices,
+      ...(options?.pricesOnly ? { workerPrices } : {}),
       status: nextStatus,
     })
     if (result.success) {
@@ -264,7 +262,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <JobCardStatusBadge
               status={status}
-              jobCard={{ productionData, workerPrices }}
+              jobCard={{ productionData }}
               workers={workers}
               variant={isWorker ? 'worker' : 'admin'}
             />

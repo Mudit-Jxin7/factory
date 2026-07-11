@@ -3,11 +3,6 @@ import { getJobCardDisplayStatus } from '@/lib/jobCardStatus'
 import { hasAllProductionRates } from '@/lib/jobCardWorkerPrices'
 import { JobCardProductionRow } from '@/lib/types'
 
-const workers = [
-  { _id: 'w1', worker_id: 1, worker_full_name: 'Alice' },
-  { _id: 'w2', worker_id: 2, worker_full_name: 'Bob' },
-]
-
 const productionWithMissingRate: JobCardProductionRow[] = [{
   serialNumber: 1,
   layer: '1',
@@ -45,34 +40,61 @@ const productionWithMissingRate: JobCardProductionRow[] = [{
 }]
 
 describe('hasAllProductionRates', () => {
-  it('returns false when an assigned worker is missing a rate', () => {
-    expect(hasAllProductionRates(productionWithMissingRate, {}, workers)).toBe(false)
+  it('returns false when no workers are assigned', () => {
+    expect(hasAllProductionRates([])).toBe(false)
+  })
+
+  it('returns false when an assigned worker is missing a production rate', () => {
+    expect(hasAllProductionRates(productionWithMissingRate)).toBe(false)
   })
 
   it('returns true when all assigned workers have production rates', () => {
     const rows = [{ ...productionWithMissingRate[0], frontRate: '12' }]
-    expect(hasAllProductionRates(rows, {}, workers)).toBe(true)
+    expect(hasAllProductionRates(rows)).toBe(true)
   })
 
-  it('returns true when missing production rates are covered by workerPrices', () => {
-    expect(hasAllProductionRates(productionWithMissingRate, { '1': '12' }, workers)).toBe(true)
+  it('returns true when each unique assigned worker has a production rate across multiple slots', () => {
+    const rows = [{
+      ...productionWithMissingRate[0],
+      frontRate: '12',
+      backWorker: 'w1',
+      backDate: '2024-01-01',
+      backRate: '',
+    }]
+    expect(hasAllProductionRates(rows)).toBe(true)
+  })
+
+  it('returns false when one of multiple assigned workers is missing a production rate', () => {
+    const rows = [{
+      ...productionWithMissingRate[0],
+      frontRate: '12',
+      backWorker: 'w2',
+      backDate: '2024-01-01',
+      backRate: '',
+    }]
+    expect(hasAllProductionRates(rows)).toBe(false)
   })
 })
 
 describe('getJobCardDisplayStatus', () => {
-  it('shows rate pending to admin for approved cards with missing rates', () => {
+  it('shows rate pending to admin for approved cards with no assigned workers', () => {
     expect(getJobCardDisplayStatus(
-      { status: 'complete', productionData: productionWithMissingRate },
+      { status: 'complete', productionData: [] },
       { variant: 'admin' },
-      workers,
     )).toBe('rate_pending')
   })
 
-  it('shows complete to admin once all rates are added', () => {
+  it('shows rate pending to admin for approved cards with missing production rates', () => {
+    expect(getJobCardDisplayStatus(
+      { status: 'complete', productionData: productionWithMissingRate },
+      { variant: 'admin' },
+    )).toBe('rate_pending')
+  })
+
+  it('shows complete to admin once all production rates are saved', () => {
     expect(getJobCardDisplayStatus(
       { status: 'complete', productionData: [{ ...productionWithMissingRate[0], frontRate: '12' }] },
       { variant: 'admin' },
-      workers,
     )).toBe('complete')
   })
 
@@ -80,15 +102,13 @@ describe('getJobCardDisplayStatus', () => {
     expect(getJobCardDisplayStatus(
       { status: 'pending_approval', productionData: productionWithMissingRate },
       { variant: 'worker' },
-      workers,
     )).toBe('pending_approval')
   })
 
-  it('shows complete to worker for approved cards even when rates are missing', () => {
+  it('shows complete to worker for approved cards even when production rates are missing', () => {
     expect(getJobCardDisplayStatus(
       { status: 'complete', productionData: productionWithMissingRate },
       { variant: 'worker' },
-      workers,
     )).toBe('complete')
   })
 })

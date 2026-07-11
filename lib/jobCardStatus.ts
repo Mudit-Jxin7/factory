@@ -55,7 +55,7 @@ export const getJobCardDisplayStatus = (
   }
 
   if (stored === 'complete') {
-    return hasAllProductionRates(jobCard.productionData, jobCard.workerPrices, workers)
+    return hasAllProductionRates(jobCard.productionData)
       ? 'complete'
       : 'rate_pending'
   }
