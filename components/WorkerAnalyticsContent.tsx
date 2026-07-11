@@ -94,7 +94,8 @@ export default function WorkerAnalyticsContent() {
 
   const handleDateRangePreset = (days: number) => {
     const to = new Date()
-    const from = new Date()
+    if (days === 7) to.setDate(to.getDate() - 1)
+    const from = new Date(to)
     from.setDate(from.getDate() - (days - 1))
     setFromDate(from.toISOString().split('T')[0])
     setToDate(to.toISOString().split('T')[0])
