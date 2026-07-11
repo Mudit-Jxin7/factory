@@ -34,6 +34,11 @@ export function getUserRole(): UserRole | null {
 
 export const WORKER_ALLOWED_PREFIXES = ['/worker']
 
+/** Staff routes only — excludes `/worker-analytics` (admin analytics). */
+export function isStaffOnlyPath(pathname: string): boolean {
+  return pathname === '/worker' || pathname.startsWith('/worker/')
+}
+
 export function isWorkerAllowedPath(pathname: string): boolean {
-  return WORKER_ALLOWED_PREFIXES.some(prefix => pathname.startsWith(prefix))
+  return isStaffOnlyPath(pathname)
 }

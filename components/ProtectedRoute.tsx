@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
-import { getUserRole, isWorkerAllowedPath } from '@/lib/auth'
+import { getUserRole, isStaffOnlyPath, isWorkerAllowedPath } from '@/lib/auth'
 import './dashboard.css'
 
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -23,7 +23,7 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
       return
     }
 
-    if (role === 'admin' && pathname.startsWith('/worker')) {
+    if (role === 'admin' && isStaffOnlyPath(pathname)) {
       router.push('/dashboard')
       return
     }
