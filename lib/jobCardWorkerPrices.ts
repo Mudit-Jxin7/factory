@@ -4,6 +4,20 @@ export type WorkerPrices = Record<string, string>
 
 const WORKER_PRICE_FIELDS = ['front', 'back', 'zip', 'astar', 'beltProd', 'add1', 'add2'] as const
 
+export const getWorkersAssignedToProduction = (
+  productionData: JobCardProductionRow[],
+  workers: Worker[],
+): Worker[] => {
+  const assignedIds = new Set<string>()
+  productionData.forEach((row) => {
+    WORKER_PRICE_FIELDS.forEach((field) => {
+      const workerMongoId = String(row[`${field}Worker` as keyof JobCardProductionRow] ?? '')
+      if (workerMongoId) assignedIds.add(workerMongoId)
+    })
+  })
+  return workers.filter((w) => assignedIds.has(w._id))
+}
+
 export const getWorkerRateFromPrices = (
   workerMongoId: string,
   workers: Worker[],

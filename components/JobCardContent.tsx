@@ -16,7 +16,7 @@ import JobCardRatios from './jobcard/JobCardRatios'
 import JobCardProductionTable from './jobcard/JobCardProductionTable'
 import JobCardAdditionalInfo from './jobcard/JobCardAdditionalInfo'
 import JobCardWorkerPrices from './jobcard/JobCardWorkerPrices'
-import { applyWorkerPricesToProduction, getWorkerRateFromPrices, WorkerPrices } from '@/lib/jobCardWorkerPrices'
+import { applyWorkerPricesToProduction, getWorkerRateFromPrices, getWorkersAssignedToProduction, WorkerPrices } from '@/lib/jobCardWorkerPrices'
 import { exportJobCardToPDF } from './jobcard/exportToPDF'
 import { exportJobCardToExcel } from './jobcard/exportToExcel'
 import './dashboard.css'
@@ -68,6 +68,10 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
   const canApprove = !isWorker && canAdminApproveJobCard(status)
 
   const sumOfRatios = useMemo(() => Object.values(ratios).reduce((sum, val) => sum + (Number(val) || 0), 0), [ratios])
+  const assignedWorkers = useMemo(
+    () => getWorkersAssignedToProduction(productionData, workers),
+    [productionData, workers],
+  )
 
   const fetchJobCard = useCallback(async (isRefresh = false) => {
     if (!lotNumber) return
@@ -307,7 +311,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
           />
           {!isWorker && (
             <JobCardWorkerPrices
-              workers={workers}
+              workers={assignedWorkers}
               workerPrices={workerPrices}
               isEditMode={effectiveWorkerPricesEdit}
               saving={savingPrices}

@@ -52,7 +52,7 @@ export default function JobCardWorkerPrices({
             {sortedWorkers.length === 0 ? (
               <tr>
                 <td colSpan={4} style={{ padding: '24px', textAlign: 'center', color: '#6c757d' }}>
-                  No workers found
+                  No workers assigned to this lot yet
                 </td>
               </tr>
             ) : sortedWorkers.map((worker) => {
