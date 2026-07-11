@@ -1,6 +1,6 @@
 'use client'
 
-import { ADMIN_FILTER_STATUSES, getJobCardDisplayStatus, JOB_CARD_DISPLAY_STATUS_LABELS } from '@/lib/jobCardStatus'
+import { ADMIN_FILTER_STATUSES, JOB_CARD_DISPLAY_STATUS_LABELS, WORKER_FILTER_STATUSES } from '@/lib/jobCardStatus'
 
 const inputStyle = { width: '100%', padding: '8px 10px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', backgroundColor: '#fff' }
 const labelStyle = { marginBottom: '8px', display: 'block', fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }
@@ -23,9 +23,7 @@ export default function JobCardsFilters({
   filterLotNumber, filterDate, filterBrand, filterStatus, brandOptions, variant = 'admin',
   onLotNumberChange, onDateChange, onBrandChange, onStatusChange, onClear,
 }: JobCardsFiltersProps) {
-  const statusOptions = variant === 'admin'
-    ? ADMIN_FILTER_STATUSES
-    : ADMIN_FILTER_STATUSES.filter((status) => status !== 'rate_pending' && status !== 'pending_approval')
+  const statusOptions = variant === 'admin' ? ADMIN_FILTER_STATUSES : WORKER_FILTER_STATUSES
   return (
     <div className="card" style={{ marginBottom: '20px', padding: '20px', background: '#fff9e6' }}>
       <h3 style={{ marginTop: 0, marginBottom: '15px', fontSize: '18px', fontWeight: '600', color: '#1a1a1a' }}>Filters</h3>

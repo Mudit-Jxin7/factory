@@ -29,6 +29,7 @@ export const JOB_CARD_DISPLAY_STATUS_COLORS: Record<JobCardDisplayStatus, { bg: 
 }
 
 export const ADMIN_FILTER_STATUSES: JobCardDisplayStatus[] = [...JOB_CARD_STATUSES, 'rate_pending']
+export const WORKER_FILTER_STATUSES: JobCardDisplayStatus[] = ['incomplete', 'complete']
 
 type JobCardForDisplay = {
   status?: string

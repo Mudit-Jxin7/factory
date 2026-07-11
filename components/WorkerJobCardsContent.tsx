@@ -65,6 +65,7 @@ export default function WorkerJobCardsContent() {
           <div className="card">
             {!loadingJobCards && (
               <JobCardsFilters
+                variant="worker"
                 filterLotNumber={filterLotNumber} filterDate={filterDate} filterBrand={filterBrand} filterStatus={filterStatus}
                 brandOptions={brandOptions}
                 onLotNumberChange={setFilterLotNumber} onDateChange={setFilterDate} onBrandChange={setFilterBrand}
