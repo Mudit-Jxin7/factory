@@ -8,9 +8,7 @@ interface JobCardWorkerPricesProps {
   workers: Worker[]
   workerPrices: WorkerPrices
   isEditMode: boolean
-  saving?: boolean
   onPriceChange: (workerId: string, rate: string) => void
-  onSavePrices: () => void
 }
 
 const inputStyle = {
@@ -19,24 +17,17 @@ const inputStyle = {
 }
 
 export default function JobCardWorkerPrices({
-  workers, workerPrices, isEditMode, saving, onPriceChange, onSavePrices,
+  workers, workerPrices, isEditMode, onPriceChange,
 }: JobCardWorkerPricesProps) {
   const sortedWorkers = [...workers].sort((a, b) => a.worker_id - b.worker_id)
 
   return (
     <div className="card">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', flexWrap: 'wrap', gap: '12px' }}>
-        <div>
-          <h2 style={{ margin: 0 }}>Worker Prices</h2>
-          <p style={{ margin: '6px 0 0', color: '#6c757d', fontSize: '14px' }}>
-            Set rate by worker ID. Assigned workers in production data will use these rates automatically.
-          </p>
-        </div>
-        {isEditMode && (
-          <button className="btn btn-primary" onClick={onSavePrices} disabled={saving} style={{ padding: '8px 16px' }}>
-            {saving ? 'Saving…' : 'Save Prices'}
-          </button>
-        )}
+      <div style={{ marginBottom: '15px' }}>
+        <h2 style={{ margin: 0 }}>Worker Prices</h2>
+        <p style={{ margin: '6px 0 0', color: '#6c757d', fontSize: '14px' }}>
+          Set rate by worker ID. Rates are applied to production data when you save the job card.
+        </p>
       </div>
       <div style={{ overflowX: 'auto' }}>
         <table className="production-table" style={{ width: '100%' }}>

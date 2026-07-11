@@ -59,12 +59,11 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
   const [popupDate, setPopupDate] = useState('')
   const [popupRate, setPopupRate] = useState('')
   const [workerPrices, setWorkerPrices] = useState<WorkerPrices>({})
-  const [savingPrices, setSavingPrices] = useState(false)
 
   const canEdit = isWorker ? canWorkerEditJobCard(status) : canAdminEditJobCard(status)
   const showWorkerPrices = !isWorker && canAdminViewWorkerPrices(status)
   const effectiveEditMode = isEditMode && canEdit
-  const effectiveWorkerPricesEdit = showWorkerPrices
+  const effectiveWorkerPricesEdit = showWorkerPrices && effectiveEditMode
   const canApprove = !isWorker && canAdminApproveJobCard(status)
 
   const sumOfRatios = useMemo(() => Object.values(ratios).reduce((sum, val) => sum + (Number(val) || 0), 0), [ratios])
@@ -157,13 +156,13 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
     })
   }
 
-  const persistJobCard = async (options?: { pricesOnly?: boolean; nextStatus?: JobCardStatus; successMessage?: string }) => {
+  const persistJobCard = async (options?: { nextStatus?: JobCardStatus; successMessage?: string }) => {
     const nextStatus = options?.nextStatus ?? (isWorker ? 'pending_approval' : status)
-    const pricesToSave = options?.pricesOnly ? sanitizeWorkerPrices(workerPrices) : workerPrices
-    const productionToSave = options?.pricesOnly
-      ? applyWorkerPricesToProduction(productionData, pricesToSave, workers)
+    const pricesToSave = showWorkerPrices ? sanitizeWorkerPrices(workerPrices) : undefined
+    const productionToSave = showWorkerPrices
+      ? applyWorkerPricesToProduction(productionData, pricesToSave ?? {}, workers)
       : productionData
-    if (options?.pricesOnly) {
+    if (showWorkerPrices && pricesToSave !== undefined) {
       setWorkerPrices(pricesToSave)
       setProductionData(productionToSave)
     }
@@ -171,25 +170,17 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
       lotNumber, date, brand, ratios,
       productionData: productionToSave.map(row => ({ ...row, layer: Number(row.layer) || 1, pieces: Number(row.pieces) || 0 })),
       flyWidth, additionalInfo,
-      ...(options?.pricesOnly ? { workerPrices: pricesToSave } : {}),
+      ...(showWorkerPrices && pricesToSave !== undefined ? { workerPrices: pricesToSave } : {}),
       status: nextStatus,
     })
     if (result.success) {
       setStatus(nextStatus)
       toast.showToast(options?.successMessage || 'Job card updated successfully!', 'success')
-      if (!options?.pricesOnly) router.push(`${jobCardBasePath}/${encodeURIComponent(lotNumber)}`)
+      router.push(`${jobCardBasePath}/${encodeURIComponent(lotNumber)}`)
       return true
     }
     toast.showToast('Error updating job card: ' + result.error, 'error')
     return false
-  }
-
-  const handleSaveWorkerPrices = async () => {
-    if (!showWorkerPrices) return
-    setSavingPrices(true)
-    try {
-      await persistJobCard({ pricesOnly: true, successMessage: 'Worker prices saved successfully!' })
-    } finally { setSavingPrices(false) }
   }
 
   const handleSave = async () => {
@@ -327,9 +318,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
               workers={assignedWorkers}
               workerPrices={workerPrices}
               isEditMode={effectiveWorkerPricesEdit}
-              saving={savingPrices}
               onPriceChange={handleWorkerPriceChange}
-              onSavePrices={handleSaveWorkerPrices}
             />
           )}
         </div>
