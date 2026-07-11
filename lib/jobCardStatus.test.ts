@@ -76,12 +76,12 @@ describe('getJobCardDisplayStatus', () => {
     )).toBe('complete')
   })
 
-  it('shows complete to worker for pending approval even when rates are missing', () => {
+  it('shows pending approval to worker for submitted cards', () => {
     expect(getJobCardDisplayStatus(
       { status: 'pending_approval', productionData: productionWithMissingRate },
       { variant: 'worker' },
       workers,
-    )).toBe('complete')
+    )).toBe('pending_approval')
   })
 
   it('shows complete to worker for approved cards even when rates are missing', () => {
