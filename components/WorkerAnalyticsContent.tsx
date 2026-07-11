@@ -28,6 +28,9 @@ export default function WorkerAnalyticsContent() {
   const [fromDate, setFromDate] = useState('')
   const [toDate, setToDate] = useState('')
   const [selectedWorker, setSelectedWorker] = useState('')
+  const [appliedFromDate, setAppliedFromDate] = useState('')
+  const [appliedToDate, setAppliedToDate] = useState('')
+  const [appliedWorker, setAppliedWorker] = useState('')
 
   useEffect(() => {
     const fetchData = async () => {
@@ -74,21 +77,36 @@ export default function WorkerAnalyticsContent() {
 
   const filteredData = useMemo(() => {
     let filtered = [...analyticsData]
-    if (fromDate) filtered = filtered.filter((row) => row.date >= fromDate)
-    if (toDate) filtered = filtered.filter((row) => row.date <= toDate)
-    if (selectedWorker) {
-      const worker = workers.find((w: any) => w._id === selectedWorker)
+    if (appliedFromDate) filtered = filtered.filter((row) => row.date >= appliedFromDate)
+    if (appliedToDate) filtered = filtered.filter((row) => row.date <= appliedToDate)
+    if (appliedWorker) {
+      const worker = workers.find((w: any) => w._id === appliedWorker)
       if (worker) filtered = filtered.filter((row) => row.worker_id === worker.worker_id)
     }
     return filtered.sort((a, b) => a.date !== b.date ? b.date.localeCompare(a.date) : a.worker_id - b.worker_id)
-  }, [analyticsData, fromDate, toDate, selectedWorker, workers])
+  }, [analyticsData, appliedFromDate, appliedToDate, appliedWorker, workers])
+
+  const handleApplyFilters = () => {
+    setAppliedFromDate(fromDate)
+    setAppliedToDate(toDate)
+    setAppliedWorker(selectedWorker)
+  }
+
+  const handleClearFilters = () => {
+    setFromDate('')
+    setToDate('')
+    setSelectedWorker('')
+    setAppliedFromDate('')
+    setAppliedToDate('')
+    setAppliedWorker('')
+  }
 
   const totals = useMemo(() => filteredData.reduce(
     (acc, row) => ({ totalPieces: acc.totalPieces + row.pieces, totalAmount: acc.totalAmount + row.total_amount }),
     { totalPieces: 0, totalAmount: 0 }
   ), [filteredData])
 
-  const exportParams = { filteredData, workers, fromDate, toDate, selectedWorker, totals }
+  const exportParams = { filteredData, workers, fromDate: appliedFromDate, toDate: appliedToDate, selectedWorker: appliedWorker, totals }
 
   return (
     <>
@@ -108,7 +126,8 @@ export default function WorkerAnalyticsContent() {
           <AnalyticsFilters
             workers={workers} fromDate={fromDate} toDate={toDate} selectedWorker={selectedWorker}
             onFromDateChange={setFromDate} onToDateChange={setToDate} onWorkerChange={setSelectedWorker}
-            onClearFilters={() => { setFromDate(''); setToDate(''); setSelectedWorker('') }}
+            onApplyFilters={handleApplyFilters}
+            onClearFilters={handleClearFilters}
           />
           <div className="card">
             <AnalyticsTable loading={loading} filteredData={filteredData} allCount={analyticsData.length} totals={totals} />

@@ -8,6 +8,7 @@ interface AnalyticsFiltersProps {
   onFromDateChange: (v: string) => void
   onToDateChange: (v: string) => void
   onWorkerChange: (v: string) => void
+  onApplyFilters: () => void
   onClearFilters: () => void
 }
 
@@ -18,7 +19,7 @@ const inputStyle = {
 
 export default function AnalyticsFilters({
   workers, fromDate, toDate, selectedWorker,
-  onFromDateChange, onToDateChange, onWorkerChange, onClearFilters,
+  onFromDateChange, onToDateChange, onWorkerChange, onApplyFilters, onClearFilters,
 }: AnalyticsFiltersProps) {
   return (
     <div className="card filters-section" style={{ marginBottom: '20px', padding: '20px', background: '#fff9e6' }}>
@@ -43,7 +44,10 @@ export default function AnalyticsFilters({
             ))}
           </select>
         </div>
-        <div style={{ display: 'flex', alignItems: 'end' }}>
+        <div style={{ display: 'flex', alignItems: 'end', gap: '10px' }}>
+          <button className="btn btn-primary" onClick={onApplyFilters} style={{ padding: '10px 20px', fontSize: '16px', whiteSpace: 'nowrap' }}>
+            Apply Filters
+          </button>
           <button className="btn btn-secondary" onClick={onClearFilters} style={{ padding: '10px 20px', fontSize: '16px', whiteSpace: 'nowrap' }}>
             Clear Filters
           </button>
