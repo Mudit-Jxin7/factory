@@ -19,16 +19,23 @@ export default function WorkerJobCardsContent() {
   const [filterDate, setFilterDate] = useState('')
   const [filterBrand, setFilterBrand] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
+  const [refreshing, setRefreshing] = useState(false)
 
-  const fetchAllJobCards = async () => {
-    setLoadingJobCards(true)
+  const fetchAllJobCards = async (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true)
+    else setLoadingJobCards(true)
     try {
       const result = await jobCardsAPI.getAllJobCards()
-      if (result.success) setAllJobCards(result.jobCards || [])
-      else toast.showToast('Error fetching job cards: ' + result.error, 'error')
+      if (result.success) {
+        setAllJobCards(result.jobCards || [])
+        if (isRefresh) toast.showToast('Job cards refreshed', 'success')
+      } else toast.showToast('Error fetching job cards: ' + result.error, 'error')
     } catch (error: any) {
       toast.showToast('Error fetching job cards: ' + error.message, 'error')
-    } finally { setLoadingJobCards(false) }
+    } finally {
+      if (isRefresh) setRefreshing(false)
+      else setLoadingJobCards(false)
+    }
   }
 
   useEffect(() => { fetchAllJobCards() }, [])
@@ -67,6 +74,8 @@ export default function WorkerJobCardsContent() {
             )}
             <JobCardsTable
               jobCards={filteredJobCards} allCount={allJobCards.length} loading={loadingJobCards}
+              onRefresh={() => fetchAllJobCards(true)}
+              refreshing={refreshing}
               onView={(lotNumber) => router.push(`/worker/jobcard/${encodeURIComponent(lotNumber)}`)}
               variant="worker"
             />

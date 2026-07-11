@@ -22,12 +22,15 @@ interface JobCardsTableProps {
   onView: (lotNumber: string) => void
   onDelete?: (lotNumber: string) => void
   onApprove?: (lotNumber: string) => void
+  onRefresh?: () => void
+  refreshing?: boolean
   variant?: 'admin' | 'worker'
 }
 
 export default function JobCardsTable({
   jobCards, allCount, loading, deletingJobCard, approvingJobCard, bulkDeleting,
   selectedIds = new Set(), onSelectId, onSelectAll, onDeleteSelected, onView, onDelete, onApprove,
+  onRefresh, refreshing = false,
   variant = 'admin',
 }: JobCardsTableProps) {
   const router = useRouter()
@@ -54,11 +57,32 @@ export default function JobCardsTable({
     }
   }, [somePageSelected, allPageSelected])
 
+  const tableTitle = isWorker ? 'Job Cards' : 'All Job Cards'
+
+  const renderTableHeading = (countLabel?: string) => (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+      <h2 style={{ margin: 0 }}>{countLabel ? `${tableTitle} (${countLabel})` : tableTitle}</h2>
+      {onRefresh && (
+        <button
+          type="button"
+          className="btn btn-secondary"
+          onClick={onRefresh}
+          disabled={refreshing || loading}
+          title="Refresh job cards"
+          aria-label="Refresh job cards"
+          style={{ padding: '8px 12px', minWidth: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        >
+          <span className="btn-icon" style={{ display: 'inline-block', transform: refreshing ? 'rotate(360deg)' : undefined, transition: 'transform 0.6s linear' }}>🔄</span>
+        </button>
+      )}
+    </div>
+  )
+
   if (loading) {
     return (
       <>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-          <h2>All Job Cards</h2>
+          {renderTableHeading()}
         </div>
         <div style={{ overflowX: 'auto' }}>
           <table className="production-table" style={{ width: '100%' }}>
@@ -84,7 +108,7 @@ export default function JobCardsTable({
   return (
     <>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-        <h2>All Job Cards ({jobCards.length} of {allCount})</h2>
+        {renderTableHeading(`${jobCards.length} of ${allCount}`)}
         {!isWorker && totalSelected > 0 && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <span style={{ fontSize: '14px', color: '#495057', fontWeight: 500 }}>
