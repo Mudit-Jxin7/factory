@@ -16,7 +16,7 @@ import JobCardRatios from './jobcard/JobCardRatios'
 import JobCardProductionTable from './jobcard/JobCardProductionTable'
 import JobCardAdditionalInfo from './jobcard/JobCardAdditionalInfo'
 import JobCardWorkerPrices from './jobcard/JobCardWorkerPrices'
-import { applyWorkerPricesToProduction, getWorkerRateFromPrices, getWorkersAssignedToProduction, WorkerPrices } from '@/lib/jobCardWorkerPrices'
+import { applyWorkerPricesToProduction, getWorkerRateFromPrices, getWorkersAssignedToProduction, sanitizeWorkerPrices, WorkerPrices } from '@/lib/jobCardWorkerPrices'
 import { exportJobCardToPDF } from './jobcard/exportToPDF'
 import { exportJobCardToExcel } from './jobcard/exportToExcel'
 import './dashboard.css'
@@ -148,20 +148,30 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
   }
 
   const handleWorkerPriceChange = (workerId: string, rate: string) => {
-    setWorkerPrices((prev) => ({ ...prev, [workerId]: rate }))
+    setWorkerPrices((prev) => {
+      if (String(rate).trim() === '') {
+        const { [workerId]: _removed, ...rest } = prev
+        return rest
+      }
+      return { ...prev, [workerId]: rate }
+    })
   }
 
   const persistJobCard = async (options?: { pricesOnly?: boolean; nextStatus?: JobCardStatus; successMessage?: string }) => {
     const nextStatus = options?.nextStatus ?? (isWorker ? 'pending_approval' : status)
+    const pricesToSave = options?.pricesOnly ? sanitizeWorkerPrices(workerPrices) : workerPrices
     const productionToSave = options?.pricesOnly
-      ? applyWorkerPricesToProduction(productionData, workerPrices, workers)
+      ? applyWorkerPricesToProduction(productionData, pricesToSave, workers)
       : productionData
-    if (options?.pricesOnly) setProductionData(productionToSave)
+    if (options?.pricesOnly) {
+      setWorkerPrices(pricesToSave)
+      setProductionData(productionToSave)
+    }
     const result = await jobCardsAPI.updateJobCard(lotNumber, {
       lotNumber, date, brand, ratios,
       productionData: productionToSave.map(row => ({ ...row, layer: Number(row.layer) || 1, pieces: Number(row.pieces) || 0 })),
       flyWidth, additionalInfo,
-      ...(options?.pricesOnly ? { workerPrices } : {}),
+      ...(options?.pricesOnly ? { workerPrices: pricesToSave } : {}),
       status: nextStatus,
     })
     if (result.success) {

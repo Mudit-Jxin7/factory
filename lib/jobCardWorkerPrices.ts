@@ -6,6 +6,11 @@ const WORKER_PRICE_FIELDS = ['front', 'back', 'zip', 'astar', 'beltProd', 'add1'
 
 const normalizeWorkerId = (id: unknown) => String(id ?? '').trim()
 
+export const sanitizeWorkerPrices = (workerPrices: WorkerPrices): WorkerPrices =>
+  Object.fromEntries(
+    Object.entries(workerPrices).filter(([, rate]) => String(rate).trim() !== ''),
+  )
+
 export const getAssignedWorkerMongoIds = (
   productionData: JobCardProductionRow[] = [],
 ): string[] => {
@@ -52,7 +57,7 @@ export const applyWorkerPricesToProduction = (
       const workerMongoId = String(row[workerKey] ?? '')
       if (!workerMongoId) return
       const rate = getWorkerRateFromPrices(workerMongoId, workers, workerPrices)
-      if (rate !== '') (updated as any)[rateKey] = rate
+      ;(updated as any)[rateKey] = rate
     })
     return updated
   })

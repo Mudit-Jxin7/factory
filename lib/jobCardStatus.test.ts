@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { getJobCardDisplayStatus } from '@/lib/jobCardStatus'
-import { hasAllProductionRates } from '@/lib/jobCardWorkerPrices'
+import { applyWorkerPricesToProduction, hasAllProductionRates } from '@/lib/jobCardWorkerPrices'
 import { JobCardProductionRow } from '@/lib/types'
 
 const productionWithMissingRate: JobCardProductionRow[] = [{
@@ -73,6 +73,21 @@ describe('hasAllProductionRates', () => {
       backRate: '',
     }]
     expect(hasAllProductionRates(rows)).toBe(false)
+  })
+})
+
+describe('applyWorkerPricesToProduction', () => {
+  const workers = [{ _id: 'w1', worker_id: 1, worker_full_name: 'Alice' }]
+
+  it('clears production row rates when the worker price is empty', () => {
+    const rows = [{ ...productionWithMissingRate[0], frontRate: '12' }]
+    const updated = applyWorkerPricesToProduction(rows, {}, workers)
+    expect(updated[0].frontRate).toBe('')
+  })
+
+  it('writes worker prices into matching production row rates on save', () => {
+    const updated = applyWorkerPricesToProduction(productionWithMissingRate, { '1': '15' }, workers)
+    expect(updated[0].frontRate).toBe('15')
   })
 })
 
