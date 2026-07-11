@@ -22,7 +22,7 @@ export default function Login() {
       setAuthSession(loginRole)
       router.push(loginRole === 'worker' ? '/worker' : '/dashboard')
     } else {
-      setError(`Invalid ${loginRole} username or password`)
+      setError(`Invalid ${loginRole === 'worker' ? 'staff' : loginRole} username or password`)
     }
 
     setLoading(false)
@@ -49,7 +49,7 @@ export default function Login() {
             className={`login-role-btn ${loginRole === 'worker' ? 'active' : ''}`}
             onClick={() => { setLoginRole('worker'); setError('') }}
           >
-            Login as Worker
+            Login as Staff
           </button>
         </div>
 
@@ -90,7 +90,7 @@ export default function Login() {
             disabled={loading}
             className="btn btn-primary login-button"
           >
-            {loading ? 'Logging in...' : loginRole === 'admin' ? 'Login as Admin' : 'Login as Worker'}
+            {loading ? 'Logging in...' : loginRole === 'admin' ? 'Login as Admin' : 'Login as Staff'}
           </button>
         </form>
       </div>
