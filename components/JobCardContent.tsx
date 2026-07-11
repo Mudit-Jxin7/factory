@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { jobCardsAPI, lotsAPI, workersAPI } from '@/lib/api'
 import { JobCardProductionRow, Worker, Ratios, AdditionalInfo, DEFAULT_RATIOS, DEFAULT_ADDITIONAL_INFO } from '@/lib/types'
 import NavigationBar from './NavigationBar'
+import WorkerNavigationBar from './WorkerNavigationBar'
 import { useToast } from './ToastProvider'
 import ActionBar, { ActionBarItem } from './ActionBar'
 import { WorkerField, DEFAULT_PRODUCTION_ROW } from './jobcard/constants'
@@ -19,12 +20,17 @@ import './dashboard.css'
 interface JobCardContentProps {
   lotNumber: string
   isEdit?: boolean
+  variant?: 'admin' | 'worker'
 }
 
-export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: initialIsEdit }: JobCardContentProps) {
+export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: initialIsEdit, variant = 'admin' }: JobCardContentProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const toast = useToast()
+  const isWorker = variant === 'worker'
+  const jobCardBasePath = isWorker ? '/worker/jobcard' : '/jobcard'
+  const jobCardsListPath = isWorker ? '/worker' : '/jobcards'
+  const NavBar = isWorker ? WorkerNavigationBar : NavigationBar
   const isEditMode = initialIsEdit || searchParams?.get('edit') === 'true'
   const decodedLotNumber = initialLotNumber ? decodeURIComponent(initialLotNumber) : ''
 
@@ -100,7 +106,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
       })
       if (result.success) {
         toast.showToast('Job card updated successfully!', 'success')
-        router.push(`/jobcard/${encodeURIComponent(lotNumber)}?edit=true`)
+        router.push(`${jobCardBasePath}/${encodeURIComponent(lotNumber)}?edit=true`)
       } else {
         toast.showToast('Error updating job card: ' + result.error, 'error')
       }
@@ -128,7 +134,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
 
   if (loading) {
     return (
-      <><NavigationBar />
+      <><NavBar />
         <div className="dashboard-container">
           <div className="loading-container"><div className="spinner" /><p>Loading job card&hellip;</p></div>
         </div>
@@ -138,13 +144,13 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
 
   return (
     <>
-      <NavigationBar />
+      <NavBar />
       <ActionBar actions={[
         ...(isEditMode ? [{ label: 'Update Job Card', shortLabel: 'Save', icon: '💾', onClick: handleSave, disabled: saving || !lotNumber, loading: saving, loadingLabel: 'Saving…' } as ActionBarItem] : []),
         { label: 'Download PDF', shortLabel: 'PDF', icon: '📄', onClick: handleExportPDF, loading: generatingPDF, loadingLabel: '…' },
         { label: 'Download Excel', shortLabel: 'Excel', icon: '📊', onClick: handleExportExcel, loading: generatingExcel, loadingLabel: '…' },
-        ...(!isEditMode ? [{ label: 'Edit Job Card', shortLabel: 'Edit', icon: '✏️', onClick: () => router.push(`/jobcard/${encodeURIComponent(lotNumber)}?edit=true`) } as ActionBarItem] : []),
-        { label: 'Back to Job Cards', shortLabel: 'Back', icon: '←', onClick: () => router.push('/jobcards'), variant: 'secondary' as const },
+        ...(!isEditMode ? [{ label: 'Edit Job Card', shortLabel: 'Edit', icon: '✏️', onClick: () => router.push(`${jobCardBasePath}/${encodeURIComponent(lotNumber)}?edit=true`) } as ActionBarItem] : []),
+        { label: 'Back to Job Cards', shortLabel: 'Back', icon: '←', onClick: () => router.push(jobCardsListPath), variant: 'secondary' as const },
       ]} />
       <div className="dashboard-container job-card-page">
         <div className="dashboard-header">

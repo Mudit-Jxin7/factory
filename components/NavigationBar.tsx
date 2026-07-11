@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter, usePathname } from 'next/navigation'
+import { clearAuthSession } from '@/lib/auth'
 import './dashboard.css'
 
 export default function NavigationBar() {
@@ -8,7 +9,7 @@ export default function NavigationBar() {
   const pathname = usePathname()
 
   const handleLogout = () => {
-    localStorage.removeItem('isAuthenticated')
+    clearAuthSession()
     router.push('/login')
   }
 

@@ -2,10 +2,11 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { AUTH_CREDENTIALS } from '@/lib/auth'
+import { authenticate, setAuthSession, type UserRole } from '@/lib/auth'
 import '@/components/dashboard.css'
 
 export default function Login() {
+  const [loginRole, setLoginRole] = useState<UserRole>('admin')
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -17,12 +18,11 @@ export default function Login() {
     setError('')
     setLoading(true)
 
-    // Frontend-only authentication
-    if (username === AUTH_CREDENTIALS.username && password === AUTH_CREDENTIALS.password) {
-      localStorage.setItem('isAuthenticated', 'true')
-      router.push('/dashboard')
+    if (authenticate(username, password, loginRole)) {
+      setAuthSession(loginRole)
+      router.push(loginRole === 'worker' ? '/worker' : '/dashboard')
     } else {
-      setError('Invalid username or password')
+      setError(`Invalid ${loginRole} username or password`)
     }
 
     setLoading(false)
@@ -34,6 +34,23 @@ export default function Login() {
         <div className="login-header">
           <h1>Factory Dashboard</h1>
           <p>Please login to continue</p>
+        </div>
+
+        <div className="login-role-toggle">
+          <button
+            type="button"
+            className={`login-role-btn ${loginRole === 'admin' ? 'active' : ''}`}
+            onClick={() => { setLoginRole('admin'); setError('') }}
+          >
+            Login as Admin
+          </button>
+          <button
+            type="button"
+            className={`login-role-btn ${loginRole === 'worker' ? 'active' : ''}`}
+            onClick={() => { setLoginRole('worker'); setError('') }}
+          >
+            Login as Worker
+          </button>
         </div>
 
         <form onSubmit={handleSubmit} className="login-form">
@@ -73,7 +90,7 @@ export default function Login() {
             disabled={loading}
             className="btn btn-primary login-button"
           >
-            {loading ? 'Logging in...' : 'Login'}
+            {loading ? 'Logging in...' : loginRole === 'admin' ? 'Login as Admin' : 'Login as Worker'}
           </button>
         </form>
       </div>

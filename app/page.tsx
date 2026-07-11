@@ -18,7 +18,8 @@ export default function Home() {
     // Check if user is authenticated
     const isAuthenticated = localStorage.getItem('isAuthenticated')
     if (isAuthenticated === 'true') {
-      router.push('/dashboard')
+      const role = localStorage.getItem('userRole')
+      router.push(role === 'worker' ? '/worker' : '/dashboard')
     } else {
       router.push('/login')
     }

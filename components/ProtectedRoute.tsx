@@ -1,21 +1,35 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
+import { getUserRole, isWorkerAllowedPath } from '@/lib/auth'
 import './dashboard.css'
 
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const router = useRouter()
+  const pathname = usePathname()
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const isAuthenticated = localStorage.getItem('isAuthenticated')
     if (isAuthenticated !== 'true') {
       router.push('/login')
-    } else {
-      setLoading(false)
+      return
     }
-  }, [router])
+
+    const role = getUserRole()
+    if (role === 'worker' && !isWorkerAllowedPath(pathname)) {
+      router.push('/worker')
+      return
+    }
+
+    if (role === 'admin' && pathname.startsWith('/worker')) {
+      router.push('/dashboard')
+      return
+    }
+
+    setLoading(false)
+  }, [router, pathname])
 
   if (loading) {
     return (
