@@ -110,7 +110,7 @@ export const exportAnalyticsToExcel = (params: ExportParams) => {
 
   filterRows.push([])
 
-  const headers = ['Worker ID', 'Worker Name', 'Front / Back / Zip', 'Date', 'Rate', 'Lot Number', 'Layer', 'Pieces', 'Total Amount']
+  const headers = ['Worker ID', 'Worker Name', 'Section', 'Date', 'Rate', 'Lot Number', 'Layer', 'Pieces', 'Total Amount']
   const rows = filteredData.map((row) => [row.worker_id.toString(), row.worker_full_name, row.section, row.date, row.rate.toString(), row.lotNumber, row.layer.toString(), row.pieces.toString(), row.total_amount.toFixed(2)])
   rows.push(['', 'TOTAL', '', '', '', '', '', totals.totalPieces.toFixed(2), totals.totalAmount.toFixed(2)])
 

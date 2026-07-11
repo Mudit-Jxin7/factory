@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { jobCardsAPI, workersAPI } from '@/lib/api'
+import { WORKER_ROLES } from '@/lib/types'
+import { getWorkerRole } from './jobcard/constants'
 import NavigationBar from './NavigationBar'
 import { useToast } from './ToastProvider'
 import ActionBar from './ActionBar'
@@ -10,12 +12,14 @@ import AnalyticsTable from './analytics/AnalyticsTable'
 import { exportAnalyticsToPDF, exportAnalyticsToExcel } from './analytics/exportUtils'
 import './dashboard.css'
 
-type SectionType = 'Front' | 'Back' | 'Zip'
+type SectionType = 'Front' | 'Back' | 'Zip' | 'Astar' | 'Belt'
 
 const SECTIONS: { key: SectionType; workerKey: string; dateKey: string; rateKey: string }[] = [
   { key: 'Front', workerKey: 'frontWorker', dateKey: 'frontDate', rateKey: 'frontRate' },
   { key: 'Back',  workerKey: 'backWorker',  dateKey: 'backDate',  rateKey: 'backRate'  },
   { key: 'Zip',   workerKey: 'zipWorker',   dateKey: 'zipDate',   rateKey: 'zipRate'   },
+  { key: 'Astar', workerKey: 'astarWorker', dateKey: 'astarDate', rateKey: 'astarRate' },
+  { key: 'Belt',  workerKey: 'beltProdWorker', dateKey: 'beltProdDate', rateKey: 'beltProdRate' },
 ]
 
 export default function WorkerAnalyticsContent() {
@@ -47,6 +51,11 @@ export default function WorkerAnalyticsContent() {
     }
     fetchData()
   }, [])
+
+  const eligibleWorkers = useMemo(
+    () => workers.filter((w) => WORKER_ROLES.includes(getWorkerRole(w) as typeof WORKER_ROLES[number])),
+    [workers],
+  )
 
   const analyticsData = useMemo(() => {
     const rows: any[] = []
@@ -133,7 +142,7 @@ export default function WorkerAnalyticsContent() {
         </div>
         <div className="dashboard-content">
           <AnalyticsFilters
-            workers={workers} fromDate={fromDate} toDate={toDate} selectedWorker={selectedWorker}
+            workers={eligibleWorkers} fromDate={fromDate} toDate={toDate} selectedWorker={selectedWorker}
             onFromDateChange={setFromDate} onToDateChange={setToDate} onWorkerChange={setSelectedWorker}
             onApplyFilters={handleApplyFilters}
             onClearFilters={handleClearFilters}

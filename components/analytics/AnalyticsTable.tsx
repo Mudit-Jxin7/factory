@@ -27,7 +27,7 @@ interface AnalyticsTableProps {
 const SKELETON_COLS = 9
 
 export default function AnalyticsTable({ loading, filteredData, allCount, totals }: AnalyticsTableProps) {
-  const headers = ['Worker ID', 'Worker Name', 'Front / Back / Zip', 'Date', 'Rate', 'Lot Number', 'Layer', 'Pieces', 'Total Amount']
+  const headers = ['Worker ID', 'Worker Name', 'Section', 'Date', 'Rate', 'Lot Number', 'Layer', 'Pieces', 'Total Amount']
   const [page, setPage] = useState(1)
 
   useEffect(() => { setPage(1) }, [filteredData.length])
