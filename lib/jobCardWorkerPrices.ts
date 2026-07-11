@@ -47,3 +47,24 @@ export const applyWorkerPricesToProduction = (
     return updated
   })
 }
+
+export const hasAllProductionRates = (
+  productionData: JobCardProductionRow[] = [],
+  workerPrices: WorkerPrices = {},
+  workers: Pick<Worker, '_id' | 'worker_id'>[] = [],
+): boolean => {
+  for (const row of productionData) {
+    for (const field of WORKER_PRICE_FIELDS) {
+      const workerMongoId = String(row[`${field}Worker` as keyof JobCardProductionRow] ?? '')
+      if (!workerMongoId) continue
+
+      const productionRate = row[`${field}Rate` as keyof JobCardProductionRow]
+      if (productionRate !== undefined && productionRate !== null && String(productionRate).trim() !== '') continue
+
+      if (getWorkerRateFromPrices(workerMongoId, workers, workerPrices) !== '') continue
+
+      return false
+    }
+  }
+  return true
+}

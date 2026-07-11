@@ -7,7 +7,7 @@ import WorkerNavigationBar from './WorkerNavigationBar'
 import { useToast } from './ToastProvider'
 import JobCardsFilters from './jobcards/JobCardsFilters'
 import JobCardsTable from './jobcards/JobCardsTable'
-import { normalizeJobCardStatus } from '@/lib/jobCardStatus'
+import { getJobCardDisplayStatus } from '@/lib/jobCardStatus'
 import './dashboard.css'
 
 export default function WorkerJobCardsContent() {
@@ -46,7 +46,7 @@ export default function WorkerJobCardsContent() {
     (!filterLotNumber || j.lotNumber?.toLowerCase().includes(filterLotNumber.toLowerCase())) &&
     (!filterDate      || j.date === filterDate) &&
     (!filterBrand     || j.brand === filterBrand) &&
-    (!filterStatus    || normalizeJobCardStatus(j.status) === filterStatus)
+    (!filterStatus    || getJobCardDisplayStatus(j, { variant: 'worker' }) === filterStatus)
   )
 
   return (

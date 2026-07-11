@@ -262,7 +262,12 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
             <p>{effectiveEditMode ? 'Edit' : 'View'} job card details for lot {lotNumber}</p>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <JobCardStatusBadge status={status} />
+            <JobCardStatusBadge
+              status={status}
+              jobCard={{ productionData, workerPrices }}
+              workers={workers}
+              variant={isWorker ? 'worker' : 'admin'}
+            />
             <button
               type="button"
               className="btn btn-secondary"

@@ -1,14 +1,35 @@
 'use client'
 
+import { JobCardProductionRow, Worker } from '@/lib/types'
+import { WorkerPrices } from '@/lib/jobCardWorkerPrices'
 import {
-  JOB_CARD_STATUS_COLORS,
-  JOB_CARD_STATUS_LABELS,
-  normalizeJobCardStatus,
+  getJobCardDisplayStatus,
+  JOB_CARD_DISPLAY_STATUS_COLORS,
+  JOB_CARD_DISPLAY_STATUS_LABELS,
 } from '@/lib/jobCardStatus'
 
-export default function JobCardStatusBadge({ status }: { status?: string }) {
-  const normalized = normalizeJobCardStatus(status)
-  const colors = JOB_CARD_STATUS_COLORS[normalized]
+interface JobCardStatusBadgeProps {
+  status?: string
+  jobCard?: {
+    productionData?: JobCardProductionRow[]
+    workerPrices?: WorkerPrices
+  }
+  workers?: Pick<Worker, '_id' | 'worker_id'>[]
+  variant?: 'admin' | 'worker'
+}
+
+export default function JobCardStatusBadge({
+  status,
+  jobCard,
+  workers = [],
+  variant = 'admin',
+}: JobCardStatusBadgeProps) {
+  const displayStatus = getJobCardDisplayStatus(
+    { status, productionData: jobCard?.productionData, workerPrices: jobCard?.workerPrices },
+    { variant },
+    workers,
+  )
+  const colors = JOB_CARD_DISPLAY_STATUS_COLORS[displayStatus]
   return (
     <span style={{
       display: 'inline-block',
@@ -20,7 +41,7 @@ export default function JobCardStatusBadge({ status }: { status?: string }) {
       color: colors.color,
       whiteSpace: 'nowrap',
     }}>
-      {JOB_CARD_STATUS_LABELS[normalized]}
+      {JOB_CARD_DISPLAY_STATUS_LABELS[displayStatus]}
     </span>
   )
 }

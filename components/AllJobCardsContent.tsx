@@ -8,7 +8,7 @@ import { useToast } from './ToastProvider'
 import { useConfirm } from './ConfirmProvider'
 import JobCardsFilters from './jobcards/JobCardsFilters'
 import JobCardsTable from './jobcards/JobCardsTable'
-import { normalizeJobCardStatus } from '@/lib/jobCardStatus'
+import { getJobCardDisplayStatus } from '@/lib/jobCardStatus'
 import './dashboard.css'
 
 export default function AllJobCardsContent() {
@@ -135,7 +135,7 @@ export default function AllJobCardsContent() {
     (!filterLotNumber || j.lotNumber?.toLowerCase().includes(filterLotNumber.toLowerCase())) &&
     (!filterDate      || j.date === filterDate) &&
     (!filterBrand     || j.brand === filterBrand) &&
-    (!filterStatus    || normalizeJobCardStatus(j.status) === filterStatus)
+    (!filterStatus    || getJobCardDisplayStatus(j, { variant: 'admin' }) === filterStatus)
   )
 
   const selectedCount = filteredJobCards.filter(j => selectedJobCardIds.has(j._id)).length
