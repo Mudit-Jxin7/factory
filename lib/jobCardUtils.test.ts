@@ -143,6 +143,13 @@ describe('createJobCardFromLot', () => {
     expect(payload.additionalInfo.bottom).toBe('Cotton')
   })
 
+  it('creates job cards with incomplete status', async () => {
+    await createJobCardFromLot({ lotNumber: 'L012' })
+
+    const [payload] = mockCreateJobCard.mock.calls[0]
+    expect(payload.status).toBe('incomplete')
+  })
+
   it('does not throw when createJobCard rejects', async () => {
     mockCreateJobCard.mockRejectedValue(new Error('DB error'))
 

@@ -17,6 +17,7 @@ export default function AllJobCardsContent() {
   const [allJobCards, setAllJobCards] = useState<any[]>([])
   const [loadingJobCards, setLoadingJobCards] = useState(true)
   const [deletingJobCard, setDeletingJobCard] = useState<string | null>(null)
+  const [approvingJobCard, setApprovingJobCard] = useState<string | null>(null)
   const [bulkDeleting, setBulkDeleting] = useState(false)
   const [selectedJobCardIds, setSelectedJobCardIds] = useState<Set<string>>(new Set())
   const [filterLotNumber, setFilterLotNumber] = useState('')
@@ -52,6 +53,23 @@ export default function AllJobCardsContent() {
     } catch (error: any) {
       toast.showToast('Error deleting job card: ' + error.message, 'error')
     } finally { setDeletingJobCard(null) }
+  }
+
+  const handleApproveJobCard = async (lotNumber: string) => {
+    const confirmed = await showConfirm({
+      title: 'Approve Job Card',
+      message: `Approve job card for lot "${lotNumber}"? This will mark it as complete.`,
+      confirmText: 'Approve', cancelText: 'Cancel', type: 'info',
+    })
+    if (!confirmed) return
+    setApprovingJobCard(lotNumber)
+    try {
+      const result = await jobCardsAPI.approveJobCard(lotNumber)
+      if (result.success) { toast.showToast('Job card approved successfully!', 'success'); fetchAllJobCards() }
+      else toast.showToast('Error approving job card: ' + result.error, 'error')
+    } catch (error: any) {
+      toast.showToast('Error approving job card: ' + error.message, 'error')
+    } finally { setApprovingJobCard(null) }
   }
 
   const handleDeleteSelected = async () => {
@@ -145,6 +163,7 @@ export default function AllJobCardsContent() {
             <JobCardsTable
               jobCards={filteredJobCards} allCount={allJobCards.length} loading={loadingJobCards}
               deletingJobCard={deletingJobCard}
+              approvingJobCard={approvingJobCard}
               bulkDeleting={bulkDeleting}
               selectedIds={selectedJobCardIds}
               onSelectId={handleSelectId}
@@ -152,6 +171,7 @@ export default function AllJobCardsContent() {
               onDeleteSelected={handleDeleteSelected}
               onView={(lotNumber) => router.push(`/jobcard/${encodeURIComponent(lotNumber)}`)}
               onDelete={handleDeleteJobCard}
+              onApprove={handleApproveJobCard}
             />
           </div>
         </div>

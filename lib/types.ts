@@ -72,6 +72,8 @@ export interface JobCardProductionRow {
 export const WORKER_ROLES = ['FRONT', 'BACK', 'ZIP', 'ASTAR', 'BELT'] as const
 export type WorkerRole = typeof WORKER_ROLES[number]
 
+export type { JobCardStatus } from './jobCardStatus'
+
 export interface Worker {
   _id: string
   worker_id: number

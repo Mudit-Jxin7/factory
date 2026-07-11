@@ -27,6 +27,7 @@ export const createJobCardFromLot = async (lotData: any) => {
       })),
       flyWidth: lotData.flyWidth ?? '',
       additionalInfo: { ...DEFAULT_ADDITIONAL_INFO, ...(lotData.additionalInfo || {}) },
+      status: 'incomplete',
     }
     await jobCardsAPI.createJobCard(jobCardData)
   } catch (error) {

@@ -47,6 +47,17 @@ export const jobCardsAPI = {
     }
   },
 
+  approveJobCard: async (lotNumber: string) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/jobcards/${encodeURIComponent(lotNumber)}/approve`, {
+        method: 'PATCH',
+      })
+      return await response.json()
+    } catch (error: any) {
+      return { success: false, error: error.message }
+    }
+  },
+
   deleteJobCard: async (lotNumber: string) => {
     try {
       const response = await fetch(`${API_BASE_URL}/jobcards/${encodeURIComponent(lotNumber)}`, {

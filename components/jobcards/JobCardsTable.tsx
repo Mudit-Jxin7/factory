@@ -3,6 +3,8 @@
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Pagination from '@/components/Pagination'
+import JobCardStatusBadge from './JobCardStatusBadge'
+import { canAdminApproveJobCard, canAdminEditJobCard, canWorkerEditJobCard } from '@/lib/jobCardStatus'
 
 const PAGE_SIZE = 15
 
@@ -11,6 +13,7 @@ interface JobCardsTableProps {
   allCount: number
   loading: boolean
   deletingJobCard?: string | null
+  approvingJobCard?: string | null
   bulkDeleting?: boolean
   selectedIds?: Set<string>
   onSelectId?: (id: string, checked: boolean) => void
@@ -18,12 +21,13 @@ interface JobCardsTableProps {
   onDeleteSelected?: () => void
   onView: (lotNumber: string) => void
   onDelete?: (lotNumber: string) => void
+  onApprove?: (lotNumber: string) => void
   variant?: 'admin' | 'worker'
 }
 
 export default function JobCardsTable({
-  jobCards, allCount, loading, deletingJobCard, bulkDeleting,
-  selectedIds = new Set(), onSelectId, onSelectAll, onDeleteSelected, onView, onDelete,
+  jobCards, allCount, loading, deletingJobCard, approvingJobCard, bulkDeleting,
+  selectedIds = new Set(), onSelectId, onSelectAll, onDeleteSelected, onView, onDelete, onApprove,
   variant = 'admin',
 }: JobCardsTableProps) {
   const router = useRouter()
@@ -31,6 +35,7 @@ export default function JobCardsTable({
   const selectAllRef = useRef<HTMLInputElement>(null)
   const isWorker = variant === 'worker'
   const jobCardBasePath = isWorker ? '/worker/jobcard' : '/jobcard'
+  const colSpan = isWorker ? 5 : 6
 
   useEffect(() => { setPage(1) }, [jobCards.length])
 
@@ -57,7 +62,7 @@ export default function JobCardsTable({
         </div>
         <div style={{ overflowX: 'auto' }}>
           <table className="production-table" style={{ width: '100%' }}>
-            <thead><tr>{!isWorker && <th style={{ width: '40px' }}></th>}<th>Lot Number</th><th>Date</th><th>Brand</th><th style={{ textAlign: 'center' }}>Actions</th></tr></thead>
+            <thead><tr>{!isWorker && <th style={{ width: '40px' }}></th>}<th>Lot Number</th><th>Date</th><th>Brand</th><th>Status</th><th style={{ textAlign: 'center' }}>Actions</th></tr></thead>
             <tbody>
               {Array.from({ length: 6 }).map((_, i) => (
                 <tr key={i} className="skeleton-row">
@@ -65,6 +70,7 @@ export default function JobCardsTable({
                   <td><div className="skeleton-cell" style={{ width: '75%' }} /></td>
                   <td><div className="skeleton-cell" style={{ width: '65%' }} /></td>
                   <td><div className="skeleton-cell" style={{ width: '55%' }} /></td>
+                  <td><div className="skeleton-cell" style={{ width: '70%' }} /></td>
                   <td><div className="skeleton-cell" style={{ width: '85%', margin: '0 auto' }} /></td>
                 </tr>
               ))}
@@ -114,18 +120,21 @@ export default function JobCardsTable({
                   />
                 </th>
               )}
-              <th>Lot Number</th><th>Date</th><th>Brand</th>
+              <th>Lot Number</th><th>Date</th><th>Brand</th><th>Status</th>
               <th style={{ textAlign: 'center' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
             {pageCards.length === 0 ? (
-              <tr><td colSpan={isWorker ? 4 : 5} style={{ padding: '40px', textAlign: 'center', color: '#6c757d', fontSize: '18px' }}>
+              <tr><td colSpan={colSpan} style={{ padding: '40px', textAlign: 'center', color: '#6c757d', fontSize: '18px' }}>
                 {allCount === 0 ? 'No job cards found' : 'No job cards match the filters'}
               </td></tr>
             ) : pageCards.map((jobCard: any) => {
               const id = jobCard._id
               const isSelected = !isWorker && selectedIds.has(id)
+              const showWorkerEdit = isWorker && canWorkerEditJobCard(jobCard.status)
+              const showAdminEdit = !isWorker && canAdminEditJobCard(jobCard.status)
+              const showApprove = !isWorker && canAdminApproveJobCard(jobCard.status) && onApprove
               return (
                 <tr key={id} style={isSelected ? { background: '#eef4ff' } : undefined}>
                   {!isWorker && (
@@ -141,10 +150,23 @@ export default function JobCardsTable({
                   <td style={{ fontWeight: '600', color: '#1a1a1a' }}>{jobCard.lotNumber || '-'}</td>
                   <td>{jobCard.date || '-'}</td>
                   <td>{jobCard.brand || '-'}</td>
+                  <td><JobCardStatusBadge status={jobCard.status} /></td>
                   <td style={{ textAlign: 'center' }}>
                     <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
                       <button className="btn btn-secondary" onClick={() => onView(jobCard.lotNumber)} style={{ padding: '8px 16px', fontSize: '14px' }}>View</button>
-                      <button className="btn btn-primary" onClick={() => router.push(`${jobCardBasePath}/${encodeURIComponent(jobCard.lotNumber)}?edit=true`)} style={{ padding: '8px 16px', fontSize: '14px' }}>Edit</button>
+                      {(showWorkerEdit || showAdminEdit) && (
+                        <button className="btn btn-primary" onClick={() => router.push(`${jobCardBasePath}/${encodeURIComponent(jobCard.lotNumber)}?edit=true`)} style={{ padding: '8px 16px', fontSize: '14px' }}>Edit</button>
+                      )}
+                      {showApprove && (
+                        <button
+                          className="btn btn-primary"
+                          onClick={() => onApprove!(jobCard.lotNumber)}
+                          disabled={approvingJobCard === jobCard.lotNumber}
+                          style={{ padding: '8px 16px', fontSize: '14px' }}
+                        >
+                          {approvingJobCard === jobCard.lotNumber ? 'Approving...' : 'Approve'}
+                        </button>
+                      )}
                       {!isWorker && onDelete && (
                         <button className="btn btn-logout" onClick={() => onDelete(jobCard.lotNumber)} disabled={deletingJobCard === jobCard.lotNumber} style={{ padding: '8px 16px', fontSize: '14px' }}>
                           {deletingJobCard === jobCard.lotNumber ? 'Deleting...' : 'Delete'}

@@ -70,6 +70,10 @@ export async function PUT(
       createdAt: existingJobCard.createdAt,
       updatedAt: new Date(),
     }
+
+    if (!updateData.status) {
+      updateData.status = existingJobCard.status ?? 'incomplete'
+    }
     
     const result = await collection.updateOne(
       { lotNumber },

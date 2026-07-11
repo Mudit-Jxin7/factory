@@ -54,6 +54,7 @@ export async function POST(request: NextRequest) {
 
     jobCardData.createdAt = new Date()
     jobCardData.updatedAt = new Date()
+    if (!jobCardData.status) jobCardData.status = 'incomplete'
 
     const result = await collection.insertOne(jobCardData)
 

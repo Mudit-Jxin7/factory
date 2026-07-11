@@ -3,7 +3,9 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { jobCardsAPI, lotsAPI, workersAPI } from '@/lib/api'
-import { JobCardProductionRow, Worker, Ratios, AdditionalInfo, DEFAULT_RATIOS, DEFAULT_ADDITIONAL_INFO } from '@/lib/types'
+import { JobCardProductionRow, Worker, Ratios, AdditionalInfo, JobCardStatus, DEFAULT_RATIOS, DEFAULT_ADDITIONAL_INFO } from '@/lib/types'
+import { canAdminApproveJobCard, canAdminEditJobCard, canWorkerEditJobCard, normalizeJobCardStatus } from '@/lib/jobCardStatus'
+import JobCardStatusBadge from './jobcards/JobCardStatusBadge'
 import NavigationBar from './NavigationBar'
 import WorkerNavigationBar from './WorkerNavigationBar'
 import { useToast } from './ToastProvider'
@@ -34,6 +36,8 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
   const isEditMode = initialIsEdit || searchParams?.get('edit') === 'true'
   const decodedLotNumber = initialLotNumber ? decodeURIComponent(initialLotNumber) : ''
 
+  const [status, setStatus] = useState<JobCardStatus>('incomplete')
+
   const [lotNumber, setLotNumber] = useState(decodedLotNumber)
   const [date, setDate] = useState(new Date().toISOString().split('T')[0])
   const [brand, setBrand] = useState('')
@@ -52,6 +56,10 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
   const [popupDate, setPopupDate] = useState('')
   const [popupRate, setPopupRate] = useState('')
 
+  const canEdit = isWorker ? canWorkerEditJobCard(status) : canAdminEditJobCard(status)
+  const effectiveEditMode = isEditMode && canEdit
+  const canApprove = !isWorker && canAdminApproveJobCard(status)
+
   const sumOfRatios = useMemo(() => Object.values(ratios).reduce((sum, val) => sum + (Number(val) || 0), 0), [ratios])
 
   useEffect(() => { workersAPI.getAllWorkers().then(r => { if (r.success) setWorkers(r.workers || []) }) }, [])
@@ -68,6 +76,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
         setProductionData(jc.productionData || productionData)
         setFlyWidth(jc.flyWidth || '')
         setAdditionalInfo({ ...DEFAULT_ADDITIONAL_INFO, ...(jc.additionalInfo || {}) })
+        setStatus(normalizeJobCardStatus(jc.status))
       } else {
         setError('Job card not found. Job cards are automatically created when a lot is saved.')
       }
@@ -103,21 +112,46 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
 
   const handleSave = async () => {
     if (!lotNumber.trim()) { toast.showToast('Please enter a lot number', 'warning'); return }
+    if (!canEdit) { toast.showToast('This job card cannot be edited', 'warning'); return }
     setSaving(true)
     try {
+      const nextStatus: JobCardStatus = isWorker ? 'pending_approval' : status
       const result = await jobCardsAPI.updateJobCard(lotNumber, {
         lotNumber, date, brand, ratios,
         productionData: productionData.map(row => ({ ...row, layer: Number(row.layer) || 1, pieces: Number(row.pieces) || 0 })),
         flyWidth, additionalInfo,
+        status: nextStatus,
       })
       if (result.success) {
-        toast.showToast('Job card updated successfully!', 'success')
-        router.push(`${jobCardBasePath}/${encodeURIComponent(lotNumber)}?edit=true`)
+        setStatus(nextStatus)
+        toast.showToast(
+          isWorker
+            ? (status === 'incomplete' ? 'Job card submitted for approval!' : 'Job card updated successfully!')
+            : 'Job card updated successfully!',
+          'success'
+        )
+        router.push(`${jobCardBasePath}/${encodeURIComponent(lotNumber)}`)
       } else {
         toast.showToast('Error updating job card: ' + result.error, 'error')
       }
     } catch (err: any) {
       toast.showToast('Error saving job card: ' + err.message, 'error')
+    } finally { setSaving(false) }
+  }
+
+  const handleApprove = async () => {
+    setSaving(true)
+    try {
+      const result = await jobCardsAPI.approveJobCard(lotNumber)
+      if (result.success) {
+        setStatus('complete')
+        toast.showToast('Job card approved successfully!', 'success')
+        router.push(`${jobCardBasePath}/${encodeURIComponent(lotNumber)}`)
+      } else {
+        toast.showToast('Error approving job card: ' + result.error, 'error')
+      }
+    } catch (err: any) {
+      toast.showToast('Error approving job card: ' + err.message, 'error')
     } finally { setSaving(false) }
   }
 
@@ -152,19 +186,23 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
     <>
       <NavBar />
       <ActionBar actions={[
-        ...(isEditMode ? [{ label: 'Update Job Card', shortLabel: 'Save', icon: '💾', onClick: handleSave, disabled: saving || !lotNumber, loading: saving, loadingLabel: 'Saving…' } as ActionBarItem] : []),
+        ...(effectiveEditMode ? [{ label: isWorker ? 'Submit for Approval' : 'Update Job Card', shortLabel: 'Save', icon: '💾', onClick: handleSave, disabled: saving || !lotNumber, loading: saving, loadingLabel: 'Saving…' } as ActionBarItem] : []),
+        ...(canApprove ? [{ label: 'Approve Job Card', shortLabel: 'Approve', icon: '✅', onClick: handleApprove, disabled: saving, loading: saving, loadingLabel: 'Approving…' } as ActionBarItem] : []),
         ...(!isWorker ? [
           { label: 'Download PDF', shortLabel: 'PDF', icon: '📄', onClick: handleExportPDF, loading: generatingPDF, loadingLabel: '…' },
           { label: 'Download Excel', shortLabel: 'Excel', icon: '📊', onClick: handleExportExcel, loading: generatingExcel, loadingLabel: '…' },
         ] : []),
-        ...(!isEditMode ? [{ label: 'Edit Job Card', shortLabel: 'Edit', icon: '✏️', onClick: () => router.push(`${jobCardBasePath}/${encodeURIComponent(lotNumber)}?edit=true`) } as ActionBarItem] : []),
+        ...(!effectiveEditMode && canEdit ? [{ label: 'Edit Job Card', shortLabel: 'Edit', icon: '✏️', onClick: () => router.push(`${jobCardBasePath}/${encodeURIComponent(lotNumber)}?edit=true`) } as ActionBarItem] : []),
         { label: 'Back to Job Cards', shortLabel: 'Back', icon: '←', onClick: () => router.push(jobCardsListPath), variant: 'secondary' as const },
       ]} />
       <div className="dashboard-container job-card-page">
         <div className="dashboard-header">
           <div className="header-title">
-            <h1>{isEditMode ? 'Edit Job Card' : 'View Job Card'}</h1>
-            <p>{isEditMode ? 'Edit' : 'View'} job card details for lot {lotNumber}</p>
+            <h1>{effectiveEditMode ? 'Edit Job Card' : 'View Job Card'}</h1>
+            <p>{effectiveEditMode ? 'Edit' : 'View'} job card details for lot {lotNumber}</p>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <JobCardStatusBadge status={status} />
           </div>
         </div>
 
@@ -192,7 +230,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
           <JobCardRatios ratios={ratios} sumOfRatios={sumOfRatios} />
           <JobCardProductionTable
             productionData={productionData} workers={workers}
-            isEditMode={isEditMode} onOpenWorkerPopup={openWorkerPopup}
+            isEditMode={effectiveEditMode} onOpenWorkerPopup={openWorkerPopup}
             hideRate={isWorker}
           />
           <JobCardAdditionalInfo

@@ -67,7 +67,10 @@ export function useSaveLot() {
                 const existingRow = existing.productionData?.[i] || {}
                 return { ...existingRow, serialNumber: lotRow.serialNumber, layer: Number(lotRow.layer) || 1, pieces: Number(lotRow.pieces) || 0, color: lotRow.color || '', shade: lotRow.shade || '', zip_code: lotRow.zip_code || '', thread_code: lotRow.thread_code || '' }
               })
-              await jobCardsAPI.updateJobCard(lotNumber, { lotNumber, date, brand, ratios, productionData: mergedProdData, flyWidth, additionalInfo })
+              await jobCardsAPI.updateJobCard(lotNumber, {
+                lotNumber, date, brand, ratios, productionData: mergedProdData, flyWidth, additionalInfo,
+                status: existing.status ?? 'incomplete',
+              })
             }
           } catch (err) { console.error('Error syncing job card:', err) }
         }
@@ -80,6 +83,7 @@ export function useSaveLot() {
               lotNumber, date, brand, worker: '', rate: '', ratios,
               productionData: productionData.map(row => ({ serialNumber: row.serialNumber, layer: Number(row.layer) || 1, pieces: Number(row.pieces) || 0, color: row.color || '', shade: row.shade || '', front: '', back: '', zip_code: row.zip_code || '', thread_code: row.thread_code || '' })),
               flyWidth, additionalInfo,
+              status: 'incomplete',
             })
           } catch (err) { console.error('Error auto-creating job card:', err) }
         }
