@@ -8,6 +8,7 @@ import { useToast } from './ToastProvider'
 import { useConfirm } from './ConfirmProvider'
 import JobCardsFilters from './jobcards/JobCardsFilters'
 import JobCardsTable from './jobcards/JobCardsTable'
+import { normalizeJobCardStatus } from '@/lib/jobCardStatus'
 import './dashboard.css'
 
 export default function AllJobCardsContent() {
@@ -23,6 +24,7 @@ export default function AllJobCardsContent() {
   const [filterLotNumber, setFilterLotNumber] = useState('')
   const [filterDate, setFilterDate] = useState('')
   const [filterBrand, setFilterBrand] = useState('')
+  const [filterStatus, setFilterStatus] = useState('')
 
   const fetchAllJobCards = async () => {
     setLoadingJobCards(true)
@@ -123,7 +125,8 @@ export default function AllJobCardsContent() {
   const filteredJobCards = allJobCards.filter((j: any) =>
     (!filterLotNumber || j.lotNumber?.toLowerCase().includes(filterLotNumber.toLowerCase())) &&
     (!filterDate      || j.date === filterDate) &&
-    (!filterBrand     || j.brand === filterBrand)
+    (!filterBrand     || j.brand === filterBrand) &&
+    (!filterStatus    || normalizeJobCardStatus(j.status) === filterStatus)
   )
 
   const selectedCount = filteredJobCards.filter(j => selectedJobCardIds.has(j._id)).length
@@ -154,10 +157,11 @@ export default function AllJobCardsContent() {
           <div className="card">
             {!loadingJobCards && (
               <JobCardsFilters
-                filterLotNumber={filterLotNumber} filterDate={filterDate} filterBrand={filterBrand}
+                filterLotNumber={filterLotNumber} filterDate={filterDate} filterBrand={filterBrand} filterStatus={filterStatus}
                 brandOptions={brandOptions}
                 onLotNumberChange={setFilterLotNumber} onDateChange={setFilterDate} onBrandChange={setFilterBrand}
-                onClear={() => { setFilterLotNumber(''); setFilterDate(''); setFilterBrand('') }}
+                onStatusChange={setFilterStatus}
+                onClear={() => { setFilterLotNumber(''); setFilterDate(''); setFilterBrand(''); setFilterStatus('') }}
               />
             )}
             <JobCardsTable
