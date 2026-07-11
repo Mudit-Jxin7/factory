@@ -53,8 +53,11 @@ export default function WorkersTab({
 
   const handleUpdate = async (id: string) => {
     if (!editWorker.worker_full_name.trim()) { toast.showToast('Please enter worker full name', 'warning'); return }
-    if (!editWorker.role) { toast.showToast('Please select a role', 'warning'); return }
-    const result = await workersAPI.updateWorker(id, editWorker)
+    const result = await workersAPI.updateWorker(id, {
+      worker_full_name: editWorker.worker_full_name,
+      tbd2: editWorker.tbd2,
+      tbd3: editWorker.tbd3,
+    })
     if (result.success) { onSetEditingWorker(null); onRefresh(); toast.showToast('Worker updated successfully!', 'success') }
     else toast.showToast('Error updating worker: ' + result.error, 'error')
   }
@@ -131,7 +134,7 @@ export default function WorkersTab({
                     </td>
                     <td>
                       {editingWorker === worker._id
-                        ? renderRoleSelect(editWorker.role, (role) => onEditWorkerChange({ ...editWorker, role }), { width: '100%', padding: '8px' })
+                        ? <span style={{ display: 'inline-block', padding: '8px', color: '#495057', background: '#f8f9fa', borderRadius: '4px', width: '100%' }} title="Role cannot be changed after creation">{editWorker.role || '—'}</span>
                         : <span>{getWorkerRole(worker) || '-'}</span>}
                     </td>
                     {(['tbd2', 'tbd3'] as const).map((key) => (

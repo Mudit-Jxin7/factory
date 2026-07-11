@@ -23,8 +23,10 @@ export async function PUT(
       updatedAt: new Date(),
     }
 
-    // Don't allow updating worker_id
+    // Don't allow updating worker_id or role once set
     delete updateData.worker_id
+    delete updateData.role
+    delete updateData.tbd1
 
     const result = await collection.updateOne(
       { _id: new ObjectId(id) },
