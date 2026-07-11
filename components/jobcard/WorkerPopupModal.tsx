@@ -78,8 +78,9 @@ export default function WorkerPopupModal({
               <label>Rate</label>
               <input
                 type="number" value={popupRate}
-                onChange={(e) => onRateChange(e.target.value)}
-                placeholder="Rate" step="0.01" min="0" style={inputStyle}
+                readOnly disabled
+                placeholder="Rate" step="0.01" min="0"
+                style={{ ...inputStyle, background: '#f8f9fa', cursor: 'not-allowed' }}
               />
             </div>
           )}

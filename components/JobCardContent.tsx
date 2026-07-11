@@ -118,8 +118,14 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
     setPopupWorker(workerMongoId)
     setPopupDate(isWorker ? today : String((row as any)[`${field}Date`] ?? '') || today)
     const presetRate = getWorkerRateFromPrices(workerMongoId, workers, workerPrices)
-    setPopupRate(isWorker ? '' : String((row as any)[`${field}Rate`] ?? '') || presetRate)
+    setPopupRate(presetRate || String((row as any)[`${field}Rate`] ?? ''))
     setEditingWorkerCell({ rowIndex, field })
+  }
+
+  const handlePopupWorkerChange = (value: string) => {
+    setPopupWorker(value)
+    const presetRate = getWorkerRateFromPrices(value, workers, workerPrices)
+    setPopupRate(presetRate)
   }
 
   const saveWorkerPopup = () => {
@@ -133,7 +139,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
         ...row,
         [`${field}Worker`]: popupWorker,
         [`${field}Date`]: isWorker ? today : popupDate,
-        [rateKey]: isWorker ? (presetRate || (row as any)[rateKey]) : (popupRate || presetRate || (row as any)[rateKey]),
+        [rateKey]: presetRate || (row as any)[rateKey],
       }
     }))
     setEditingWorkerCell(null)
@@ -316,7 +322,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
         <WorkerPopupModal
           field={editingWorkerCell.field} workers={workers}
           popupWorker={popupWorker} popupDate={popupDate} popupRate={popupRate}
-          onWorkerChange={setPopupWorker} onDateChange={setPopupDate} onRateChange={setPopupRate}
+          onWorkerChange={handlePopupWorkerChange} onDateChange={setPopupDate} onRateChange={setPopupRate}
           onSave={saveWorkerPopup} onCancel={() => setEditingWorkerCell(null)}
           hideRate={isWorker}
         />
