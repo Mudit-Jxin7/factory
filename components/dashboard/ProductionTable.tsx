@@ -40,7 +40,7 @@ export default function ProductionTable({
         <table className="production-table">
           <thead>
             <tr>
-              <th>Serial Number</th><th>Meter</th><th>Layer</th><th>Pieces</th><th>Tukda</th>
+              <th>Serial Number</th><th>Meter</th><th>Layer</th><th>Pieces</th><th>Tukda</th><th>Total Pieces</th>
               <th>Color</th><th>Shade</th><th>Zip Code</th><th>Thread Code</th><th>Actions</th>
             </tr>
           </thead>
@@ -72,6 +72,9 @@ export default function ProductionTable({
                     onBlur={(e) => onBlurTukda(index, e.target.value)}
                     inputMode="numeric" pattern="[0-9]*" placeholder="0"
                   />
+                </td>
+                <td className="pieces-cell">
+                  {((Number(row.pieces) || 0) + (Number(row.tukda) || 0)).toFixed(2)}
                 </td>
                 <td>
                   <select

@@ -47,8 +47,11 @@ export const exportLotViewToPDF = (lot: any) => {
   pdf.text('Production Data', margin, afterRatioSum)
   autoTable(pdf, {
     startY: afterRatioSum + 2, margin: { left: margin, right: margin },
-    head: [['S.No', 'Meter', 'Layer', 'Pieces', 'Tukda', 'Color', 'Shade', 'TBD2', 'TBD3']],
-    body: (lot.productionData || []).map((row: any) => [row.serialNumber, Number(row.meter || 0), Number(row.layer || 1), Number(row.pieces || 0).toFixed(2), Number(row.tukda || 0), row.color || 'N/A', row.shade || 'N/A', row.tbd2 || 'N/A', row.tbd3 || 'N/A']),
+    head: [['S.No', 'Meter', 'Layer', 'Pieces', 'Tukda', 'Total Pieces', 'Color', 'Shade', 'TBD2', 'TBD3']],
+    body: (lot.productionData || []).map((row: any) => {
+      const rowTotalPieces = Number(row.pieces || 0) + Number(row.tukda || 0)
+      return [row.serialNumber, Number(row.meter || 0), Number(row.layer || 1), Number(row.pieces || 0).toFixed(2), Number(row.tukda || 0), rowTotalPieces.toFixed(2), row.color || 'N/A', row.shade || 'N/A', row.tbd2 || 'N/A', row.tbd3 || 'N/A']
+    }),
     styles: { fontSize: 8, cellPadding: 2, halign: 'center' },
     headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
     alternateRowStyles: { fillColor: [240, 247, 255] }, theme: 'grid',
@@ -83,10 +86,13 @@ export const exportLotViewToExcel = (lot: any) => {
   const totalTukda = (lot.productionData || []).reduce((sum: number, row: any) => sum + (Number(row.tukda) || 0), 0)
   const tukdaCount = totalTukda || Number(lot.tukda?.count || 0)
   const grandTotal = Number(lot.totalPiecesWithTukda ?? (Number(lot.totalPieces || 0) + tukdaCount)).toFixed(2)
-  const prodRows = (lot.productionData || []).map((row: any) => [row.serialNumber, Number(row.meter || 0), Number(row.layer || 1), Number(row.pieces || 0).toFixed(2), Number(row.tukda || 0), row.color || '', row.shade || '', row.tbd2 || '', row.tbd3 || ''])
+  const prodRows = (lot.productionData || []).map((row: any) => {
+    const rowTotalPieces = Number(row.pieces || 0) + Number(row.tukda || 0)
+    return [row.serialNumber, Number(row.meter || 0), Number(row.layer || 1), Number(row.pieces || 0).toFixed(2), Number(row.tukda || 0), rowTotalPieces.toFixed(2), row.color || '', row.shade || '', row.tbd2 || '', row.tbd3 || '']
+  })
   const allRows = [
     ...infoRows,
-    ['S.No', 'Meter', 'Layer', 'Pieces', 'Tukda', 'Color', 'Shade', 'TBD2', 'TBD3'],
+    ['S.No', 'Meter', 'Layer', 'Pieces', 'Tukda', 'Total Pieces', 'Color', 'Shade', 'TBD2', 'TBD3'],
     ...prodRows, [],
     ['Summary'], ['# Tukda', 'Tukda Size', 'Total Meter', 'Total Pieces', 'Grand Total Pieces', 'Average'],
     [tukdaCount, lot.tukda?.size || '', Number(lot.totalMeter || 0).toFixed(2), Number(lot.totalPieces || 0).toFixed(2), grandTotal, Number(lot.average || 0).toFixed(4)],
