@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { jobCardsAPI, workersAPI } from '@/lib/api'
 import { JobCardProductionRow, Worker, Ratios, AdditionalInfo, JobCardStatus, DEFAULT_RATIOS, DEFAULT_ADDITIONAL_INFO } from '@/lib/types'
 import { canAdminApproveJobCard, canAdminEditJobCard, canAdminViewWorkerPrices, canWorkerEditJobCard, normalizeJobCardStatus } from '@/lib/jobCardStatus'
+import { hasAllRequiredWorkerFields } from '@/lib/jobCardWorkerCompletion'
 import JobCardStatusBadge from './jobcards/JobCardStatusBadge'
 import NavigationBar from './NavigationBar'
 import WorkerNavigationBar from './WorkerNavigationBar'
@@ -70,6 +71,10 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
   const assignedWorkers = useMemo(
     () => getWorkersAssignedToProduction(productionData, workers),
     [productionData, workers],
+  )
+  const workerSubmitReady = useMemo(
+    () => isWorker && hasAllRequiredWorkerFields(productionData),
+    [isWorker, productionData],
   )
 
   const fetchJobCard = useCallback(async (isRefresh = false) => {
@@ -188,9 +193,11 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
     if (!canEdit) { toast.showToast('This job card cannot be edited', 'warning'); return }
     setSaving(true)
     try {
-      const nextStatus: JobCardStatus = isWorker ? 'pending_approval' : status
+      const nextStatus: JobCardStatus = isWorker
+        ? (workerSubmitReady ? 'pending_approval' : 'incomplete')
+        : status
       const message = isWorker
-        ? (status === 'incomplete' ? 'Job card submitted for approval!' : 'Job card updated successfully!')
+        ? (workerSubmitReady ? 'Job card submitted for approval!' : 'Job card saved successfully!')
         : 'Job card updated successfully!'
       await persistJobCard({ nextStatus, successMessage: message })
     } catch (err: any) {
@@ -245,7 +252,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
     <>
       <NavBar />
       <ActionBar actions={[
-        ...(effectiveEditMode ? [{ label: isWorker ? 'Submit for Approval' : 'Update Job Card', shortLabel: 'Save', icon: '💾', onClick: handleSave, disabled: saving || !lotNumber, loading: saving, loadingLabel: 'Saving…' } as ActionBarItem] : []),
+        ...(effectiveEditMode ? [{ label: isWorker ? (workerSubmitReady ? 'Submit for Approval' : 'Save Job Card') : 'Update Job Card', shortLabel: 'Save', icon: '💾', onClick: handleSave, disabled: saving || !lotNumber, loading: saving, loadingLabel: 'Saving…' } as ActionBarItem] : []),
         ...(canApprove ? [{ label: 'Approve Job Card', shortLabel: 'Approve', icon: '✅', onClick: handleApprove, disabled: saving, loading: saving, loadingLabel: 'Approving…' } as ActionBarItem] : []),
         ...(!isWorker ? [
           { label: 'Download PDF', shortLabel: 'PDF', icon: '📄', onClick: handleExportPDF, loading: generatingPDF, loadingLabel: '…' },

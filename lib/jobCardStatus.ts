@@ -1,10 +1,14 @@
 import { JobCardProductionRow } from '@/lib/types'
 import { hasAllProductionRates, WorkerPrices } from '@/lib/jobCardWorkerPrices'
+import {
+  hasAllRequiredWorkerFields,
+  hasAnyRequiredWorkerFields,
+} from '@/lib/jobCardWorkerCompletion'
 
 export const JOB_CARD_STATUSES = ['incomplete', 'pending_approval', 'complete'] as const
 export type JobCardStatus = typeof JOB_CARD_STATUSES[number]
 
-export type JobCardDisplayStatus = JobCardStatus | 'rate_pending'
+export type JobCardDisplayStatus = JobCardStatus | 'rate_pending' | 'partial_complete'
 
 export const JOB_CARD_STATUS_LABELS: Record<JobCardStatus, string> = {
   incomplete: 'Incomplete',
@@ -15,6 +19,7 @@ export const JOB_CARD_STATUS_LABELS: Record<JobCardStatus, string> = {
 export const JOB_CARD_DISPLAY_STATUS_LABELS: Record<JobCardDisplayStatus, string> = {
   ...JOB_CARD_STATUS_LABELS,
   rate_pending: 'Rate Pending',
+  partial_complete: 'Partial Complete',
 }
 
 export const JOB_CARD_STATUS_COLORS: Record<JobCardStatus, { bg: string; color: string }> = {
@@ -26,10 +31,13 @@ export const JOB_CARD_STATUS_COLORS: Record<JobCardStatus, { bg: string; color: 
 export const JOB_CARD_DISPLAY_STATUS_COLORS: Record<JobCardDisplayStatus, { bg: string; color: string }> = {
   ...JOB_CARD_STATUS_COLORS,
   rate_pending: { bg: '#ffe8cc', color: '#8a4b00' },
+  partial_complete: { bg: '#e8daef', color: '#5b2c6f' },
 }
 
 export const ADMIN_FILTER_STATUSES: JobCardDisplayStatus[] = [...JOB_CARD_STATUSES, 'rate_pending']
-export const WORKER_FILTER_STATUSES: JobCardDisplayStatus[] = ['incomplete', 'pending_approval', 'complete']
+export const WORKER_FILTER_STATUSES: JobCardDisplayStatus[] = [
+  'incomplete', 'partial_complete', 'pending_approval', 'complete',
+]
 
 type JobCardForDisplay = {
   status?: string
@@ -51,7 +59,10 @@ export const getJobCardDisplayStatus = (
 
   if (options.variant === 'worker') {
     if (stored === 'complete') return 'complete'
-    return stored
+    if (stored === 'pending_approval') return 'pending_approval'
+    if (hasAllRequiredWorkerFields(jobCard.productionData)) return 'pending_approval'
+    if (hasAnyRequiredWorkerFields(jobCard.productionData)) return 'partial_complete'
+    return 'incomplete'
   }
 
   if (stored === 'complete') {

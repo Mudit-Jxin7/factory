@@ -113,6 +113,45 @@ describe('getJobCardDisplayStatus', () => {
     )).toBe('complete')
   })
 
+  it('shows partial complete to worker when required fields are partially filled', () => {
+    expect(getJobCardDisplayStatus(
+      { status: 'incomplete', productionData: productionWithMissingRate },
+      { variant: 'worker' },
+    )).toBe('partial_complete')
+  })
+
+  it('shows pending approval to worker when all required fields are filled before submit', () => {
+    expect(getJobCardDisplayStatus(
+      {
+        status: 'incomplete',
+        productionData: [{
+          ...productionWithMissingRate[0],
+          backWorker: 'w2',
+          backDate: '2024-01-02',
+          zipWorker: 'w3',
+          zipDate: '2024-01-02',
+          astarWorker: 'w4',
+          astarDate: '2024-01-02',
+          beltProdWorker: 'w5',
+          beltProdDate: '2024-01-02',
+        }],
+      },
+      { variant: 'worker' },
+    )).toBe('pending_approval')
+  })
+
+  it('shows incomplete to worker when no required fields are filled', () => {
+    const rows = [{
+      ...productionWithMissingRate[0],
+      frontWorker: '',
+      frontDate: '',
+    }]
+    expect(getJobCardDisplayStatus(
+      { status: 'incomplete', productionData: rows },
+      { variant: 'worker' },
+    )).toBe('incomplete')
+  })
+
   it('shows pending approval to worker for submitted cards', () => {
     expect(getJobCardDisplayStatus(
       { status: 'pending_approval', productionData: productionWithMissingRate },
