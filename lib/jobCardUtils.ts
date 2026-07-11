@@ -1,4 +1,5 @@
 import { jobCardsAPI } from './api'
+import { DEFAULT_ADDITIONAL_INFO } from './types'
 
 export const createJobCardFromLot = async (lotData: any) => {
   try {
@@ -24,10 +25,8 @@ export const createJobCardFromLot = async (lotData: any) => {
         zip_code: '',
         thread_code: '',
       })),
-      flyWidth: '',
-      additionalInfo: {
-        belt: '', bottom: '', pasting: '', bone: '', hala: '', ticketPocket: '',
-      },
+      flyWidth: lotData.flyWidth ?? '',
+      additionalInfo: { ...DEFAULT_ADDITIONAL_INFO, ...(lotData.additionalInfo || {}) },
     }
     await jobCardsAPI.createJobCard(jobCardData)
   } catch (error) {

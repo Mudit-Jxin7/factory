@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { lotsAPI, jobCardsAPI } from '@/lib/api'
-import { Ratios } from '@/lib/types'
+import { Ratios, AdditionalInfo, DEFAULT_ADDITIONAL_INFO } from '@/lib/types'
 import { useToast } from '../ToastProvider'
 
 interface ProductionRow {
@@ -29,6 +29,8 @@ interface SaveLotParams {
   totalPieces: number
   totalPiecesWithTukda: number
   average: number
+  flyWidth: string
+  additionalInfo: AdditionalInfo
   editLotNumber?: string | null
 }
 
@@ -37,7 +39,7 @@ export function useSaveLot() {
   const toast = useToast()
 
   const saveLot = async (params: SaveLotParams, setSaving: (v: boolean) => void) => {
-    const { lotNumber, date, fabric, pattern, brand, ratios, productionData, tukda, totalMeter, totalPieces, totalPiecesWithTukda, average, editLotNumber } = params
+    const { lotNumber, date, fabric, pattern, brand, ratios, productionData, tukda, totalMeter, totalPieces, totalPiecesWithTukda, average, flyWidth, additionalInfo, editLotNumber } = params
     if (!lotNumber.trim()) { toast.showToast('Please enter a lot number', 'warning'); return }
     setSaving(true)
     try {
@@ -48,6 +50,7 @@ export function useSaveLot() {
           color: row.color || '', shade: row.shade || '', zip_code: row.zip_code || '', thread_code: row.thread_code || '',
         })),
         tukda, totalMeter, totalPieces, totalPiecesWithTukda, average,
+        flyWidth, additionalInfo,
       }
 
       const isUpdate = editLotNumber && decodeURIComponent(editLotNumber) === lotNumber
@@ -64,7 +67,7 @@ export function useSaveLot() {
                 const existingRow = existing.productionData?.[i] || {}
                 return { ...existingRow, serialNumber: lotRow.serialNumber, layer: Number(lotRow.layer) || 1, pieces: Number(lotRow.pieces) || 0, color: lotRow.color || '', shade: lotRow.shade || '', zip_code: lotRow.zip_code || '', thread_code: lotRow.thread_code || '' }
               })
-              await jobCardsAPI.updateJobCard(lotNumber, { lotNumber, date, brand, ratios, productionData: mergedProdData, flyWidth: existing.flyWidth ?? '', additionalInfo: existing.additionalInfo ?? {} })
+              await jobCardsAPI.updateJobCard(lotNumber, { lotNumber, date, brand, ratios, productionData: mergedProdData, flyWidth, additionalInfo })
             }
           } catch (err) { console.error('Error syncing job card:', err) }
         }
@@ -76,7 +79,7 @@ export function useSaveLot() {
               lotId: result.id ? String(result.id) : undefined,
               lotNumber, date, brand, worker: '', rate: '', ratios,
               productionData: productionData.map(row => ({ serialNumber: row.serialNumber, layer: Number(row.layer) || 1, pieces: Number(row.pieces) || 0, color: row.color || '', shade: row.shade || '', front: '', back: '', zip_code: row.zip_code || '', thread_code: row.thread_code || '' })),
-              flyWidth: '', additionalInfo: { belt: '', bottom: '', pasting: '', bone: '', hala: '', ticketPocket: '' },
+              flyWidth, additionalInfo,
             })
           } catch (err) { console.error('Error auto-creating job card:', err) }
         }

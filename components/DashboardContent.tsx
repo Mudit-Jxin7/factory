@@ -2,8 +2,8 @@
 
 import { useState, useMemo, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { lotsAPI, colorsAPI, brandsAPI, patternsAPI, fabricsAPI } from '@/lib/api'
-import { Ratios, DEFAULT_RATIOS } from '@/lib/types'
+import { lotsAPI, colorsAPI, brandsAPI, patternsAPI, fabricsAPI, jobCardsAPI } from '@/lib/api'
+import { Ratios, AdditionalInfo, DEFAULT_RATIOS, DEFAULT_ADDITIONAL_INFO } from '@/lib/types'
 import NavigationBar from './NavigationBar'
 import ActionBar from './ActionBar'
 import { useToast } from './ToastProvider'
@@ -11,6 +11,7 @@ import LotInfoForm from './dashboard/LotInfoForm'
 import RatiosForm from './dashboard/RatiosForm'
 import ProductionTable from './dashboard/ProductionTable'
 import SummarySection from './dashboard/SummarySection'
+import JobCardAdditionalInfo from './jobcard/JobCardAdditionalInfo'
 import { exportLotToPDF, exportLotToExcel } from './dashboard/exportUtils'
 import { useSaveLot } from './dashboard/useSaveLot'
 import './dashboard.css'
@@ -39,6 +40,8 @@ export default function DashboardContent() {
   const [ratios, setRatios] = useState<Ratios>(DEFAULT_RATIOS)
   const [productionData, setProductionData] = useState([BLANK_ROW])
   const [tukda, setTukda] = useState({ count: 0, size: '28' })
+  const [flyWidth, setFlyWidth] = useState('')
+  const [additionalInfo, setAdditionalInfo] = useState<AdditionalInfo>(DEFAULT_ADDITIONAL_INFO)
 
   useEffect(() => {
     colorsAPI.getAllColors().then(r => { if (r.success) setColors(r.colors || []) })
@@ -69,6 +72,15 @@ export default function DashboardContent() {
           ? lot.productionData.map((row: any) => ({ ...row, meter: String(row.meter || ''), layer: String(row.layer || '1') }))
           : [BLANK_ROW])
         setTukda(lot.tukda || { count: 0, size: '28' })
+        setFlyWidth(lot.flyWidth || '')
+        setAdditionalInfo({ ...DEFAULT_ADDITIONAL_INFO, ...(lot.additionalInfo || {}) })
+        if (!lot.flyWidth && !lot.additionalInfo) {
+          const jcResult = await jobCardsAPI.getJobCardByLotNumber(lot.lotNumber)
+          if (jcResult.success && jcResult.jobCard) {
+            setFlyWidth(jcResult.jobCard.flyWidth || '')
+            setAdditionalInfo({ ...DEFAULT_ADDITIONAL_INFO, ...(jcResult.jobCard.additionalInfo || {}) })
+          }
+        }
       } else {
         toast.showToast('Error loading lot: ' + (result.error || 'Lot not found'), 'error')
       }
@@ -148,7 +160,7 @@ export default function DashboardContent() {
   }
 
   const handleSave = () => saveLotFn(
-    { lotNumber, date, fabric, pattern, brand, ratios, productionData, tukda, totalMeter, totalPieces, totalPiecesWithTukda, average, editLotNumber: searchParams?.get('edit') },
+    { lotNumber, date, fabric, pattern, brand, ratios, productionData, tukda, totalMeter, totalPieces, totalPiecesWithTukda, average, flyWidth, additionalInfo, editLotNumber: searchParams?.get('edit') },
     setSaving
   )
 
@@ -201,6 +213,11 @@ export default function DashboardContent() {
             onTukdaCountChange={(v) => { if (v === '' || /^[0-9]+$/.test(v)) setTukda({ ...tukda, count: v === '' ? 0 : Number(v) }) }}
             onTukdaCountBlur={(v) => { const n = Number(v); setTukda({ ...tukda, count: v === '' || isNaN(n) || n < 0 ? 0 : Math.floor(n) }) }}
             onTukdaSizeChange={(v) => setTukda({ ...tukda, size: v })}
+          />
+          <JobCardAdditionalInfo
+            flyWidth={flyWidth} additionalInfo={additionalInfo} isEditMode
+            onFlyWidthChange={setFlyWidth}
+            onAdditionalInfoChange={(key, value) => setAdditionalInfo((prev) => ({ ...prev, [key]: value }))}
           />
         </div>
       </div>

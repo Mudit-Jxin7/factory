@@ -196,9 +196,9 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
             hideRate={isWorker}
           />
           <JobCardAdditionalInfo
-            flyWidth={flyWidth} additionalInfo={additionalInfo} isEditMode={isEditMode}
-            onFlyWidthChange={setFlyWidth}
-            onAdditionalInfoChange={(key, value) => setAdditionalInfo(prev => ({ ...prev, [key]: value }))}
+            flyWidth={flyWidth} additionalInfo={additionalInfo} isEditMode={false}
+            onFlyWidthChange={() => {}}
+            onAdditionalInfoChange={() => {}}
           />
         </div>
       </div>

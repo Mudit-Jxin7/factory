@@ -124,7 +124,23 @@ describe('createJobCardFromLot', () => {
     const [payload] = mockCreateJobCard.mock.calls[0]
     expect(payload.additionalInfo).toEqual({
       belt: '', bottom: '', pasting: '', bone: '', hala: '', ticketPocket: '',
+      cutting: '', number: '', buttonTake: '', assembly: '', sealStitch: '',
+      label: '', tanki: '', kaajButton: '', finishing: '',
+      addition1: '', addition2: '', addition3: '',
     })
+  })
+
+  it('uses additionalInfo from lot data when provided', async () => {
+    await createJobCardFromLot({
+      lotNumber: 'L011',
+      flyWidth: '32',
+      additionalInfo: { belt: 'Leather', bottom: 'Cotton' },
+    })
+
+    const [payload] = mockCreateJobCard.mock.calls[0]
+    expect(payload.flyWidth).toBe('32')
+    expect(payload.additionalInfo.belt).toBe('Leather')
+    expect(payload.additionalInfo.bottom).toBe('Cotton')
   })
 
   it('does not throw when createJobCard rejects', async () => {
