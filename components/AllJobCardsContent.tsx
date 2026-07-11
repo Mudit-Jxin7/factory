@@ -157,7 +157,7 @@ export default function AllJobCardsContent() {
                 {bulkDeleting ? 'Deleting...' : `Delete Selected (${selectedCount})`}
               </button>
             )}
-            <button className="btn btn-secondary" onClick={fetchAllJobCards} disabled={bulkDeleting}>
+            <button className="btn btn-secondary" onClick={() => fetchAllJobCards(true)} disabled={bulkDeleting || refreshing}>
               <span className="btn-icon">🔄</span>Refresh
             </button>
           </div>

@@ -56,7 +56,7 @@ export default function WorkerJobCardsContent() {
         <div className="dashboard-header">
           <div className="header-title"><h1>Job Cards</h1><p>View and update job cards</p></div>
           <div className="header-actions">
-            <button className="btn btn-secondary" onClick={fetchAllJobCards}>
+            <button className="btn btn-secondary" onClick={() => fetchAllJobCards(true)} disabled={refreshing}>
               <span className="btn-icon">🔄</span>Refresh
             </button>
           </div>
