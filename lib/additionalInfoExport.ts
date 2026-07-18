@@ -26,10 +26,17 @@ export const getAdditionalInfoExportRows = (
   additionalInfo?: Partial<AdditionalInfo>,
 ): [string, string][] => {
   const info = { ...DEFAULT_ADDITIONAL_INFO, ...(additionalInfo || {}) }
-  return [
-    ['Fly Width', flyWidth || ''],
-    ...ADDITIONAL_INFO_FIELDS.map(({ key, label }) => [label, info[key] || ''] as [string, string]),
-  ]
+  const rows: [string, string][] = []
+
+  const flyWidthValue = String(flyWidth || '').trim()
+  if (flyWidthValue) rows.push(['Fly Width', flyWidthValue])
+
+  for (const { key, label } of ADDITIONAL_INFO_FIELDS) {
+    const value = String(info[key] || '').trim()
+    if (value) rows.push([label, value])
+  }
+
+  return rows
 }
 
 export const buildAdditionalInfoPdfBody = (rows: [string, string][]) => {

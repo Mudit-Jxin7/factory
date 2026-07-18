@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { Ratios, AdditionalInfo, JobCardProductionRow, Worker } from '@/lib/types'
+import { buildAdditionalInfoPdfBody, getAdditionalInfoExportRows } from '@/lib/additionalInfoExport'
 import { WORKER_PAIRS, WORKER_META } from './constants'
 
 const getWorkerName = (workerId: string, workers: Worker[]) => {
@@ -103,42 +104,25 @@ export const exportJobCardToPDF = (params: {
   })
 
   const afterProd = (pdf as any).lastAutoTable.finalY + 6
-  pdf.setFontSize(11); pdf.setFont('helvetica', 'bold')
-  pdf.text('Additional Information', margin, afterProd)
+  const addlRows = getAdditionalInfoExportRows(flyWidth, additionalInfo)
+  if (addlRows.length > 0) {
+    pdf.setFontSize(11); pdf.setFont('helvetica', 'bold')
+    pdf.text('Additional Information', margin, afterProd)
 
-  const ADDL_FIELD_KEYS: (keyof AdditionalInfo)[] = [
-    'belt', 'bottom', 'pasting', 'bone', 'hala', 'ticketPocket',
-    'cutting', 'number', 'buttonTake', 'assembly', 'sealStitch', 'label',
-    'tanki', 'kaajButton', 'finishing', 'addition1', 'addition2', 'addition3',
-  ]
-  const addlFields: [string, string][] = [
-    ['Fly Width', flyWidth],
-    ...ADDL_FIELD_KEYS.map(k => [
-      k.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase()),
-      additionalInfo[k] ?? '',
-    ] as [string, string]),
-  ]
-  const third = Math.ceil(addlFields.length / 3)
-  const col1 = addlFields.slice(0, third)
-  const col2 = addlFields.slice(third, third * 2)
-  const col3 = addlFields.slice(third * 2)
-  const addlBody = col1.map((item, i) => [
-    item[0], item[1] || '', col2[i]?.[0] ?? '', col2[i]?.[1] ?? '',
-    col3[i]?.[0] ?? '', col3[i]?.[1] ?? '',
-  ])
-
-  autoTable(pdf, {
-    startY: afterProd + 2, margin: { left: margin, right: margin },
-    head: [['Field', 'Value', 'Field', 'Value', 'Field', 'Value']], body: addlBody,
-    styles: { fontSize: 10, cellPadding: 2 },
-    headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
-    columnStyles: {
-      0: { fontStyle: 'bold', cellWidth: 28 }, 1: { cellWidth: 35 },
-      2: { fontStyle: 'bold', cellWidth: 28 }, 3: { cellWidth: 35 },
-      4: { fontStyle: 'bold', cellWidth: 28 }, 5: { cellWidth: 35 },
-    },
-    alternateRowStyles: { fillColor: [240, 247, 255] }, theme: 'grid',
-  })
+    autoTable(pdf, {
+      startY: afterProd + 2, margin: { left: margin, right: margin },
+      head: [['Field', 'Value', 'Field', 'Value', 'Field', 'Value']],
+      body: buildAdditionalInfoPdfBody(addlRows),
+      styles: { fontSize: 10, cellPadding: 2 },
+      headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
+      columnStyles: {
+        0: { fontStyle: 'bold', cellWidth: 28 }, 1: { cellWidth: 35 },
+        2: { fontStyle: 'bold', cellWidth: 28 }, 3: { cellWidth: 35 },
+        4: { fontStyle: 'bold', cellWidth: 28 }, 5: { cellWidth: 35 },
+      },
+      alternateRowStyles: { fillColor: [240, 247, 255] }, theme: 'grid',
+    })
+  }
 
   pdf.save(`JobCard_${lotNumber || 'Production'}_${date || 'Report'}.pdf`)
 }

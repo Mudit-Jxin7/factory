@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { isAdditionalInfoEmpty } from './additionalInfoExport'
+import { getAdditionalInfoExportRows, isAdditionalInfoEmpty } from './additionalInfoExport'
 
 describe('isAdditionalInfoEmpty', () => {
   it('returns true when flyWidth and all additional info fields are empty', () => {
@@ -13,5 +13,25 @@ describe('isAdditionalInfoEmpty', () => {
 
   it('returns false when any additional info field has a value', () => {
     expect(isAdditionalInfoEmpty({ belt: 'Leather', bottom: '' }, '')).toBe(false)
+  })
+})
+
+describe('getAdditionalInfoExportRows', () => {
+  it('returns only fields that have non-empty values', () => {
+    expect(getAdditionalInfoExportRows(' 32 ', {
+      belt: 'Leather',
+      bottom: '',
+      pasting: '   ',
+      bone: 'Plastic',
+    })).toEqual([
+      ['Fly Width', '32'],
+      ['Belt', 'Leather'],
+      ['Bone', 'Plastic'],
+    ])
+  })
+
+  it('returns an empty array when every field is blank', () => {
+    expect(getAdditionalInfoExportRows('', { belt: '', bottom: '  ' })).toEqual([])
+    expect(getAdditionalInfoExportRows(undefined, undefined)).toEqual([])
   })
 })

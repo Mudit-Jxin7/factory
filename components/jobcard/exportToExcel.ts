@@ -1,4 +1,5 @@
 import { Ratios, AdditionalInfo, JobCardProductionRow, Worker } from '@/lib/types'
+import { getAdditionalInfoExportRows } from '@/lib/additionalInfoExport'
 import { WORKER_PAIRS, WORKER_META } from './constants'
 
 const getWorkerName = (workerId: string, workers: Worker[]) => {
@@ -52,20 +53,12 @@ export const exportJobCardToExcel = (params: {
     if (idx < productionData.length - 1) { prodRows.push([]); prodRows.push([]) }
   })
 
-  const ADDL_FIELD_KEYS: (keyof AdditionalInfo)[] = [
-    'belt', 'bottom', 'pasting', 'bone', 'hala', 'ticketPocket',
-    'cutting', 'number', 'buttonTake', 'assembly', 'sealStitch', 'label',
-    'tanki', 'kaajButton', 'finishing', 'addition1', 'addition2', 'addition3',
+  const addlRows = getAdditionalInfoExportRows(flyWidth, additionalInfo)
+  const allRows = [
+    ...infoRows,
+    ...prodRows,
+    ...(addlRows.length > 0 ? [[], ['Additional Information'], ['Field', 'Value'], ...addlRows] : []),
   ]
-  const addlRows = [
-    ['Fly Width', flyWidth],
-    ...ADDL_FIELD_KEYS.map(k => [
-      k.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase()),
-      additionalInfo[k] ?? '',
-    ]),
-  ]
-
-  const allRows = [...infoRows, ...prodRows, [], ['Additional Information'], ['Field', 'Value'], ...addlRows]
 
   const csvContent = allRows.map((row) =>
     (row as any[]).map((cell) => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(',')
