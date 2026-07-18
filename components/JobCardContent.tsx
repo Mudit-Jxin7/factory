@@ -234,7 +234,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
       const nextStatus = deriveJobCardStatus(productionData)
       const message = isWorker
         ? (nextStatus === 'complete'
-          ? 'Job card completed! Admin can now review and edit.'
+          ? 'Job card completed!'
           : 'Job card saved successfully!')
         : 'Job card updated successfully!'
       await persistJobCard({ nextStatus, successMessage: message })
