@@ -1,7 +1,6 @@
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { buildAdditionalInfoPdfBody, getAdditionalInfoExportRows } from '@/lib/additionalInfoExport'
-import { getLotWorkerRateExportRows } from '@/lib/lotWorkerRates'
 
 export const exportLotViewToPDF = (lot: any) => {
   const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
@@ -25,31 +24,16 @@ export const exportLotViewToPDF = (lot: any) => {
     theme: 'grid',
   })
 
-  let cursorY = (pdf as any).lastAutoTable.finalY + 6
-  const rateRows = getLotWorkerRateExportRows(lot.workerRates)
-  if (rateRows.length > 0) {
-    pdf.setFontSize(11); pdf.setFont('helvetica', 'bold')
-    pdf.text('Worker Rates', margin, cursorY)
-    autoTable(pdf, {
-      startY: cursorY + 2, margin: { left: margin, right: margin },
-      head: [['Role', 'Rate']],
-      body: rateRows,
-      styles: { fontSize: 9, cellPadding: 2 },
-      headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
-      theme: 'grid',
-    })
-    cursorY = (pdf as any).lastAutoTable.finalY + 6
-  }
-
+  const afterInfo = (pdf as any).lastAutoTable.finalY + 6
   pdf.setFontSize(11); pdf.setFont('helvetica', 'bold')
-  pdf.text('Ratios', margin, cursorY)
+  pdf.text('Ratios', margin, afterInfo)
 
   const ratioKeys = Object.keys(lot.ratios || {})
   const ratioVals = Object.values(lot.ratios || {}).map((v) => String(v))
   const sumOfRatios = Object.values(lot.ratios || {}).reduce((s: number, v: any) => s + (Number(v) || 0), 0).toFixed(2)
 
   autoTable(pdf, {
-    startY: cursorY + 2, margin: { left: margin, right: margin },
+    startY: afterInfo + 2, margin: { left: margin, right: margin },
     head: [ratioKeys.map(k => k.toUpperCase())], body: [ratioVals],
     styles: { fontSize: 8, cellPadding: 2, halign: 'center' },
     headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' }, theme: 'grid',
@@ -128,10 +112,8 @@ export const exportLotViewToExcel = (lot: any) => {
     return [row.serialNumber, Number(row.meter || 0), Number(row.layer || 1), Number(row.pieces || 0).toFixed(2), Number(row.tukda || 0), rowTotalPieces.toFixed(2), row.color || '', row.shade || '', row.tbd2 || '', row.tbd3 || '']
   })
   const addlRows = getAdditionalInfoExportRows(lot.flyWidth, lot.additionalInfo)
-  const rateRows = getLotWorkerRateExportRows(lot.workerRates)
   const allRows = [
     ...infoRows,
-    ...(rateRows.length > 0 ? [['Worker Rates'], ['Role', 'Rate'], ...rateRows, []] : []),
     ['S.No', 'Meter', 'Layer', 'Pieces', 'Tukda', 'Total Pieces', 'Color', 'Shade', 'TBD2', 'TBD3'],
     ...prodRows, [],
     ['Summary'], ['# Tukda', 'Tukda Size', 'Total Meter', 'Total Pieces', 'Grand Total Pieces', 'Average'],

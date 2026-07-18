@@ -1,8 +1,7 @@
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
-import { Ratios, AdditionalInfo, LotWorkerRates } from '@/lib/types'
+import { Ratios, AdditionalInfo } from '@/lib/types'
 import { buildAdditionalInfoPdfBody, getAdditionalInfoExportRows } from '@/lib/additionalInfoExport'
-import { getLotWorkerRateExportRows } from '@/lib/lotWorkerRates'
 
 interface ExportParams {
   lotNumber: string
@@ -20,11 +19,10 @@ interface ExportParams {
   average: number
   flyWidth?: string
   additionalInfo?: AdditionalInfo
-  workerRates?: LotWorkerRates
 }
 
 export const exportLotToPDF = (params: ExportParams) => {
-  const { lotNumber, date, fabric, pattern, brand, ratios, sumOfRatios, productionData, tukda, totalMeter, totalPieces, totalPiecesWithTukda, average, flyWidth, additionalInfo, workerRates } = params
+  const { lotNumber, date, fabric, pattern, brand, ratios, sumOfRatios, productionData, tukda, totalMeter, totalPieces, totalPiecesWithTukda, average, flyWidth, additionalInfo } = params
   const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
   const pageW = pdf.internal.pageSize.getWidth()
   const margin = 10
@@ -46,26 +44,11 @@ export const exportLotToPDF = (params: ExportParams) => {
     theme: 'grid',
   })
 
-  let cursorY = (pdf as any).lastAutoTable.finalY + 6
-  const rateRows = getLotWorkerRateExportRows(workerRates)
-  if (rateRows.length > 0) {
-    pdf.setFontSize(11); pdf.setFont('helvetica', 'bold')
-    pdf.text('Worker Rates', margin, cursorY)
-    autoTable(pdf, {
-      startY: cursorY + 2, margin: { left: margin, right: margin },
-      head: [['Role', 'Rate']],
-      body: rateRows,
-      styles: { fontSize: 9, cellPadding: 2 },
-      headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
-      theme: 'grid',
-    })
-    cursorY = (pdf as any).lastAutoTable.finalY + 6
-  }
-
+  const afterInfo = (pdf as any).lastAutoTable.finalY + 6
   pdf.setFontSize(11); pdf.setFont('helvetica', 'bold')
-  pdf.text('Ratios', margin, cursorY)
+  pdf.text('Ratios', margin, afterInfo)
   autoTable(pdf, {
-    startY: cursorY + 2, margin: { left: margin, right: margin },
+    startY: afterInfo + 2, margin: { left: margin, right: margin },
     head: [Object.keys(ratios).map(k => k.toUpperCase())],
     body: [Object.values(ratios).map(v => String(v))],
     styles: { fontSize: 8, cellPadding: 2, halign: 'center' },
@@ -131,13 +114,12 @@ export const exportLotToPDF = (params: ExportParams) => {
 }
 
 export const exportLotToExcel = (params: ExportParams) => {
-  const { lotNumber, date, fabric, pattern, brand, ratios, productionData, tukda, totalMeter, totalPieces, totalPiecesWithTukda, average, flyWidth, additionalInfo, workerRates } = params
+  const { lotNumber, date, fabric, pattern, brand, ratios, productionData, tukda, totalMeter, totalPieces, totalPiecesWithTukda, average, flyWidth, additionalInfo } = params
 
   const infoRows = [
     ['Lot Number', lotNumber], ['Date', date], ['Fabric', fabric], ['Pattern', pattern], ['Brand', brand], [],
     ['Ratios'], Object.keys(ratios).map(k => k.toUpperCase()), Object.values(ratios).map(v => String(v)), [],
   ]
-  const rateRows = getLotWorkerRateExportRows(workerRates)
   const prodHeaders = ['S.No', 'Meter', 'Layer', 'Pieces', 'Tukda', 'Total Pieces', 'Color', 'Zip Code', 'Thread Code']
   const prodRows = productionData.map(row => {
     const rowTotalPieces = (Number(row.pieces) || 0) + (Number(row.tukda) || 0)
@@ -150,7 +132,6 @@ export const exportLotToExcel = (params: ExportParams) => {
   const addlRows = getAdditionalInfoExportRows(flyWidth, additionalInfo)
   const allRows = [
     ...infoRows,
-    ...(rateRows.length > 0 ? [['Worker Rates'], ['Role', 'Rate'], ...rateRows, []] : []),
     prodHeaders, ...prodRows, [],
     ['Summary'], ['# Tukda', 'Tukda Size', 'Total Meter', 'Total Pieces', 'Grand Total', 'Average'], summaryRow,
     ...(addlRows.length > 0 ? [[], ['Additional Information'], ['Field', 'Value'], ...addlRows] : []),
