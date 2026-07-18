@@ -73,8 +73,8 @@ export default function WorkersTab({
   }
 
   const tbdFields: { key: 'tbd2' | 'tbd3'; label: string }[] = [
-    { key: 'tbd2', label: 'TBD 2' },
-    { key: 'tbd3', label: 'TBD 3' },
+    { key: 'tbd2', label: 'Phone Number' },
+    { key: 'tbd3', label: 'Additional Information 1' },
   ]
 
   const renderRoleSelect = (value: string, onChange: (role: string) => void, style?: CSSProperties) => (
@@ -117,7 +117,7 @@ export default function WorkersTab({
           <table className="production-table" style={{ width: '100%' }}>
             <thead>
               <tr>
-                <th>Worker ID</th><th>Worker Full Name</th><th>Role</th><th>TBD 2</th><th>TBD 3</th>
+                <th>Worker ID</th><th>Worker Full Name</th><th>Role</th><th>Phone Number</th><th>Additional Information 1</th>
                 <th style={{ textAlign: 'center' }}>Actions</th>
               </tr>
             </thead>
