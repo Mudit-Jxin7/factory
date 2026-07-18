@@ -19,17 +19,19 @@ interface ExportParams {
   fromDate: string
   toDate: string
   selectedWorker: string
+  selectedRole?: string
   totals: { totalPieces: number; totalAmount: number }
 }
 
-const getFilename = (base: string, { fromDate, toDate, selectedWorker, workers }: Pick<ExportParams, 'fromDate' | 'toDate' | 'selectedWorker' | 'workers'>) => {
+const getFilename = (base: string, { fromDate, toDate, selectedWorker, selectedRole, workers }: Pick<ExportParams, 'fromDate' | 'toDate' | 'selectedWorker' | 'selectedRole' | 'workers'>) => {
   const dateRange = fromDate && toDate ? `_${fromDate}_to_${toDate}` : ''
   const workerSuffix = selectedWorker ? `_${workers.find((w: any) => w._id === selectedWorker)?.worker_full_name || 'worker'}` : ''
-  return `${base}${dateRange}${workerSuffix}`
+  const roleSuffix = selectedRole ? `_${selectedRole}` : ''
+  return `${base}${dateRange}${workerSuffix}${roleSuffix}`
 }
 
 export const exportAnalyticsToPDF = (params: ExportParams) => {
-  const { filteredData, workers, fromDate, toDate, selectedWorker, totals } = params
+  const { filteredData, workers, fromDate, toDate, selectedWorker, selectedRole, totals } = params
   const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
   const pageW = pdf.internal.pageSize.getWidth()
   const margin = 10
@@ -43,6 +45,7 @@ export const exportAnalyticsToPDF = (params: ExportParams) => {
   if (toDate) filterParts.push(`To: ${toDate}`)
   const selectedWorkerObj = selectedWorker ? workers.find((w: any) => w._id === selectedWorker) : null
   if (selectedWorkerObj) filterParts.push(`Worker: ${selectedWorkerObj.worker_full_name}`)
+  if (selectedRole) filterParts.push(`Role: ${selectedRole}`)
   if (filterParts.length > 0) pdf.text(filterParts.join('   |   '), pageW / 2, 20, { align: 'center' })
 
   let tableStartY = filterParts.length > 0 ? 24 : 18
@@ -90,7 +93,7 @@ export const exportAnalyticsToPDF = (params: ExportParams) => {
 }
 
 export const exportAnalyticsToExcel = (params: ExportParams) => {
-  const { filteredData, workers, fromDate, toDate, selectedWorker, totals } = params
+  const { filteredData, workers, fromDate, toDate, selectedWorker, selectedRole, totals } = params
   const selectedWorkerObj = selectedWorker ? workers.find((w: any) => w._id === selectedWorker) : null
   const selectedWorkerName = selectedWorkerObj?.worker_full_name || 'All Workers'
 
@@ -98,6 +101,7 @@ export const exportAnalyticsToExcel = (params: ExportParams) => {
     ['From Date', fromDate || 'All'],
     ['To Date', toDate || 'All'],
     ['Worker', selectedWorkerName],
+    ['Role', selectedRole || 'All'],
   ]
 
   if (selectedWorkerObj) {

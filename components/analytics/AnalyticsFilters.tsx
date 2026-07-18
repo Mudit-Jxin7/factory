@@ -1,13 +1,17 @@
 'use client'
 
+const ROLE_OPTIONS = ['Front', 'Back', 'Zip', 'Astar', 'Belt'] as const
+
 interface AnalyticsFiltersProps {
   workers: any[]
   fromDate: string
   toDate: string
   selectedWorker: string
+  selectedRole: string
   onFromDateChange: (v: string) => void
   onToDateChange: (v: string) => void
   onWorkerChange: (v: string) => void
+  onRoleChange: (v: string) => void
   onApplyFilters: () => void
   onClearFilters: () => void
   onDateRangePreset: (days: number) => void
@@ -19,8 +23,9 @@ const inputStyle = {
 }
 
 export default function AnalyticsFilters({
-  workers, fromDate, toDate, selectedWorker,
-  onFromDateChange, onToDateChange, onWorkerChange, onApplyFilters, onClearFilters, onDateRangePreset,
+  workers, fromDate, toDate, selectedWorker, selectedRole,
+  onFromDateChange, onToDateChange, onWorkerChange, onRoleChange,
+  onApplyFilters, onClearFilters, onDateRangePreset,
 }: AnalyticsFiltersProps) {
   return (
     <div className="card filters-section" style={{ marginBottom: '20px', padding: '20px', background: '#fff9e6' }}>
@@ -50,6 +55,15 @@ export default function AnalyticsFilters({
               <option key={worker._id} value={worker._id}>
                 {worker.worker_id} - {worker.worker_full_name}
               </option>
+            ))}
+          </select>
+        </div>
+        <div className="form-group" style={{ marginBottom: 0 }}>
+          <label>Role</label>
+          <select value={selectedRole} onChange={(e) => onRoleChange(e.target.value)} style={inputStyle}>
+            <option value="">All Roles</option>
+            {ROLE_OPTIONS.map((role) => (
+              <option key={role} value={role}>{role}</option>
             ))}
           </select>
         </div>

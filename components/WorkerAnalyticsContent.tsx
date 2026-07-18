@@ -32,9 +32,11 @@ export default function WorkerAnalyticsContent() {
   const [fromDate, setFromDate] = useState('')
   const [toDate, setToDate] = useState('')
   const [selectedWorker, setSelectedWorker] = useState('')
+  const [selectedRole, setSelectedRole] = useState('')
   const [appliedFromDate, setAppliedFromDate] = useState('')
   const [appliedToDate, setAppliedToDate] = useState('')
   const [appliedWorker, setAppliedWorker] = useState('')
+  const [appliedRole, setAppliedRole] = useState('')
 
   useEffect(() => {
     const fetchData = async () => {
@@ -92,13 +94,15 @@ export default function WorkerAnalyticsContent() {
       const worker = workers.find((w: any) => w._id === appliedWorker)
       if (worker) filtered = filtered.filter((row) => row.worker_id === worker.worker_id)
     }
+    if (appliedRole) filtered = filtered.filter((row) => row.section === appliedRole)
     return filtered.sort((a, b) => a.date !== b.date ? b.date.localeCompare(a.date) : a.worker_id - b.worker_id)
-  }, [analyticsData, appliedFromDate, appliedToDate, appliedWorker, workers])
+  }, [analyticsData, appliedFromDate, appliedToDate, appliedWorker, appliedRole, workers])
 
   const handleApplyFilters = () => {
     setAppliedFromDate(fromDate)
     setAppliedToDate(toDate)
     setAppliedWorker(selectedWorker)
+    setAppliedRole(selectedRole)
   }
 
   const handleDateRangePreset = (days: number) => {
@@ -119,9 +123,11 @@ export default function WorkerAnalyticsContent() {
     setFromDate('')
     setToDate('')
     setSelectedWorker('')
+    setSelectedRole('')
     setAppliedFromDate('')
     setAppliedToDate('')
     setAppliedWorker('')
+    setAppliedRole('')
   }
 
   const totals = useMemo(() => filteredData.reduce(
@@ -129,7 +135,11 @@ export default function WorkerAnalyticsContent() {
     { totalPieces: 0, totalAmount: 0 }
   ), [filteredData])
 
-  const exportParams = { filteredData, workers, fromDate: appliedFromDate, toDate: appliedToDate, selectedWorker: appliedWorker, totals }
+  const exportParams = {
+    filteredData, workers,
+    fromDate: appliedFromDate, toDate: appliedToDate,
+    selectedWorker: appliedWorker, selectedRole: appliedRole, totals,
+  }
 
   return (
     <>
@@ -147,8 +157,10 @@ export default function WorkerAnalyticsContent() {
         </div>
         <div className="dashboard-content">
           <AnalyticsFilters
-            workers={eligibleWorkers} fromDate={fromDate} toDate={toDate} selectedWorker={selectedWorker}
-            onFromDateChange={setFromDate} onToDateChange={setToDate} onWorkerChange={setSelectedWorker}
+            workers={eligibleWorkers} fromDate={fromDate} toDate={toDate}
+            selectedWorker={selectedWorker} selectedRole={selectedRole}
+            onFromDateChange={setFromDate} onToDateChange={setToDate}
+            onWorkerChange={setSelectedWorker} onRoleChange={setSelectedRole}
             onApplyFilters={handleApplyFilters}
             onClearFilters={handleClearFilters}
             onDateRangePreset={handleDateRangePreset}
