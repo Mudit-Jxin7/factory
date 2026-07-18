@@ -184,7 +184,7 @@ export default function DashboardContent() {
     setSaving
   )
 
-  const exportParams = { lotNumber, date, fabric, pattern, brand, ratios, sumOfRatios, productionData, tukda, totalMeter, totalPieces, totalPiecesWithTukda, average, flyWidth, additionalInfo, workerRates }
+  const exportParams = { lotNumber, date, fabric, pattern, brand, ratios, sumOfRatios, productionData, tukda, totalMeter, totalPieces, totalPiecesWithTukda, average, flyWidth, additionalInfo }
 
   if (loadingLot) {
     return (

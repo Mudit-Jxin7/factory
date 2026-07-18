@@ -47,21 +47,6 @@ export const applyLotRatesToProduction = (
   })
 }
 
-export const getLotWorkerRateExportRows = (
-  rates?: Partial<LotWorkerRates> | null,
-): [string, string][] => {
-  const normalized = normalizeLotWorkerRates(rates)
-  return (
-    [
-      ['Front Rate', normalized.front],
-      ['Back Rate', normalized.back],
-      ['Zip Rate', normalized.zip],
-      ['Astar Rate', normalized.astar],
-      ['Belt Rate', normalized.belt],
-    ] as [string, string][]
-  ).filter(([, value]) => String(value || '').trim() !== '')
-}
-
 export const LOT_WORKER_RATE_LABELS: Record<keyof LotWorkerRates, string> = {
   front: 'Front',
   back: 'Back',
