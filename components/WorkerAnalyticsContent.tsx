@@ -10,6 +10,7 @@ import ActionBar from './ActionBar'
 import AnalyticsFilters from './analytics/AnalyticsFilters'
 import AnalyticsTable from './analytics/AnalyticsTable'
 import { exportAnalyticsToPDF, exportAnalyticsToExcel } from './analytics/exportUtils'
+import { aggregateAnalyticsRows } from '@/lib/analyticsAggregate'
 import './dashboard.css'
 
 type SectionType = 'Front' | 'Back' | 'Zip' | 'Astar' | 'Belt'
@@ -95,7 +96,8 @@ export default function WorkerAnalyticsContent() {
       if (worker) filtered = filtered.filter((row) => row.worker_id === worker.worker_id)
     }
     if (appliedRole) filtered = filtered.filter((row) => row.section === appliedRole)
-    return filtered.sort((a, b) => a.date !== b.date ? b.date.localeCompare(a.date) : a.worker_id - b.worker_id)
+    const aggregated = aggregateAnalyticsRows(filtered)
+    return aggregated.sort((a, b) => a.date !== b.date ? b.date.localeCompare(a.date) : a.worker_id - b.worker_id)
   }, [analyticsData, appliedFromDate, appliedToDate, appliedWorker, appliedRole, workers])
 
   const handleApplyFilters = () => {
