@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 const ROLE_OPTIONS = ['Front', 'Back', 'Zip', 'Astar', 'Belt'] as const
 
@@ -24,40 +24,68 @@ const inputStyle = {
   borderRadius: '6px', fontSize: '16px', backgroundColor: '#fff',
 }
 
+const workerLabel = (w: any) => `${w.worker_id} - ${w.worker_full_name}`
+
 export default function AnalyticsFilters({
   workers, fromDate, toDate, selectedWorker, selectedRole,
   onFromDateChange, onToDateChange, onWorkerChange, onRoleChange,
   onApplyFilters, onClearFilters, onDateRangePreset,
 }: AnalyticsFiltersProps) {
-  const [workerSearch, setWorkerSearch] = useState('')
+  const [open, setOpen] = useState(false)
+  const [query, setQuery] = useState('')
+  const wrapRef = useRef<HTMLDivElement>(null)
+
+  const selected = useMemo(
+    () => workers.find((w: any) => w._id === selectedWorker) || null,
+    [workers, selectedWorker],
+  )
+
+  // Keep input text in sync when selection changes from outside (e.g. clear)
+  useEffect(() => {
+    if (!open) setQuery(selected ? workerLabel(selected) : '')
+  }, [selected, open])
 
   const filteredWorkers = useMemo(() => {
-    const q = workerSearch.trim().toLowerCase()
+    const q = query.trim().toLowerCase()
+    // When a worker is already selected and the box shows their label, show full list on open
+    if (selected && query === workerLabel(selected)) return workers
     if (!q) return workers
     return workers.filter((w: any) =>
       String(w.worker_id ?? '').toLowerCase().includes(q)
       || String(w.worker_full_name ?? '').toLowerCase().includes(q)
     )
-  }, [workers, workerSearch])
+  }, [workers, query, selected])
 
-  const handleWorkerSearchChange = (value: string) => {
-    setWorkerSearch(value)
-    const q = value.trim().toLowerCase()
-    if (!q) return
-    const stillVisible = workers.some((w: any) => {
-      if (w._id !== selectedWorker) return false
-      return String(w.worker_id ?? '').toLowerCase().includes(q)
-        || String(w.worker_full_name ?? '').toLowerCase().includes(q)
-    })
-    if (selectedWorker && !stillVisible) onWorkerChange('')
+  useEffect(() => {
+    const onDocClick = (e: MouseEvent) => {
+      if (!wrapRef.current?.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', onDocClick)
+    return () => document.removeEventListener('mousedown', onDocClick)
+  }, [])
+
+  const pickWorker = (id: string) => {
+    onWorkerChange(id)
+    const w = workers.find((x: any) => x._id === id)
+    setQuery(w ? workerLabel(w) : '')
+    setOpen(false)
   }
 
-  const handleWorkerSelect = (value: string) => {
-    onWorkerChange(value)
+  const pickAll = () => {
+    onWorkerChange('')
+    setQuery('')
+    setOpen(false)
+  }
+
+  const handleInputChange = (value: string) => {
+    setQuery(value)
+    setOpen(true)
+    if (!value.trim()) onWorkerChange('')
   }
 
   const handleClear = () => {
-    setWorkerSearch('')
+    setQuery('')
+    setOpen(false)
     onClearFilters()
   }
 
@@ -81,24 +109,60 @@ export default function AnalyticsFilters({
           <label>To Date</label>
           <input type="date" value={toDate} onChange={(e) => onToDateChange(e.target.value)} style={inputStyle} />
         </div>
-        <div className="form-group" style={{ marginBottom: 0 }}>
+        <div className="form-group" style={{ marginBottom: 0 }} ref={wrapRef}>
           <label>Worker</label>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div style={{ position: 'relative' }}>
             <input
               type="text"
-              value={workerSearch}
-              onChange={(e) => handleWorkerSearchChange(e.target.value)}
-              placeholder="Search name or ID…"
+              value={query}
+              onChange={(e) => handleInputChange(e.target.value)}
+              onFocus={() => setOpen(true)}
+              placeholder="All Workers — search name or ID…"
               style={inputStyle}
+              autoComplete="off"
             />
-            <select value={selectedWorker} onChange={(e) => handleWorkerSelect(e.target.value)} style={inputStyle}>
-              <option value="">All Workers</option>
-              {filteredWorkers.map((worker: any) => (
-                <option key={worker._id} value={worker._id}>
-                  {worker.worker_id} - {worker.worker_full_name}
-                </option>
-              ))}
-            </select>
+            {open && (
+              <ul
+                style={{
+                  position: 'absolute', left: 0, right: 0, top: '100%', margin: '4px 0 0',
+                  padding: '4px 0', listStyle: 'none', background: '#fff',
+                  border: '1px solid #ddd', borderRadius: '6px',
+                  maxHeight: '220px', overflowY: 'auto', zIndex: 20,
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                }}
+              >
+                <li>
+                  <button
+                    type="button"
+                    onClick={pickAll}
+                    style={{
+                      width: '100%', textAlign: 'left', padding: '10px 12px', border: 'none',
+                      background: !selectedWorker ? '#fff3cd' : 'transparent',
+                      cursor: 'pointer', fontSize: '15px',
+                    }}
+                  >
+                    All Workers
+                  </button>
+                </li>
+                {filteredWorkers.length === 0 ? (
+                  <li style={{ padding: '10px 12px', color: '#6c757d', fontSize: '14px' }}>No workers found</li>
+                ) : filteredWorkers.map((worker: any) => (
+                  <li key={worker._id}>
+                    <button
+                      type="button"
+                      onClick={() => pickWorker(worker._id)}
+                      style={{
+                        width: '100%', textAlign: 'left', padding: '10px 12px', border: 'none',
+                        background: selectedWorker === worker._id ? '#fff3cd' : 'transparent',
+                        cursor: 'pointer', fontSize: '15px',
+                      }}
+                    >
+                      {workerLabel(worker)}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </div>
         <div className="form-group" style={{ marginBottom: 0 }}>
