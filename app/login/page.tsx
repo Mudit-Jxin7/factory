@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { authenticate, setAuthSession, type UserRole } from '@/lib/auth'
+import { IconFactory } from '@/components/Icons'
 import '@/components/dashboard.css'
 
 export default function Login() {
@@ -32,24 +33,31 @@ export default function Login() {
     <div className="login-container">
       <div className="login-card">
         <div className="login-header">
-          <h1>Factory Dashboard</h1>
-          <p>Please login to continue</p>
+          <div className="login-brand-mark">
+            <IconFactory size={28} />
+          </div>
+          <h1>Factory</h1>
+          <p>Sign in to manage production</p>
         </div>
 
-        <div className="login-role-toggle">
+        <div className="login-role-toggle" role="tablist" aria-label="Login role">
           <button
             type="button"
+            role="tab"
+            aria-selected={loginRole === 'admin'}
             className={`login-role-btn ${loginRole === 'admin' ? 'active' : ''}`}
             onClick={() => { setLoginRole('admin'); setError('') }}
           >
-            Login as Admin
+            Admin
           </button>
           <button
             type="button"
+            role="tab"
+            aria-selected={loginRole === 'worker'}
             className={`login-role-btn ${loginRole === 'worker' ? 'active' : ''}`}
             onClick={() => { setLoginRole('worker'); setError('') }}
           >
-            Login as Staff
+            Staff
           </button>
         </div>
 
@@ -90,7 +98,7 @@ export default function Login() {
             disabled={loading}
             className="btn btn-primary login-button"
           >
-            {loading ? 'Logging in...' : loginRole === 'admin' ? 'Login as Admin' : 'Login as Staff'}
+            {loading ? 'Signing in…' : 'Sign in'}
           </button>
         </form>
       </div>

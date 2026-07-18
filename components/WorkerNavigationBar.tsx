@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { clearAuthSession } from '@/lib/auth'
+import { IconFactory, IconFile, IconLogout } from './Icons'
 import './dashboard.css'
 
 export default function WorkerNavigationBar() {
@@ -16,20 +17,22 @@ export default function WorkerNavigationBar() {
     <nav className="main-navbar">
       <div className="navbar-container">
         <div className="navbar-brand" onClick={() => router.push('/worker')}>
-          <span className="navbar-icon">🏭</span>
+          <span className="navbar-brand-mark">
+            <IconFactory size={18} />
+          </span>
           <span className="navbar-title">Factory Worker</span>
         </div>
 
         <div className="navbar-links navbar-links--desktop">
           <button className="navbar-link active">
-            <span className="navbar-link-icon">📄</span>
+            <span className="navbar-link-icon"><IconFile size={16} /></span>
             Job Cards
           </button>
         </div>
 
         <div className="navbar-actions">
           <button className="navbar-logout" onClick={handleLogout}>
-            <span className="navbar-link-icon">🚪</span>
+            <span className="navbar-link-icon"><IconLogout size={16} /></span>
             <span className="navbar-logout-label">Logout</span>
           </button>
         </div>

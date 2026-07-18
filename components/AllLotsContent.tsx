@@ -9,6 +9,7 @@ import { useToast } from './ToastProvider'
 import { useConfirm } from './ConfirmProvider'
 import LotsFilters from './lots/LotsFilters'
 import LotsTable from './lots/LotsTable'
+import { IconRefresh } from './Icons'
 import './dashboard.css'
 
 export default function AllLotsContent() {
@@ -142,7 +143,7 @@ export default function AllLotsContent() {
               </button>
             )}
             <button className="btn btn-secondary" onClick={fetchAllLots} disabled={bulkDeleting}>
-              <span className="btn-icon">🔄</span>Refresh
+              <span className="btn-icon"><IconRefresh size={16} /></span>Refresh
             </button>
           </div>
         </div>

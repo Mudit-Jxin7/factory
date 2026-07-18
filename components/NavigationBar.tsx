@@ -1,16 +1,30 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { clearAuthSession } from '@/lib/auth'
+import {
+  IconPlus,
+  IconList,
+  IconFile,
+  IconSettings,
+  IconChart,
+  IconLogout,
+  IconFactory,
+} from './Icons'
 import './dashboard.css'
 
-const NAV_LINKS = [
-  { path: '/dashboard', icon: '➕', label: 'Create Lot', match: (pathname: string | null) => pathname === '/dashboard' || pathname === '/' },
-  { path: '/lots', icon: '📋', label: 'All Lots', match: (pathname: string | null) => !!pathname?.startsWith('/lots') },
-  { path: '/jobcards', icon: '📄', label: 'Job Cards', match: (pathname: string | null) => !!pathname?.startsWith('/jobcards') },
-  { path: '/developer', icon: '⚙️', label: 'Developer', match: (pathname: string | null) => !!pathname?.startsWith('/developer') },
-  { path: '/worker-analytics', icon: '📈', label: 'Worker Analytics', match: (pathname: string | null) => !!pathname?.startsWith('/worker-analytics') },
+const NAV_LINKS: {
+  path: string
+  icon: ReactNode
+  label: string
+  match: (pathname: string | null) => boolean
+}[] = [
+  { path: '/dashboard', icon: <IconPlus size={16} />, label: 'Create Lot', match: (pathname) => pathname === '/dashboard' || pathname === '/' },
+  { path: '/lots', icon: <IconList size={16} />, label: 'All Lots', match: (pathname) => !!pathname?.startsWith('/lots') },
+  { path: '/jobcards', icon: <IconFile size={16} />, label: 'Job Cards', match: (pathname) => !!pathname?.startsWith('/jobcards') },
+  { path: '/developer', icon: <IconSettings size={16} />, label: 'Developer', match: (pathname) => !!pathname?.startsWith('/developer') },
+  { path: '/worker-analytics', icon: <IconChart size={16} />, label: 'Worker Analytics', match: (pathname) => !!pathname?.startsWith('/worker-analytics') },
 ]
 
 export default function NavigationBar() {
@@ -49,7 +63,9 @@ export default function NavigationBar() {
     <nav className="main-navbar">
       <div className="navbar-container">
         <div className="navbar-brand" onClick={() => navigate('/dashboard')}>
-          <span className="navbar-icon">🏭</span>
+          <span className="navbar-brand-mark">
+            <IconFactory size={18} />
+          </span>
           <span className="navbar-title">Factory Dashboard</span>
         </div>
 
@@ -68,7 +84,7 @@ export default function NavigationBar() {
 
         <div className="navbar-actions">
           <button className="navbar-logout navbar-logout--desktop" onClick={handleLogout}>
-            <span className="navbar-link-icon">🚪</span>
+            <span className="navbar-link-icon"><IconLogout size={16} /></span>
             Logout
           </button>
           <button
@@ -103,7 +119,7 @@ export default function NavigationBar() {
           ))}
         </div>
         <button className="navbar-drawer-logout" onClick={handleLogout}>
-          <span className="navbar-link-icon">🚪</span>
+          <span className="navbar-link-icon"><IconLogout size={16} /></span>
           Logout
         </button>
       </div>

@@ -1,5 +1,7 @@
 'use client'
 
+import { IconRuler, IconFile, IconChart, IconCalc } from '../Icons'
+
 const TUKDA_SIZES = ['28', '30', '32', '34', '36', '38', '40', '42', '44']
 
 interface SummarySectionProps {
@@ -24,7 +26,7 @@ export default function SummarySection({
           <input
             type="text" value={tukda.count}
             readOnly disabled
-            style={{ background: '#f8f9fa', cursor: 'not-allowed' }}
+            style={{ background: 'var(--color-surface-muted)', cursor: 'not-allowed' }}
           />
         </div>
         <div className="form-group">
@@ -36,10 +38,10 @@ export default function SummarySection({
       </div>
       <div className="summary-cards-row">
         {[
-          { icon: '📏', label: 'Total Meter', value: totalMeter.toFixed(2), extra: '' },
-          { icon: '📄', label: 'Total Pieces', value: totalPieces.toFixed(2), extra: '' },
-          { icon: '📊', label: 'Grand Total Pieces', value: totalPiecesWithTukda.toFixed(2), extra: '' },
-          { icon: '🧮', label: 'Average', value: average.toFixed(4), extra: 'average-value' },
+          { icon: <IconRuler size={20} />, label: 'Total Meter', value: totalMeter.toFixed(2), extra: '' },
+          { icon: <IconFile size={20} />, label: 'Total Pieces', value: totalPieces.toFixed(2), extra: '' },
+          { icon: <IconChart size={20} />, label: 'Grand Total Pieces', value: totalPiecesWithTukda.toFixed(2), extra: '' },
+          { icon: <IconCalc size={20} />, label: 'Average', value: average.toFixed(4), extra: 'average-value' },
         ].map(({ icon, label, value, extra }) => (
           <div key={label} className="summary-card">
             <div className="summary-icon">{icon}</div>

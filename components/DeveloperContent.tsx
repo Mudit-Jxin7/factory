@@ -82,11 +82,17 @@ export default function DeveloperContent() {
           </div>
         </div>
         <div className="dashboard-content">
-          <div className="card" style={{ marginBottom: '20px' }}>
-            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', borderBottom: '2px solid #e9ecef' }}>
+          <div className="card" style={{ marginBottom: '4px', padding: '12px' }}>
+            <div className="tab-strip" role="tablist">
               {TAB_LABELS.map(({ key, label }) => (
-                <button key={key} className={`btn ${activeTab === key ? 'btn-primary' : 'btn-secondary'}`}
-                  onClick={() => setActiveTab(key)} style={{ borderRadius: '6px 6px 0 0', marginBottom: '-2px' }}>
+                <button
+                  key={key}
+                  type="button"
+                  role="tab"
+                  aria-selected={activeTab === key}
+                  className={`tab-strip-btn${activeTab === key ? ' active' : ''}`}
+                  onClick={() => setActiveTab(key)}
+                >
                   {label}
                 </button>
               ))}

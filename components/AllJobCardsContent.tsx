@@ -9,6 +9,7 @@ import { useConfirm } from './ConfirmProvider'
 import JobCardsFilters from './jobcards/JobCardsFilters'
 import JobCardsTable from './jobcards/JobCardsTable'
 import { getJobCardDisplayStatus } from '@/lib/jobCardStatus'
+import { IconRefresh } from './Icons'
 import './dashboard.css'
 
 export default function AllJobCardsContent() {
@@ -140,7 +141,7 @@ export default function AllJobCardsContent() {
               </button>
             )}
             <button className="btn btn-secondary" onClick={() => fetchAllJobCards(true)} disabled={bulkDeleting || refreshing}>
-              <span className="btn-icon">🔄</span>Refresh
+              <span className="btn-icon"><IconRefresh size={16} /></span>Refresh
             </button>
           </div>
         </div>

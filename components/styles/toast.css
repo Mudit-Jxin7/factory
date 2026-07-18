@@ -1,0 +1,99 @@
+.toast-stack {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.toast-stack > * {
+  pointer-events: auto;
+}
+
+.toast {
+  min-width: 280px;
+  max-width: 400px;
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid;
+  box-shadow: var(--shadow-md);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  animation: slideInRight 0.3s var(--ease-out);
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+}
+
+.toast-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+}
+
+.toast-message {
+  font-size: 14px;
+  font-weight: 500;
+  flex: 1;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+}
+
+.toast-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.55;
+  transition: opacity var(--duration) var(--ease-out);
+  border-radius: var(--radius-sm);
+  color: inherit;
+  flex-shrink: 0;
+}
+
+.toast-close:hover { opacity: 1; }
+
+.toast--success {
+  background: var(--color-success-soft);
+  border-color: var(--color-success-border);
+  color: var(--color-success-text);
+}
+.toast--success .toast-icon { background: rgba(27, 94, 59, 0.1); }
+
+.toast--error {
+  background: var(--color-danger-soft);
+  border-color: var(--color-danger-border);
+  color: #9b1c1c;
+}
+.toast--error .toast-icon { background: rgba(192, 57, 43, 0.1); }
+
+.toast--info {
+  background: var(--color-info-soft);
+  border-color: var(--color-info-border);
+  color: var(--color-info-text);
+}
+.toast--info .toast-icon { background: rgba(44, 74, 94, 0.1); }
+
+.toast--warning {
+  background: var(--color-warning-soft);
+  border-color: var(--color-warning-border);
+  color: var(--color-warning-text);
+}
+.toast--warning .toast-icon { background: rgba(122, 92, 0, 0.1); }
+
+@media (max-width: 480px) {
+  .toast-stack { left: 12px; right: 12px; top: 12px; }
+  .toast { min-width: 0; max-width: none; }
+}

@@ -1,5 +1,7 @@
 'use client'
 
+import { IconRuler, IconFile, IconChart, IconCalc } from '../Icons'
+
 interface LotSummarySectionProps {
   lot: any
 }
@@ -12,10 +14,10 @@ export default function LotSummarySection({ lot }: LotSummarySectionProps) {
   ).toFixed(2)
 
   const summaryCards = [
-    { icon: '📏', label: 'Total Meter', value: Number(lot.totalMeter || 0).toFixed(2) },
-    { icon: '📄', label: 'Total Pieces', value: Number(lot.totalPieces || 0).toFixed(2) },
-    { icon: '📊', label: 'Grand Total Pieces', value: grandTotal },
-    { icon: '🧮', label: 'Average', value: Number(lot.average || 0).toFixed(4), extra: 'average-value' },
+    { icon: <IconRuler size={20} />, label: 'Total Meter', value: Number(lot.totalMeter || 0).toFixed(2) },
+    { icon: <IconFile size={20} />, label: 'Total Pieces', value: Number(lot.totalPieces || 0).toFixed(2) },
+    { icon: <IconChart size={20} />, label: 'Grand Total Pieces', value: grandTotal },
+    { icon: <IconCalc size={20} />, label: 'Average', value: Number(lot.average || 0).toFixed(4), extra: 'average-value' },
   ]
 
   return (

@@ -1,9 +1,11 @@
 'use client'
 
+import type { ReactNode } from 'react'
+
 export interface ActionBarItem {
   label: string
   shortLabel?: string
-  icon: string
+  icon: ReactNode
   onClick: () => void
   disabled?: boolean
   loading?: boolean

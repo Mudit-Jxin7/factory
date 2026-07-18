@@ -1,6 +1,7 @@
 'use client'
 
 import { getColorForShade } from '@/lib/colorUtils'
+import { IconPlus, IconTrash } from '../Icons'
 
 interface ProductionRow {
   serialNumber: number
@@ -33,7 +34,7 @@ export default function ProductionTable({
       <div className="card-header">
         <h2>Production Data</h2>
         <button className="btn btn-secondary" onClick={onAddRow}>
-          <span className="btn-icon">+</span> Add Row
+          <span className="btn-icon"><IconPlus size={16} /></span> Add Row
         </button>
       </div>
       <div className="table-container">
@@ -101,7 +102,7 @@ export default function ProductionTable({
                   <input type="text" value={row.thread_code || ''} onChange={(e) => onUpdate(index, 'thread_code', e.target.value)} placeholder="Thread Code" className="tbd-input" />
                 </td>
                 <td>
-                  <button className="btn-delete" onClick={() => onDeleteRow(index)} disabled={productionData.length === 1}>🗑️</button>
+                  <button className="btn-delete" onClick={() => onDeleteRow(index)} disabled={productionData.length === 1} aria-label="Delete row"><IconTrash size={16} /></button>
                 </td>
               </tr>
             ))}

@@ -25,39 +25,41 @@ export default function Pagination({ page, totalPages, totalItems, pageSize, onP
     pages.push(totalPages)
   }
 
-  const btn: React.CSSProperties = {
-    minWidth: '36px', height: '36px', padding: '0 10px',
-    border: '1px solid #dee2e6', borderRadius: '6px',
-    background: '#fff', color: '#495057',
-    cursor: 'pointer', fontSize: '14px', fontWeight: 500,
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    transition: 'all 0.15s',
-  }
-  const activeBtn: React.CSSProperties = { ...btn, background: '#0d6efd', color: '#fff', borderColor: '#0d6efd' }
-  const disabledBtn: React.CSSProperties = { ...btn, opacity: 0.4, cursor: 'not-allowed' }
-
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginTop: '16px' }}>
-      <span style={{ fontSize: '14px', color: '#6c757d' }}>
+    <div className="pagination">
+      <span className="pagination-info">
         Showing {from}–{to} of {totalItems}
       </span>
-      <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+      <div className="pagination-controls">
         <button
-          style={page === 1 ? disabledBtn : btn}
+          type="button"
+          className="pagination-btn"
           onClick={() => page > 1 && onPageChange(page - 1)}
           disabled={page === 1}
+          aria-label="Previous page"
         >
           ‹
         </button>
         {pages.map((p, i) =>
           p === '…'
-            ? <span key={`ellipsis-${i}`} style={{ padding: '0 4px', color: '#6c757d', fontSize: '14px' }}>…</span>
-            : <button key={p} style={p === page ? activeBtn : btn} onClick={() => onPageChange(p as number)}>{p}</button>
+            ? <span key={`ellipsis-${i}`} className="pagination-ellipsis">…</span>
+            : (
+              <button
+                key={p}
+                type="button"
+                className={`pagination-btn${p === page ? ' active' : ''}`}
+                onClick={() => onPageChange(p as number)}
+              >
+                {p}
+              </button>
+            )
         )}
         <button
-          style={page === totalPages ? disabledBtn : btn}
+          type="button"
+          className="pagination-btn"
           onClick={() => page < totalPages && onPageChange(page + 1)}
           disabled={page === totalPages}
+          aria-label="Next page"
         >
           ›
         </button>

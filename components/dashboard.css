@@ -1,13 +1,17 @@
+@import './styles/tokens.css';
 @import './styles/reset.css';
 @import './styles/layout.css';
 @import './styles/action-bar.css';
 @import './styles/buttons.css';
 @import './styles/cards.css';
+@import './styles/filters.css';
 @import './styles/ratios.css';
 @import './styles/tables.css';
 @import './styles/summary.css';
 @import './styles/states.css';
 @import './styles/modals.css';
+@import './styles/toast.css';
+@import './styles/pagination.css';
 @import './styles/login.css';
 @import './styles/navbar.css';
 @import './styles/jobcard.css';

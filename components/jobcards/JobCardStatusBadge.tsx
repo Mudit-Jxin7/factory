@@ -26,16 +26,13 @@ export default function JobCardStatusBadge({
   )
   const colors = JOB_CARD_DISPLAY_STATUS_COLORS[displayStatus]
   return (
-    <span style={{
-      display: 'inline-block',
-      padding: '4px 10px',
-      borderRadius: '12px',
-      fontSize: '12px',
-      fontWeight: 600,
-      background: colors.bg,
-      color: colors.color,
-      whiteSpace: 'nowrap',
-    }}>
+    <span
+      className="status-badge"
+      style={{
+        background: colors.bg,
+        color: colors.color,
+      }}
+    >
       {JOB_CARD_DISPLAY_STATUS_LABELS[displayStatus]}
     </span>
   )

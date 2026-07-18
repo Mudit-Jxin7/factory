@@ -16,6 +16,7 @@ import NavigationBar from './NavigationBar'
 import WorkerNavigationBar from './WorkerNavigationBar'
 import { useToast } from './ToastProvider'
 import ActionBar, { ActionBarItem } from './ActionBar'
+import { IconSave, IconPdf, IconTable, IconEdit, IconBack, IconRefresh } from './Icons'
 import { WorkerField, DEFAULT_PRODUCTION_ROW } from './jobcard/constants'
 import WorkerPopupModal from './jobcard/WorkerPopupModal'
 import JobCardRatios from './jobcard/JobCardRatios'
@@ -280,18 +281,18 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
             ? (workerFieldsComplete ? 'Complete Job Card' : 'Save Job Card')
             : 'Update Job Card',
           shortLabel: 'Save',
-          icon: '💾',
+          icon: <IconSave size={14} />,
           onClick: handleSave,
           disabled: saving || !lotNumber,
           loading: saving,
           loadingLabel: 'Saving…',
         } as ActionBarItem] : []),
         ...(!isWorker ? [
-          { label: 'Download PDF', shortLabel: 'PDF', icon: '📄', onClick: handleExportPDF, loading: generatingPDF, loadingLabel: '…' },
-          { label: 'Download Excel', shortLabel: 'Excel', icon: '📊', onClick: handleExportExcel, loading: generatingExcel, loadingLabel: '…' },
+          { label: 'Download PDF', shortLabel: 'PDF', icon: <IconPdf size={14} />, onClick: handleExportPDF, loading: generatingPDF, loadingLabel: '…' },
+          { label: 'Download Excel', shortLabel: 'Excel', icon: <IconTable size={14} />, onClick: handleExportExcel, loading: generatingExcel, loadingLabel: '…' },
         ] : []),
-        ...(!effectiveEditMode && canEdit ? [{ label: 'Edit Job Card', shortLabel: 'Edit', icon: '✏️', onClick: () => router.push(`${jobCardBasePath}/${encodeURIComponent(lotNumber)}?edit=true`) } as ActionBarItem] : []),
-        { label: 'Back to Job Cards', shortLabel: 'Back', icon: '←', onClick: () => router.push(jobCardsListPath), variant: 'secondary' as const },
+        ...(!effectiveEditMode && canEdit ? [{ label: 'Edit Job Card', shortLabel: 'Edit', icon: <IconEdit size={14} />, onClick: () => router.push(`${jobCardBasePath}/${encodeURIComponent(lotNumber)}?edit=true`) } as ActionBarItem] : []),
+        { label: 'Back to Job Cards', shortLabel: 'Back', icon: <IconBack size={14} />, onClick: () => router.push(jobCardsListPath), variant: 'secondary' as const },
       ]} />
       <div className="dashboard-container job-card-page">
         <div className="dashboard-header">
@@ -314,7 +315,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
               aria-label="Refresh job card"
               style={{ padding: '8px 12px', minWidth: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
-              <span className="btn-icon" style={{ display: 'inline-block', transform: refreshing ? 'rotate(360deg)' : undefined, transition: 'transform 0.6s linear' }}>🔄</span>
+              <span className={`btn-icon${refreshing ? ' spinning' : ''}`}><IconRefresh size={16} /></span>
             </button>
           </div>
         </div>

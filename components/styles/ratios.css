@@ -10,9 +10,9 @@
 .ratios-grid .form-group {
   min-width: 0;
   padding: 12px;
-  border: 1px solid #dee2e6;
+  border: 1px solid var(--color-border-strong);
   border-radius: 10px;
-  background: #ffffff;
+  background: var(--color-surface);
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -23,41 +23,41 @@
 
 .ratios-summary {
   padding: 18px 24px;
-  background: #fff9e6;
+  background: var(--color-accent-soft);
   border-radius: 12px;
   text-align: center;
-  color: #1a1a1a;
+  color: var(--color-ink);
   font-size: 16px;
   font-weight: 600;
-  border: 1px solid #ffeaa7;
+  border: 1px solid var(--color-accent-border);
 }
 
 .pdf-export-clone .card {
-  background: #ffffff !important;
-  border: 1px solid #e9ecef !important;
+  background: var(--color-surface) !important;
+  border: 1px solid var(--color-border) !important;
   border-radius: 16px !important;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
   padding: 28px !important;
 }
 
 .pdf-export-clone .ratios-grid .form-group {
-  background: #ffffff !important;
-  border: 1px solid #dee2e6 !important;
+  background: var(--color-surface) !important;
+  border: 1px solid var(--color-border-strong) !important;
   border-radius: 10px !important;
   padding: 12px !important;
 }
 
 .pdf-export-clone .ratios-summary {
-  background: #fff9e6 !important;
-  border: 1px solid #ffeaa7 !important;
+  background: var(--color-accent-soft) !important;
+  border: 1px solid var(--color-accent-border) !important;
   border-radius: 12px !important;
   padding: 18px 24px !important;
   text-align: center !important;
 }
 
 .pdf-export-clone [data-pdf-input="true"] {
-  border: 1px solid #dee2e6 !important;
-  background-color: #ffffff !important;
+  border: 1px solid var(--color-border-strong) !important;
+  background-color: var(--color-surface) !important;
   border-radius: 10px !important;
   min-height: 36px !important;
   display: inline-block !important;
@@ -65,8 +65,8 @@
 }
 
 .pdf-export-clone .dashboard-header {
-  background: #ffffff !important;
-  border: 1px solid #e9ecef !important;
+  background: var(--color-surface) !important;
+  border: 1px solid var(--color-border) !important;
   border-radius: 16px !important;
 }
 

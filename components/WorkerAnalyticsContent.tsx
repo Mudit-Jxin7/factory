@@ -7,6 +7,7 @@ import { getWorkerRole } from './jobcard/constants'
 import NavigationBar from './NavigationBar'
 import { useToast } from './ToastProvider'
 import ActionBar from './ActionBar'
+import { IconPdf, IconTable } from './Icons'
 import AnalyticsFilters from './analytics/AnalyticsFilters'
 import AnalyticsTable from './analytics/AnalyticsTable'
 import { exportAnalyticsToPDF, exportAnalyticsToExcel } from './analytics/exportUtils'
@@ -147,8 +148,8 @@ export default function WorkerAnalyticsContent() {
     <>
       <NavigationBar />
       <ActionBar actions={[
-        { label: 'Download PDF', shortLabel: 'PDF', icon: '📄', loading: generatingPDF, loadingLabel: '…', disabled: filteredData.length === 0, onClick: () => { setGeneratingPDF(true); try { exportAnalyticsToPDF(exportParams); toast.showToast('PDF exported!', 'success') } catch (e: any) { toast.showToast('Error: ' + e.message, 'error') } finally { setGeneratingPDF(false) } } },
-        { label: 'Download Excel', shortLabel: 'Excel', icon: '📊', loading: generatingExcel, loadingLabel: '…', disabled: filteredData.length === 0, onClick: () => { setGeneratingExcel(true); try { exportAnalyticsToExcel(exportParams); toast.showToast('Excel exported!', 'success') } catch (e: any) { toast.showToast('Error: ' + e.message, 'error') } finally { setGeneratingExcel(false) } } },
+        { label: 'Download PDF', shortLabel: 'PDF', icon: <IconPdf size={14} />, loading: generatingPDF, loadingLabel: '…', disabled: filteredData.length === 0, onClick: () => { setGeneratingPDF(true); try { exportAnalyticsToPDF(exportParams); toast.showToast('PDF exported!', 'success') } catch (e: any) { toast.showToast('Error: ' + e.message, 'error') } finally { setGeneratingPDF(false) } } },
+        { label: 'Download Excel', shortLabel: 'Excel', icon: <IconTable size={14} />, loading: generatingExcel, loadingLabel: '…', disabled: filteredData.length === 0, onClick: () => { setGeneratingExcel(true); try { exportAnalyticsToExcel(exportParams); toast.showToast('Excel exported!', 'success') } catch (e: any) { toast.showToast('Error: ' + e.message, 'error') } finally { setGeneratingExcel(false) } } },
       ]} />
       <div className="dashboard-container">
         <div className="dashboard-header">

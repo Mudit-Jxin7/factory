@@ -8,6 +8,7 @@ import { useToast } from './ToastProvider'
 import JobCardsFilters from './jobcards/JobCardsFilters'
 import JobCardsTable from './jobcards/JobCardsTable'
 import { getJobCardDisplayStatus } from '@/lib/jobCardStatus'
+import { IconRefresh } from './Icons'
 import './dashboard.css'
 
 export default function WorkerJobCardsContent() {
@@ -57,7 +58,7 @@ export default function WorkerJobCardsContent() {
           <div className="header-title"><h1>Job Cards</h1><p>View and update job cards</p></div>
           <div className="header-actions">
             <button className="btn btn-secondary" onClick={() => fetchAllJobCards(true)} disabled={refreshing}>
-              <span className="btn-icon">🔄</span>Refresh
+              <span className="btn-icon"><IconRefresh size={16} /></span>Refresh
             </button>
           </div>
         </div>

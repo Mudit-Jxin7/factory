@@ -6,6 +6,7 @@ import Pagination from '@/components/Pagination'
 import JobCardStatusBadge from './JobCardStatusBadge'
 import { canAdminEditJobCard, canWorkerEditJobCard } from '@/lib/jobCardStatus'
 import { formatDisplayDate } from '@/lib/dateFormat'
+import { IconRefresh } from '../Icons'
 
 const PAGE_SIZE = 15
 
@@ -71,7 +72,7 @@ export default function JobCardsTable({
           aria-label="Refresh job cards"
           style={{ padding: '8px 12px', minWidth: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
         >
-          <span className="btn-icon" style={{ display: 'inline-block', transform: refreshing ? 'rotate(360deg)' : undefined, transition: 'transform 0.6s linear' }}>🔄</span>
+          <span className={`btn-icon${refreshing ? ' spinning' : ''}`}><IconRefresh size={16} /></span>
         </button>
       )}
     </div>
