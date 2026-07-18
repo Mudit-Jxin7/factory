@@ -38,7 +38,6 @@ export default function JobCardAdditionalInfo({
             onChange={(e) => onFlyWidthChange(e.target.value)}
             disabled={!isEditMode}
             style={!isEditMode ? disabledStyle : {}}
-            placeholder="Enter fly width"
           />
         </div>
         {ADDITIONAL_FIELDS.map(({ key, label }) => (
@@ -49,7 +48,6 @@ export default function JobCardAdditionalInfo({
               onChange={(e) => onAdditionalInfoChange(key, e.target.value)}
               disabled={!isEditMode}
               style={!isEditMode ? disabledStyle : {}}
-              placeholder={label}
             />
           </div>
         ))}
