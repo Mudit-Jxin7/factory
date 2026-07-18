@@ -185,8 +185,17 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
         console.error('Error syncing additional info to lot:', err)
       }
       setStatus(nextStatus)
+      if (isWorker) setLockedWorkerCells(buildLockedWorkerCellKeys(productionToSave))
       toast.showToast(options?.successMessage || 'Job card updated successfully!', 'success')
-      router.push(`${jobCardBasePath}/${encodeURIComponent(lotNumber)}`)
+
+      const stillEditable = isWorker
+        ? canWorkerEditJobCard(nextStatus, productionToSave)
+        : canAdminEditJobCard(nextStatus, productionToSave)
+      if (!stillEditable) {
+        router.push(`${jobCardBasePath}/${encodeURIComponent(lotNumber)}`)
+      } else {
+        router.replace(`${jobCardBasePath}/${encodeURIComponent(lotNumber)}?edit=true`)
+      }
       return true
     }
     toast.showToast('Error updating job card: ' + result.error, 'error')

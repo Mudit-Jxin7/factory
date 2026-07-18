@@ -42,7 +42,7 @@ export default function JobCardProductionTable({
   const getColumnLabel = (field: WorkerField) => {
     const base = WORKER_COL_LABELS[field]
     const rate = getLotRateForField(workerRates, field)
-    return rate ? `${base} (${rate})` : base
+    return rate ? `${base} (Rs - ${rate})` : base
   }
 
   const getWorkerCellLabel = (row: JobCardProductionRow, field: WorkerField) => {
