@@ -1,15 +1,27 @@
 import { AdditionalInfo, DEFAULT_ADDITIONAL_INFO } from './types'
 
+/** Merge stored additionalInfo with legacy top-level flyWidth. */
+export const normalizeAdditionalInfo = (
+  additionalInfo?: Partial<AdditionalInfo> | null,
+  legacyFlyWidth?: string | null,
+): AdditionalInfo => {
+  const info = { ...DEFAULT_ADDITIONAL_INFO, ...(additionalInfo || {}) }
+  if (!String(info.flyWidth || '').trim() && legacyFlyWidth) {
+    info.flyWidth = String(legacyFlyWidth)
+  }
+  return info
+}
+
 export const isAdditionalInfoEmpty = (
   additionalInfo?: Partial<AdditionalInfo> | null,
-  flyWidth?: string,
+  legacyFlyWidth?: string,
 ): boolean => {
-  if (flyWidth?.trim()) return false
-  if (!additionalInfo) return true
-  return Object.values(additionalInfo).every((value) => !String(value || '').trim())
+  const info = normalizeAdditionalInfo(additionalInfo, legacyFlyWidth)
+  return Object.values(info).every((value) => !String(value || '').trim())
 }
 
 export const ADDITIONAL_INFO_FIELDS: { key: keyof AdditionalInfo; label: string }[] = [
+  { key: 'flyWidth', label: 'Fly Width' },
   { key: 'belt', label: 'Belt' }, { key: 'bottom', label: 'Bottom' },
   { key: 'pasting', label: 'Pasting' }, { key: 'bone', label: 'Bone' },
   { key: 'hala', label: 'Hala' }, { key: 'ticketPocket', label: 'Ticket Pocket' },
@@ -22,20 +34,23 @@ export const ADDITIONAL_INFO_FIELDS: { key: keyof AdditionalInfo; label: string 
 ]
 
 export const getAdditionalInfoExportRows = (
-  flyWidth?: string,
+  flyWidthOrInfo?: string | Partial<AdditionalInfo>,
   additionalInfo?: Partial<AdditionalInfo>,
 ): [string, string][] => {
-  const info = { ...DEFAULT_ADDITIONAL_INFO, ...(additionalInfo || {}) }
+  // Support legacy call shape: getAdditionalInfoExportRows(flyWidth, additionalInfo)
+  // and new shape: getAdditionalInfoExportRows(additionalInfo)
+  let info: AdditionalInfo
+  if (typeof flyWidthOrInfo === 'string' || flyWidthOrInfo === undefined || flyWidthOrInfo === null) {
+    info = normalizeAdditionalInfo(additionalInfo, flyWidthOrInfo)
+  } else {
+    info = normalizeAdditionalInfo(flyWidthOrInfo)
+  }
+
   const rows: [string, string][] = []
-
-  const flyWidthValue = String(flyWidth || '').trim()
-  if (flyWidthValue) rows.push(['Fly Width', flyWidthValue])
-
   for (const { key, label } of ADDITIONAL_INFO_FIELDS) {
     const value = String(info[key] || '').trim()
     if (value) rows.push([label, value])
   }
-
   return rows
 }
 

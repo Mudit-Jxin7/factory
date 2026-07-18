@@ -15,8 +15,9 @@ import LotProductionTable from './lotview/LotProductionTable'
 import LotSummarySection from './lotview/LotSummarySection'
 import JobCardAdditionalInfo from './jobcard/JobCardAdditionalInfo'
 import LotRatesForm from './dashboard/LotRatesForm'
-import { DEFAULT_ADDITIONAL_INFO, DEFAULT_LOT_WORKER_RATES } from '@/lib/types'
+import { DEFAULT_LOT_WORKER_RATES } from '@/lib/types'
 import { normalizeLotWorkerRates } from '@/lib/lotWorkerRates'
+import { normalizeAdditionalInfo } from '@/lib/additionalInfoExport'
 import { exportLotViewToPDF, exportLotViewToExcel } from './lotview/exportUtils'
 import './dashboard.css'
 
@@ -137,10 +138,8 @@ export default function LotViewContent({ lotNumber }: LotViewContentProps) {
             onRateChange={() => {}}
           />
           <JobCardAdditionalInfo
-            flyWidth={lot.flyWidth || ''}
-            additionalInfo={{ ...DEFAULT_ADDITIONAL_INFO, ...(lot.additionalInfo || {}) }}
+            additionalInfo={normalizeAdditionalInfo(lot.additionalInfo, lot.flyWidth)}
             isEditMode={false}
-            onFlyWidthChange={() => {}}
             onAdditionalInfoChange={() => {}}
           />
         </div>

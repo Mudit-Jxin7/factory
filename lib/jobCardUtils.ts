@@ -1,10 +1,12 @@
 import { jobCardsAPI } from './api'
-import { DEFAULT_ADDITIONAL_INFO, DEFAULT_LOT_WORKER_RATES } from './types'
+import { DEFAULT_LOT_WORKER_RATES } from './types'
 import { normalizeLotWorkerRates } from './lotWorkerRates'
+import { normalizeAdditionalInfo } from './additionalInfoExport'
 
 export const createJobCardFromLot = async (lotData: any) => {
   try {
     const workerRates = normalizeLotWorkerRates(lotData.workerRates || DEFAULT_LOT_WORKER_RATES)
+    const additionalInfo = normalizeAdditionalInfo(lotData.additionalInfo, lotData.flyWidth)
     const jobCardData = {
       lotId: lotData._id ? String(lotData._id) : undefined,
       lotNumber: lotData.lotNumber,
@@ -28,8 +30,8 @@ export const createJobCardFromLot = async (lotData: any) => {
         zip_code: '',
         thread_code: '',
       })),
-      flyWidth: lotData.flyWidth ?? '',
-      additionalInfo: { ...DEFAULT_ADDITIONAL_INFO, ...(lotData.additionalInfo || {}) },
+      flyWidth: additionalInfo.flyWidth,
+      additionalInfo,
       status: 'incomplete',
       workerRates,
       workerPrices: {},

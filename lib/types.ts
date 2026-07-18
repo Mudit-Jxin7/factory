@@ -11,6 +11,7 @@ export interface Ratios {
 }
 
 export interface AdditionalInfo {
+  flyWidth: string
   belt: string
   bottom: string
   pasting: string
@@ -91,6 +92,7 @@ export const DEFAULT_RATIOS: Ratios = {
 }
 
 export const DEFAULT_ADDITIONAL_INFO: AdditionalInfo = {
+  flyWidth: '',
   belt: '', bottom: '', pasting: '', bone: '', hala: '', ticketPocket: '',
   cutting: '', number: '', buttonTake: '', assembly: '', sealStitch: '',
   label: '', tanki: '', kaajButton: '', finishing: '',

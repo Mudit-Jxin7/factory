@@ -14,7 +14,7 @@ import ProductionTable from './dashboard/ProductionTable'
 import SummarySection from './dashboard/SummarySection'
 import LotRatesForm from './dashboard/LotRatesForm'
 import JobCardAdditionalInfo from './jobcard/JobCardAdditionalInfo'
-import { isAdditionalInfoEmpty } from '@/lib/additionalInfoExport'
+import { isAdditionalInfoEmpty, normalizeAdditionalInfo } from '@/lib/additionalInfoExport'
 import { exportLotToPDF, exportLotToExcel } from './dashboard/exportUtils'
 import { useSaveLot } from './dashboard/useSaveLot'
 import './dashboard.css'
@@ -43,7 +43,6 @@ export default function DashboardContent() {
   const [ratios, setRatios] = useState<Ratios>(DEFAULT_RATIOS)
   const [productionData, setProductionData] = useState([BLANK_ROW])
   const [tukdaSize, setTukdaSize] = useState('28')
-  const [flyWidth, setFlyWidth] = useState('')
   const [additionalInfo, setAdditionalInfo] = useState<AdditionalInfo>(DEFAULT_ADDITIONAL_INFO)
   const [workerRates, setWorkerRates] = useState<LotWorkerRates>(DEFAULT_LOT_WORKER_RATES)
 
@@ -81,14 +80,12 @@ export default function DashboardContent() {
           }))
           : [BLANK_ROW])
         setTukdaSize(lot.tukda?.size || '28')
-        setFlyWidth(lot.flyWidth || '')
-        setAdditionalInfo({ ...DEFAULT_ADDITIONAL_INFO, ...(lot.additionalInfo || {}) })
+        setAdditionalInfo(normalizeAdditionalInfo(lot.additionalInfo, lot.flyWidth))
         setWorkerRates({ ...DEFAULT_LOT_WORKER_RATES, ...(lot.workerRates || {}) })
         if (isAdditionalInfoEmpty(lot.additionalInfo, lot.flyWidth)) {
           const jcResult = await jobCardsAPI.getJobCardByLotNumber(lot.lotNumber)
           if (jcResult.success && jcResult.jobCard && !isAdditionalInfoEmpty(jcResult.jobCard.additionalInfo, jcResult.jobCard.flyWidth)) {
-            setFlyWidth(jcResult.jobCard.flyWidth || '')
-            setAdditionalInfo({ ...DEFAULT_ADDITIONAL_INFO, ...(jcResult.jobCard.additionalInfo || {}) })
+            setAdditionalInfo(normalizeAdditionalInfo(jcResult.jobCard.additionalInfo, jcResult.jobCard.flyWidth))
           }
         }
       } else {
@@ -181,11 +178,11 @@ export default function DashboardContent() {
   }
 
   const handleSave = () => saveLotFn(
-    { lotNumber, date, fabric, pattern, brand, ratios, productionData, tukda, totalMeter, totalPieces, totalPiecesWithTukda, average, flyWidth, additionalInfo, workerRates, editLotNumber: searchParams?.get('edit') },
+    { lotNumber, date, fabric, pattern, brand, ratios, productionData, tukda, totalMeter, totalPieces, totalPiecesWithTukda, average, flyWidth: additionalInfo.flyWidth, additionalInfo, workerRates, editLotNumber: searchParams?.get('edit') },
     setSaving
   )
 
-  const exportParams = { lotNumber, date, fabric, pattern, brand, ratios, sumOfRatios, productionData, tukda, totalMeter, totalPieces, totalPiecesWithTukda, average, flyWidth, additionalInfo }
+  const exportParams = { lotNumber, date, fabric, pattern, brand, ratios, sumOfRatios, productionData, tukda, totalMeter, totalPieces, totalPiecesWithTukda, average, flyWidth: additionalInfo.flyWidth, additionalInfo }
 
   if (loadingLot) {
     return (
@@ -239,8 +236,7 @@ export default function DashboardContent() {
             onRateChange={(key, value) => setWorkerRates((prev) => ({ ...prev, [key]: value }))}
           />
           <JobCardAdditionalInfo
-            flyWidth={flyWidth} additionalInfo={additionalInfo} isEditMode
-            onFlyWidthChange={setFlyWidth}
+            additionalInfo={additionalInfo} isEditMode
             onAdditionalInfoChange={(key, value) => setAdditionalInfo((prev) => ({ ...prev, [key]: value }))}
           />
         </div>

@@ -124,6 +124,7 @@ describe('createJobCardFromLot', () => {
 
     const [payload] = mockCreateJobCard.mock.calls[0]
     expect(payload.additionalInfo).toEqual({
+      flyWidth: '',
       belt: '', bottom: '', pasting: '', bone: '', hala: '', ticketPocket: '',
       cutting: '', number: '', buttonTake: '', assembly: '', sealStitch: '',
       label: '', tanki: '', kaajButton: '', finishing: '',
@@ -140,6 +141,7 @@ describe('createJobCardFromLot', () => {
 
     const [payload] = mockCreateJobCard.mock.calls[0]
     expect(payload.flyWidth).toBe('32')
+    expect(payload.additionalInfo.flyWidth).toBe('32')
     expect(payload.additionalInfo.belt).toBe('Leather')
     expect(payload.additionalInfo.bottom).toBe('Cotton')
   })

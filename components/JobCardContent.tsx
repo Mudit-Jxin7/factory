@@ -25,6 +25,7 @@ import JobCardAdditionalInfo from './jobcard/JobCardAdditionalInfo'
 import LotRatesForm from './dashboard/LotRatesForm'
 import { exportJobCardToPDF } from './jobcard/exportToPDF'
 import { exportJobCardToExcel } from './jobcard/exportToExcel'
+import { normalizeAdditionalInfo } from '@/lib/additionalInfoExport'
 import './dashboard.css'
 
 interface JobCardContentProps {
@@ -51,7 +52,6 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
   const [workers, setWorkers] = useState<Worker[]>([])
   const [ratios, setRatios] = useState<Ratios>(DEFAULT_RATIOS)
   const [productionData, setProductionData] = useState<JobCardProductionRow[]>([{ serialNumber: 1, ...DEFAULT_PRODUCTION_ROW }])
-  const [flyWidth, setFlyWidth] = useState('')
   const [additionalInfo, setAdditionalInfo] = useState<AdditionalInfo>(DEFAULT_ADDITIONAL_INFO)
   const [workerRates, setWorkerRates] = useState<LotWorkerRates>(DEFAULT_LOT_WORKER_RATES)
   const [loading, setLoading] = useState(false)
@@ -104,8 +104,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
         setDate(jc.date || '')
         setBrand(jc.brand || '')
         setRatios(jc.ratios || DEFAULT_RATIOS)
-        setFlyWidth(jc.flyWidth || '')
-        setAdditionalInfo({ ...DEFAULT_ADDITIONAL_INFO, ...(jc.additionalInfo || {}) })
+        setAdditionalInfo(normalizeAdditionalInfo(jc.additionalInfo, jc.flyWidth))
         setStatus(normalizeJobCardStatus(jc.status))
         const lotRows = lotResult.success && Array.isArray(lotResult.lot?.productionData)
           ? lotResult.lot.productionData
@@ -190,7 +189,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
         pieces: Number(row.pieces) || 0,
         tukda: Number(row.tukda) || 0,
       })),
-      flyWidth, additionalInfo,
+      flyWidth: additionalInfo.flyWidth, additionalInfo,
       workerRates,
       workerPrices: {},
       status: nextStatus,
@@ -202,7 +201,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
           const { _id, ...lotWithoutId } = lotResult.lot
           await lotsAPI.updateLot(lotNumber, {
             ...lotWithoutId,
-            flyWidth,
+            flyWidth: additionalInfo.flyWidth,
             additionalInfo,
             workerRates,
           })
@@ -248,7 +247,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
   const handleExportPDF = () => {
     setGeneratingPDF(true)
     try {
-      exportJobCardToPDF({ lotNumber, brand, date, ratios, productionData, flyWidth, additionalInfo, workers })
+      exportJobCardToPDF({ lotNumber, brand, date, ratios, productionData, flyWidth: additionalInfo.flyWidth, additionalInfo, workers })
     } catch (err: any) { toast.showToast('Error generating PDF: ' + err.message, 'error') }
     finally { setGeneratingPDF(false) }
   }
@@ -256,7 +255,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
   const handleExportExcel = () => {
     setGeneratingExcel(true)
     try {
-      exportJobCardToExcel({ lotNumber, brand, date, ratios, productionData, flyWidth, additionalInfo, workers })
+      exportJobCardToExcel({ lotNumber, brand, date, ratios, productionData, flyWidth: additionalInfo.flyWidth, additionalInfo, workers })
       toast.showToast('Excel file exported successfully!', 'success')
     } catch (err: any) { toast.showToast('Error generating Excel: ' + err.message, 'error') }
     finally { setGeneratingExcel(false) }
@@ -361,8 +360,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
             }
           />
           <JobCardAdditionalInfo
-            flyWidth={flyWidth} additionalInfo={additionalInfo} isEditMode={false}
-            onFlyWidthChange={() => {}}
+            additionalInfo={additionalInfo} isEditMode={false}
             onAdditionalInfoChange={() => {}}
           />
         </div>
