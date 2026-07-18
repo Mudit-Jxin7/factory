@@ -62,3 +62,31 @@ export const getLotWorkerRateExportRows = (
   ).filter(([, value]) => String(value || '').trim() !== '')
 }
 
+export const LOT_WORKER_RATE_LABELS: Record<keyof LotWorkerRates, string> = {
+  front: 'Front',
+  back: 'Back',
+  zip: 'Zip',
+  astar: 'Astar',
+  belt: 'Belt',
+}
+
+/** Returns missing rate field labels, or an empty array when all are filled. */
+export const getMissingLotWorkerRateLabels = (
+  rates?: Partial<LotWorkerRates> | null,
+): string[] => {
+  const normalized = normalizeLotWorkerRates(rates)
+  return (Object.keys(LOT_WORKER_RATE_LABELS) as (keyof LotWorkerRates)[])
+    .filter((key) => {
+      const value = String(normalized[key] ?? '').trim()
+      if (!value) return true
+      const num = Number(value)
+      return !Number.isFinite(num) || num < 0
+    })
+    .map((key) => LOT_WORKER_RATE_LABELS[key])
+}
+
+export const areLotWorkerRatesComplete = (
+  rates?: Partial<LotWorkerRates> | null,
+): boolean => getMissingLotWorkerRateLabels(rates).length === 0
+
+

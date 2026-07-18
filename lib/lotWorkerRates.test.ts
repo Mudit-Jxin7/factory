@@ -43,3 +43,12 @@ describe('lotWorkerRates', () => {
     expect(updated[0].beltProdRate).toBe('')
   })
 })
+
+describe('areLotWorkerRatesComplete', () => {
+  it('requires all five rates to be present and non-negative', async () => {
+    const { areLotWorkerRatesComplete, getMissingLotWorkerRateLabels } = await import('./lotWorkerRates')
+    expect(areLotWorkerRatesComplete({ front: '10', back: '11', zip: '12', astar: '13', belt: '14' })).toBe(true)
+    expect(getMissingLotWorkerRateLabels({ front: '10', back: '', zip: '12', astar: '13', belt: '14' })).toEqual(['Back'])
+    expect(areLotWorkerRatesComplete({ front: '10', back: '-1', zip: '12', astar: '13', belt: '14' })).toBe(false)
+  })
+})

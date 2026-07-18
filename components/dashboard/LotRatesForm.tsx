@@ -25,12 +25,12 @@ export default function LotRatesForm({
     <div className="card">
       <h2>Worker Rates</h2>
       <p style={{ margin: '0 0 20px', color: '#6c757d', fontSize: '14px' }}>
-        Set rates for Front, Back, Zip, Astar, and Belt. These rates are used for all workers on the job card.
+        Set rates for Front, Back, Zip, Astar, and Belt. All rates are required and used for workers on the job card.
       </p>
       <div className="form-grid">
         {RATE_FIELDS.map(({ key, label }) => (
           <div key={key} className="form-group">
-            <label>{label} Rate</label>
+            <label>{label} Rate *</label>
             <input
               type="number"
               value={workerRates[key]}
@@ -39,6 +39,7 @@ export default function LotRatesForm({
               placeholder="0.00"
               step="0.01"
               min="0"
+              required={isEditMode}
               style={!isEditMode ? { background: '#f8f9fa', cursor: 'not-allowed' } : undefined}
             />
           </div>
