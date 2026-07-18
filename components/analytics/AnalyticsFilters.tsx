@@ -33,19 +33,28 @@ export default function AnalyticsFilters({
 
   const filteredWorkers = useMemo(() => {
     const q = workerSearch.trim().toLowerCase()
-    let list = !q
-      ? workers
-      : workers.filter((w: any) =>
-        String(w.worker_id ?? '').toLowerCase().includes(q)
+    if (!q) return workers
+    return workers.filter((w: any) =>
+      String(w.worker_id ?? '').toLowerCase().includes(q)
+      || String(w.worker_full_name ?? '').toLowerCase().includes(q)
+    )
+  }, [workers, workerSearch])
+
+  const handleWorkerSearchChange = (value: string) => {
+    setWorkerSearch(value)
+    const q = value.trim().toLowerCase()
+    if (!q) return
+    const stillVisible = workers.some((w: any) => {
+      if (w._id !== selectedWorker) return false
+      return String(w.worker_id ?? '').toLowerCase().includes(q)
         || String(w.worker_full_name ?? '').toLowerCase().includes(q)
-      )
-    // Keep current selection visible even if search doesn't match it
-    if (selectedWorker && !list.some((w: any) => w._id === selectedWorker)) {
-      const selected = workers.find((w: any) => w._id === selectedWorker)
-      if (selected) list = [selected, ...list]
-    }
-    return list
-  }, [workers, workerSearch, selectedWorker])
+    })
+    if (selectedWorker && !stillVisible) onWorkerChange('')
+  }
+
+  const handleWorkerSelect = (value: string) => {
+    onWorkerChange(value)
+  }
 
   const handleClear = () => {
     setWorkerSearch('')
@@ -73,25 +82,24 @@ export default function AnalyticsFilters({
           <input type="date" value={toDate} onChange={(e) => onToDateChange(e.target.value)} style={inputStyle} />
         </div>
         <div className="form-group" style={{ marginBottom: 0 }}>
-          <label>Search Worker</label>
-          <input
-            type="text"
-            value={workerSearch}
-            onChange={(e) => setWorkerSearch(e.target.value)}
-            placeholder="Type name or ID…"
-            style={inputStyle}
-          />
-        </div>
-        <div className="form-group" style={{ marginBottom: 0 }}>
           <label>Worker</label>
-          <select value={selectedWorker} onChange={(e) => onWorkerChange(e.target.value)} style={inputStyle}>
-            <option value="">All Workers</option>
-            {filteredWorkers.map((worker: any) => (
-              <option key={worker._id} value={worker._id}>
-                {worker.worker_id} - {worker.worker_full_name}
-              </option>
-            ))}
-          </select>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <input
+              type="text"
+              value={workerSearch}
+              onChange={(e) => handleWorkerSearchChange(e.target.value)}
+              placeholder="Search name or ID…"
+              style={inputStyle}
+            />
+            <select value={selectedWorker} onChange={(e) => handleWorkerSelect(e.target.value)} style={inputStyle}>
+              <option value="">All Workers</option>
+              {filteredWorkers.map((worker: any) => (
+                <option key={worker._id} value={worker._id}>
+                  {worker.worker_id} - {worker.worker_full_name}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
         <div className="form-group" style={{ marginBottom: 0 }}>
           <label>Role</label>
