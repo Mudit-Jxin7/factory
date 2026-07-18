@@ -152,7 +152,7 @@ describe('exportAnalyticsToExcel', () => {
 
     expect(blobContent).toContain('"TOTAL"')
     expect(blobContent).toContain('"100.00"')
-    expect(blobContent).toContain('"1000.00"')
+    expect(blobContent).toContain('"1,000.00"')
   })
 
   it('CSV groups data under a worker heading', () => {
