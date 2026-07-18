@@ -10,6 +10,8 @@ interface JobCardProductionTableProps {
   isEditMode: boolean
   onOpenWorkerPopup: (rowIndex: number, field: WorkerField) => void
   hideRate?: boolean
+  /** When true for a cell, it stays read-only even in edit mode (already saved by worker). */
+  isCellLocked?: (rowIndex: number, field: WorkerField) => boolean
 }
 
 const WORKER_FIELDS: WorkerField[] = ['front', 'back', 'zip', 'astar', 'beltProd', 'add1', 'add2']
@@ -18,15 +20,16 @@ const WORKER_COL_LABELS: Record<WorkerField, string> = {
   beltProd: 'Belt', add1: 'Additional 1', add2: 'Additional 2',
 }
 
-const workerBtnStyle = (isEditMode: boolean) => ({
-  width: '100%', padding: '8px 12px', border: '1px solid #ddd', borderRadius: '4px',
+const workerBtnStyle = (editable: boolean, locked: boolean) => ({
+  width: '100%', padding: '8px 12px', border: `1px solid ${locked ? '#ced4da' : '#ddd'}`, borderRadius: '4px',
   fontSize: '16px', textAlign: 'left' as const,
-  background: !isEditMode ? '#f8f9fa' : '#fff',
-  cursor: !isEditMode ? 'not-allowed' : 'pointer',
+  background: !editable || locked ? '#f1f3f5' : '#fff',
+  cursor: !editable || locked ? 'not-allowed' : 'pointer',
+  color: locked ? '#495057' : undefined,
 })
 
 export default function JobCardProductionTable({
-  productionData, workers, isEditMode, onOpenWorkerPopup, hideRate = false,
+  productionData, workers, isEditMode, onOpenWorkerPopup, hideRate = false, isCellLocked,
 }: JobCardProductionTableProps) {
   const getWorkerName = (workerId: string) => {
     if (!workerId) return ''
@@ -87,19 +90,24 @@ export default function JobCardProductionTable({
                     ) : <span style={{ fontSize: '16px', color: '#6c757d' }}>—</span>}
                   </div>
                 </td>
-                {WORKER_FIELDS.map((field) => (
-                  <td key={field} style={{ width: '240px', minWidth: '240px' }}>
-                    <button
-                      type="button"
-                      onClick={() => isEditMode && onOpenWorkerPopup(index, field)}
-                      disabled={!isEditMode}
-                      className="tbd-input"
-                      style={workerBtnStyle(isEditMode)}
-                    >
-                      {getWorkerCellLabel(row, field) || <span style={{ color: '#aaa' }}>—</span>}
-                    </button>
-                  </td>
-                ))}
+                {WORKER_FIELDS.map((field) => {
+                  const locked = !!isCellLocked?.(index, field)
+                  const editable = isEditMode && !locked
+                  return (
+                    <td key={field} style={{ width: '240px', minWidth: '240px' }}>
+                      <button
+                        type="button"
+                        onClick={() => editable && onOpenWorkerPopup(index, field)}
+                        disabled={!editable}
+                        className="tbd-input"
+                        title={locked ? 'Already saved — read only' : undefined}
+                        style={workerBtnStyle(isEditMode, locked)}
+                      >
+                        {getWorkerCellLabel(row, field) || <span style={{ color: '#aaa' }}>—</span>}
+                      </button>
+                    </td>
+                  )
+                })}
                 <td style={{ width: '70px', minWidth: '70px' }}>
                   <input type="text" value={row.zip_code ?? ''} readOnly disabled className="tbd-input"
                     style={{ background: '#f8f9fa', cursor: 'not-allowed', width: '100%' }} placeholder="Zip Code" />

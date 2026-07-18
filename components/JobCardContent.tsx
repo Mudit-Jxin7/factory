@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { jobCardsAPI, workersAPI, lotsAPI } from '@/lib/api'
 import { JobCardProductionRow, Worker, Ratios, AdditionalInfo, JobCardStatus, DEFAULT_RATIOS, DEFAULT_ADDITIONAL_INFO } from '@/lib/types'
 import { canAdminEditJobCard, canAdminViewWorkerPrices, canWorkerEditJobCard, deriveJobCardStatus, normalizeJobCardStatus } from '@/lib/jobCardStatus'
-import { hasAllRequiredWorkerFields } from '@/lib/jobCardWorkerCompletion'
+import { hasAllRequiredWorkerFields, buildLockedWorkerCellKeys, isWorkerCellLocked } from '@/lib/jobCardWorkerCompletion'
 import JobCardStatusBadge from './jobcards/JobCardStatusBadge'
 import NavigationBar from './NavigationBar'
 import WorkerNavigationBar from './WorkerNavigationBar'
@@ -60,9 +60,12 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
   const [popupDate, setPopupDate] = useState('')
   const [popupRate, setPopupRate] = useState('')
   const [workerPrices, setWorkerPrices] = useState<WorkerPrices>({})
+  const [lockedWorkerCells, setLockedWorkerCells] = useState<Set<string>>(() => new Set())
 
-  const canEdit = isWorker ? canWorkerEditJobCard(status) : canAdminEditJobCard(status)
-  const showWorkerPrices = !isWorker && canAdminViewWorkerPrices(status)
+  const canEdit = isWorker
+    ? canWorkerEditJobCard(status, productionData)
+    : canAdminEditJobCard(status, productionData)
+  const showWorkerPrices = !isWorker && canAdminViewWorkerPrices(status, productionData)
   const effectiveEditMode = isEditMode && canEdit
   const effectiveWorkerPricesEdit = showWorkerPrices && effectiveEditMode
   const workerFieldsComplete = useMemo(
@@ -98,9 +101,9 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
         setAdditionalInfo({ ...DEFAULT_ADDITIONAL_INFO, ...(jc.additionalInfo || {}) })
         setStatus(normalizeJobCardStatus(jc.status))
         setWorkerPrices(prices)
-        setProductionData(
-          jc.productionData?.length ? jc.productionData : [{ serialNumber: 1, ...DEFAULT_PRODUCTION_ROW }],
-        )
+        const rows = jc.productionData?.length ? jc.productionData : [{ serialNumber: 1, ...DEFAULT_PRODUCTION_ROW }]
+        setProductionData(rows)
+        setLockedWorkerCells(isWorker ? buildLockedWorkerCellKeys(rows) : new Set())
         if (isRefresh) toast.showToast('Job card refreshed', 'success')
       } else {
         setError('Job card not found. Job cards are automatically created when a lot is saved.')
@@ -111,13 +114,17 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
       if (isRefresh) setRefreshing(false)
       else setLoading(false)
     }
-  }, [lotNumber, toast])
+  }, [lotNumber, toast, isWorker])
 
   useEffect(() => { fetchJobCard() }, [fetchJobCard])
 
   const today = new Date().toISOString().split('T')[0]
 
   const openWorkerPopup = (rowIndex: number, field: WorkerField) => {
+    if (isWorker && isWorkerCellLocked(lockedWorkerCells, rowIndex, field)) {
+      toast.showToast('This column is already saved and cannot be changed', 'warning')
+      return
+    }
     const row = productionData[rowIndex]
     const workerMongoId = String((row as any)[`${field}Worker`] ?? '')
     setPopupWorker(workerMongoId)
@@ -136,6 +143,11 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
   const saveWorkerPopup = () => {
     if (!editingWorkerCell) return
     const { rowIndex, field } = editingWorkerCell
+    if (isWorker && isWorkerCellLocked(lockedWorkerCells, rowIndex, field)) {
+      setEditingWorkerCell(null)
+      toast.showToast('This column is already saved and cannot be changed', 'warning')
+      return
+    }
     const presetRate = getWorkerRateFromPrices(popupWorker, workers, workerPrices)
     setProductionData(prev => prev.map((row, i) => {
       if (i !== rowIndex) return row
@@ -321,6 +333,12 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
             productionData={productionData} workers={workers}
             isEditMode={effectiveEditMode} onOpenWorkerPopup={openWorkerPopup}
             hideRate={isWorker}
+            // Workers: saved columns stay read-only. Admins: all columns editable once complete.
+            isCellLocked={
+              isWorker
+                ? (rowIndex, field) => isWorkerCellLocked(lockedWorkerCells, rowIndex, field)
+                : undefined
+            }
           />
           <JobCardAdditionalInfo
             flyWidth={flyWidth} additionalInfo={additionalInfo} isEditMode={false}

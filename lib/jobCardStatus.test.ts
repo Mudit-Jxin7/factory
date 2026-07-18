@@ -144,11 +144,16 @@ describe('access rules', () => {
     expect(canWorkerEditJobCard('pending_approval')).toBe(false)
   })
 
-  it('allows admins to edit complete cards only', () => {
+  it('allows admins to edit complete cards only, including previously filled columns', () => {
     expect(canAdminEditJobCard('incomplete')).toBe(false)
     expect(canAdminEditJobCard('in_progress')).toBe(false)
     expect(canAdminEditJobCard('complete')).toBe(true)
     expect(canAdminEditJobCard('pending_approval')).toBe(true)
+    expect(canAdminEditJobCard('incomplete', [fullyAssignedRow])).toBe(true)
+  })
+
+  it('blocks workers when all required fields are filled even if status is not saved yet', () => {
+    expect(canWorkerEditJobCard('incomplete', [fullyAssignedRow])).toBe(false)
   })
 })
 

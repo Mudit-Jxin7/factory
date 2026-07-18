@@ -68,13 +68,28 @@ export const getJobCardDisplayStatus = (
   return deriveJobCardStatus(jobCard.productionData)
 }
 
+/** True when the card is complete (stored or all required worker fields filled). */
+export const isJobCardComplete = (
+  status?: string,
+  productionData?: JobCardProductionRow[],
+): boolean => {
+  if (normalizeJobCardStatus(status) === 'complete') return true
+  return deriveJobCardStatus(productionData) === 'complete'
+}
+
 /** Workers can edit until the card is complete. */
-export const canWorkerEditJobCard = (status?: string) =>
-  normalizeJobCardStatus(status) !== 'complete'
+export const canWorkerEditJobCard = (
+  status?: string,
+  productionData?: JobCardProductionRow[],
+) => !isJobCardComplete(status, productionData)
 
-/** Admins get edit access once the card is complete. */
-export const canAdminEditJobCard = (status?: string) =>
-  normalizeJobCardStatus(status) === 'complete'
+/** Admins can edit all columns (including ones workers locked) once complete. */
+export const canAdminEditJobCard = (
+  status?: string,
+  productionData?: JobCardProductionRow[],
+) => isJobCardComplete(status, productionData)
 
-export const canAdminViewWorkerPrices = (status?: string) =>
-  normalizeJobCardStatus(status) === 'complete'
+export const canAdminViewWorkerPrices = (
+  status?: string,
+  productionData?: JobCardProductionRow[],
+) => isJobCardComplete(status, productionData)

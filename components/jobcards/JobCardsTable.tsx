@@ -154,8 +154,8 @@ export default function JobCardsTable({
             ) : pageCards.map((jobCard: any) => {
               const id = jobCard._id
               const isSelected = !isWorker && selectedIds.has(id)
-              const showWorkerEdit = isWorker && canWorkerEditJobCard(jobCard.status)
-              const showAdminEdit = !isWorker && canAdminEditJobCard(jobCard.status)
+              const showWorkerEdit = isWorker && canWorkerEditJobCard(jobCard.status, jobCard.productionData)
+              const showAdminEdit = !isWorker && canAdminEditJobCard(jobCard.status, jobCard.productionData)
               return (
                 <tr key={id} style={isSelected ? { background: '#eef4ff' } : undefined}>
                   {!isWorker && (
