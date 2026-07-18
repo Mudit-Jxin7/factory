@@ -4,6 +4,7 @@ import { CSSProperties } from 'react'
 import { getColorForShade } from '@/lib/colorUtils'
 import { JobCardProductionRow, LotWorkerRates, Worker } from '@/lib/types'
 import { getLotRateForField } from '@/lib/lotWorkerRates'
+import { formatDisplayDate } from '@/lib/dateFormat'
 import { WorkerField } from './constants'
 
 interface JobCardProductionTableProps {
@@ -91,7 +92,7 @@ export default function JobCardProductionTable({
     const date = String(row[dateKey] ?? '')
     const parts = [name]
     if (!hideRate && rate) parts.push(rate)
-    if (date) parts.push(date)
+    if (date) parts.push(formatDisplayDate(date))
     return parts.join(' - ')
   }
 

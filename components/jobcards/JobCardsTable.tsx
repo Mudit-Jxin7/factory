@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Pagination from '@/components/Pagination'
 import JobCardStatusBadge from './JobCardStatusBadge'
 import { canAdminEditJobCard, canWorkerEditJobCard } from '@/lib/jobCardStatus'
+import { formatDisplayDate } from '@/lib/dateFormat'
 
 const PAGE_SIZE = 15
 
@@ -169,7 +170,7 @@ export default function JobCardsTable({
                     </td>
                   )}
                   <td style={{ fontWeight: '600', color: '#1a1a1a' }}>{jobCard.lotNumber || '-'}</td>
-                  <td>{jobCard.date || '-'}</td>
+                  <td>{formatDisplayDate(jobCard.date, '-')}</td>
                   <td>{jobCard.brand || '-'}</td>
                   <td><JobCardStatusBadge status={jobCard.status} jobCard={{ productionData: jobCard.productionData }} variant={variant} /></td>
                   <td style={{ textAlign: 'center' }}>

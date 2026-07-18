@@ -10,6 +10,7 @@ import {
 import { canAdminEditJobCard, canWorkerEditJobCard, deriveJobCardStatus, normalizeJobCardStatus } from '@/lib/jobCardStatus'
 import { hasAllRequiredWorkerFields, buildLockedWorkerCellKeys, isWorkerCellLocked } from '@/lib/jobCardWorkerCompletion'
 import { applyLotRatesToProduction, getLotRateForField, normalizeLotWorkerRates } from '@/lib/lotWorkerRates'
+import { formatDisplayDate } from '@/lib/dateFormat'
 import JobCardStatusBadge from './jobcards/JobCardStatusBadge'
 import NavigationBar from './NavigationBar'
 import WorkerNavigationBar from './WorkerNavigationBar'
@@ -335,6 +336,10 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
               <div className="form-group">
                 <label>Brand</label>
                 <input type="text" value={brand} disabled style={{ background: '#f8f9fa', cursor: 'not-allowed' }} placeholder="Enter brand" />
+              </div>
+              <div className="form-group">
+                <label>Date</label>
+                <input type="text" value={formatDisplayDate(date)} disabled style={{ background: '#f8f9fa', cursor: 'not-allowed' }} />
               </div>
             </div>
           </div>

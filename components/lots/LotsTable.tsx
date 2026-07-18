@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Pagination from '@/components/Pagination'
+import { formatDisplayDate } from '@/lib/dateFormat'
 
 const PAGE_SIZE = 15
 
@@ -133,7 +134,7 @@ export default function LotsTable({ lots, allCount, loading, deletingLot, bulkDe
                     />
                   </td>
                   <td style={{ fontWeight: '600', color: '#1a1a1a' }}>{lot.lotNumber || '-'}</td>
-                  <td>{lot.date || '-'}</td><td>{lot.fabric || '-'}</td>
+                  <td>{formatDisplayDate(lot.date, '-')}</td><td>{lot.fabric || '-'}</td>
                   <td>{lot.pattern || '-'}</td><td>{lot.brand || '-'}</td>
                   <td style={{ textAlign: 'center' }}>
                     <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>

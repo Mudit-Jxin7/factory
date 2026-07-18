@@ -116,7 +116,7 @@ describe('exportAnalyticsToExcel', () => {
   it('filename contains date range when both dates are provided', () => {
     exportAnalyticsToExcel(baseParams)
 
-    expect(appendedLink?.getAttribute('download')).toContain('2024-01-01_to_2024-01-31')
+    expect(appendedLink?.getAttribute('download')).toContain('01-Jan-2024_to_31-Jan-2024')
   })
 
   it('filename contains worker name when a worker is selected', () => {

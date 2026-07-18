@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
+import { formatDisplayDate } from '@/lib/dateFormat'
 
 interface AnalyticsRow {
   worker_id: number
@@ -34,7 +35,7 @@ interface WorkerGroup {
 const TABLE_HEAD = [['Section', 'Date', 'Rate', 'Lot Number', 'Layer', 'Total Pieces', 'Total Amount']]
 
 const getFilename = (base: string, { fromDate, toDate, selectedWorker, selectedRole, workers }: Pick<ExportParams, 'fromDate' | 'toDate' | 'selectedWorker' | 'selectedRole' | 'workers'>) => {
-  const dateRange = fromDate && toDate ? `_${fromDate}_to_${toDate}` : ''
+  const dateRange = fromDate && toDate ? `_${formatDisplayDate(fromDate)}_to_${formatDisplayDate(toDate)}` : ''
   const workerSuffix = selectedWorker ? `_${workers.find((w: any) => w._id === selectedWorker)?.worker_full_name || 'worker'}` : ''
   const roleSuffix = selectedRole ? `_${selectedRole}` : ''
   return `${base}${dateRange}${workerSuffix}${roleSuffix}`
@@ -64,7 +65,7 @@ const groupRowsByWorker = (filteredData: AnalyticsRow[]): WorkerGroup[] => {
 const buildWorkerTableBody = (group: WorkerGroup) => {
   const body: (string | number)[][] = group.rows.map((row) => [
     row.section,
-    row.date,
+    formatDisplayDate(row.date),
     row.rate.toFixed(2),
     row.lotNumber,
     row.layer,
@@ -87,8 +88,8 @@ export const exportAnalyticsToPDF = (params: ExportParams) => {
 
   pdf.setFontSize(9); pdf.setFont('helvetica', 'normal')
   const filterParts: string[] = []
-  if (fromDate) filterParts.push(`From: ${fromDate}`)
-  if (toDate) filterParts.push(`To: ${toDate}`)
+  if (fromDate) filterParts.push(`From: ${formatDisplayDate(fromDate)}`)
+  if (toDate) filterParts.push(`To: ${formatDisplayDate(toDate)}`)
   const selectedWorkerObj = selectedWorker ? workers.find((w: any) => w._id === selectedWorker) : null
   if (selectedWorkerObj) filterParts.push(`Worker: ${selectedWorkerObj.worker_full_name}`)
   if (selectedRole) filterParts.push(`Role: ${selectedRole}`)
@@ -154,8 +155,8 @@ export const exportAnalyticsToExcel = (params: ExportParams) => {
   const selectedWorkerName = selectedWorkerObj?.worker_full_name || 'All Workers'
 
   const filterRows: string[][] = [
-    ['From Date', fromDate || 'All'],
-    ['To Date', toDate || 'All'],
+    ['From Date', fromDate ? formatDisplayDate(fromDate) : 'All'],
+    ['To Date', toDate ? formatDisplayDate(toDate) : 'All'],
     ['Worker', selectedWorkerName],
     ['Role', selectedRole || 'All'],
     [],
@@ -171,7 +172,7 @@ export const exportAnalyticsToExcel = (params: ExportParams) => {
     group.rows.forEach((row) => {
       dataRows.push([
         row.section,
-        row.date,
+        formatDisplayDate(row.date),
         row.rate.toFixed(2),
         row.lotNumber,
         String(row.layer),

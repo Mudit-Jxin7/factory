@@ -2,6 +2,7 @@ import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { Ratios, AdditionalInfo, JobCardProductionRow, Worker } from '@/lib/types'
 import { buildAdditionalInfoPdfBody, getAdditionalInfoExportRows } from '@/lib/additionalInfoExport'
+import { formatDisplayDate } from '@/lib/dateFormat'
 import { WORKER_PAIRS, WORKER_META } from './constants'
 
 const getWorkerName = (workerId: string, workers: Worker[]) => {
@@ -21,6 +22,7 @@ export const exportJobCardToPDF = (params: {
   workers: Worker[]
 }) => {
   const { lotNumber, brand, date, ratios, productionData, flyWidth, additionalInfo, workers } = params
+  const displayDate = formatDisplayDate(date)
   const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
   const pageW = pdf.internal.pageSize.getWidth()
   const margin = 10
@@ -30,7 +32,7 @@ export const exportJobCardToPDF = (params: {
   pdf.setFontSize(9); pdf.setFont('helvetica', 'normal')
   pdf.text(`Lot Number: ${lotNumber}`, margin, 22)
   pdf.text(`Brand: ${brand}`, margin + 65, 22)
-  pdf.text(`Date: ${date}`, margin + 130, 22)
+  pdf.text(`Date: ${displayDate}`, margin + 130, 22)
 
   pdf.setFontSize(11); pdf.setFont('helvetica', 'bold')
   pdf.text('Ratios', margin, 30)
@@ -93,9 +95,9 @@ export const exportJobCardToPDF = (params: {
       ])
       prodBody.push([
         getWorkerName((row as any)[m1.workerKey] ?? '', workers) || '',
-        (row as any)[m1.dateKey] || '', (row as any)[m1.rateKey] || '',
+        formatDisplayDate((row as any)[m1.dateKey] || ''), (row as any)[m1.rateKey] || '',
         m2 ? getWorkerName((row as any)[m2.workerKey] ?? '', workers) || '' : '',
-        m2 ? (row as any)[m2.dateKey] || '' : '',
+        m2 ? formatDisplayDate((row as any)[m2.dateKey] || '') : '',
         m2 ? (row as any)[m2.rateKey] || '' : '',
       ])
       if (pIdx < WORKER_PAIRS.length - 1) { prodBody.push(blankRow); prodBody.push(blankRow) }
@@ -126,5 +128,5 @@ export const exportJobCardToPDF = (params: {
     })
   }
 
-  pdf.save(`JobCard_${lotNumber || 'Production'}_${date || 'Report'}.pdf`)
+  pdf.save(`JobCard_${lotNumber || 'Production'}_${displayDate || 'Report'}.pdf`)
 }

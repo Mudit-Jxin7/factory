@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { buildAdditionalInfoPdfBody, getAdditionalInfoExportRows } from '@/lib/additionalInfoExport'
+import { formatDisplayDate, formatDisplayDateTime } from '@/lib/dateFormat'
 
 export const exportLotViewToPDF = (lot: any) => {
   const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
@@ -15,9 +16,9 @@ export const exportLotViewToPDF = (lot: any) => {
   autoTable(pdf, {
     startY: 26, margin: { left: margin, right: margin },
     body: [
-      ['Lot Number', lot.lotNumber || 'N/A', 'Date', lot.date || 'N/A'],
+      ['Lot Number', lot.lotNumber || 'N/A', 'Date', formatDisplayDate(lot.date, 'N/A')],
       ['Fabric', lot.fabric || 'N/A', 'Pattern', lot.pattern || 'N/A'],
-      ['Brand', lot.brand || 'N/A', 'Created At', lot.createdAt ? new Date(lot.createdAt).toLocaleString() : 'N/A'],
+      ['Brand', lot.brand || 'N/A', 'Created At', lot.createdAt ? formatDisplayDateTime(lot.createdAt, 'N/A') : 'N/A'],
     ],
     styles: { fontSize: 9, cellPadding: 2 },
     columnStyles: { 0: { fontStyle: 'bold', cellWidth: 35 }, 2: { fontStyle: 'bold', cellWidth: 35 } },
@@ -92,14 +93,15 @@ export const exportLotViewToPDF = (lot: any) => {
     })
   }
 
-  pdf.save(`Lot_${lot.lotNumber || 'Production'}_${lot.date || 'Report'}.pdf`)
+  pdf.save(`Lot_${lot.lotNumber || 'Production'}_${formatDisplayDate(lot.date) || 'Report'}.pdf`)
 }
 
 export const exportLotViewToExcel = (lot: any) => {
+  const displayDate = formatDisplayDate(lot.date)
   const infoRows = [
-    ['Lot Number', lot.lotNumber || ''], ['Date', lot.date || ''],
+    ['Lot Number', lot.lotNumber || ''], ['Date', displayDate],
     ['Fabric', lot.fabric || ''], ['Pattern', lot.pattern || ''],
-    ['Brand', lot.brand || ''], ['Created At', lot.createdAt ? new Date(lot.createdAt).toLocaleString() : ''],
+    ['Brand', lot.brand || ''], ['Created At', lot.createdAt ? formatDisplayDateTime(lot.createdAt) : ''],
     [], ['Ratios'],
     Object.keys(lot.ratios || {}).map((k: string) => k.toUpperCase()),
     Object.values(lot.ratios || {}).map((v: any) => String(v)), [],
@@ -124,7 +126,7 @@ export const exportLotViewToExcel = (lot: any) => {
   const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' })
   const link = document.createElement('a')
   link.setAttribute('href', URL.createObjectURL(blob))
-  link.setAttribute('download', `Lot_${lot.lotNumber || 'Production'}_${lot.date || 'Report'}.csv`)
+  link.setAttribute('download', `Lot_${lot.lotNumber || 'Production'}_${displayDate || 'Report'}.csv`)
   link.style.visibility = 'hidden'
   document.body.appendChild(link)
   link.click()

@@ -1,5 +1,7 @@
 'use client'
 
+import { formatDisplayDate, formatDisplayDateTime } from '@/lib/dateFormat'
+
 interface LotInfoSectionProps {
   lot: any
 }
@@ -7,11 +9,11 @@ interface LotInfoSectionProps {
 export default function LotInfoSection({ lot }: LotInfoSectionProps) {
   const fields = [
     { label: 'Lot Number', value: lot.lotNumber },
-    { label: 'Date', value: lot.date },
+    { label: 'Date', value: formatDisplayDate(lot.date, 'N/A') },
     { label: 'Fabric', value: lot.fabric },
     { label: 'Pattern', value: lot.pattern },
     { label: 'Brand', value: lot.brand },
-    ...(lot.createdAt ? [{ label: 'Created At', value: new Date(lot.createdAt).toLocaleString() }] : []),
+    ...(lot.createdAt ? [{ label: 'Created At', value: formatDisplayDateTime(lot.createdAt, 'N/A') }] : []),
   ]
 
   return (

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Pagination from '@/components/Pagination'
+import { formatDisplayDate } from '@/lib/dateFormat'
 
 const PAGE_SIZE = 30
 
@@ -78,7 +79,7 @@ export default function AnalyticsTable({ loading, filteredData, allCount, totals
                     <td style={{ fontWeight: '600', color: '#1a1a1a' }}>{row.worker_id}</td>
                     <td>{row.worker_full_name}</td>
                     <td>{row.section}</td>
-                    <td>{row.date}</td>
+                    <td>{formatDisplayDate(row.date)}</td>
                     <td>{row.rate.toFixed(2)}</td>
                     <td style={{ fontWeight: '600', color: '#1a1a1a' }}>{row.lotNumber}</td>
                     <td>{row.layer}</td>
