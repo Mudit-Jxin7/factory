@@ -103,11 +103,16 @@ export default function WorkerAnalyticsContent() {
 
   const handleDateRangePreset = (days: number) => {
     const to = new Date()
-    if (days === 7) to.setDate(to.getDate() - 1)
     const from = new Date(to)
     from.setDate(from.getDate() - (days - 1))
-    setFromDate(from.toISOString().split('T')[0])
-    setToDate(to.toISOString().split('T')[0])
+    const formatLocal = (d: Date) => {
+      const y = d.getFullYear()
+      const m = String(d.getMonth() + 1).padStart(2, '0')
+      const day = String(d.getDate()).padStart(2, '0')
+      return `${y}-${m}-${day}`
+    }
+    setFromDate(formatLocal(from))
+    setToDate(formatLocal(to))
   }
 
   const handleClearFilters = () => {
