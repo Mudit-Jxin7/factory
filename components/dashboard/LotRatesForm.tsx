@@ -1,6 +1,7 @@
 'use client'
 
 import { LotWorkerRates } from '@/lib/types'
+import { formatIndianAmount } from '@/lib/indianNumberFormat'
 
 const RATE_FIELDS: { key: keyof LotWorkerRates; label: string }[] = [
   { key: 'front', label: 'Front' },
@@ -31,17 +32,24 @@ export default function LotRatesForm({
         {RATE_FIELDS.map(({ key, label }) => (
           <div key={key} className="form-group">
             <label>{label} Rate *</label>
-            <input
-              type="number"
-              value={workerRates[key]}
-              onChange={(e) => onRateChange(key, e.target.value)}
-              disabled={!isEditMode}
-              placeholder="0.00"
-              step="0.01"
-              min="0"
-              required={isEditMode}
-              style={!isEditMode ? { background: '#f8f9fa', cursor: 'not-allowed' } : undefined}
-            />
+            {isEditMode ? (
+              <input
+                type="number"
+                value={workerRates[key]}
+                onChange={(e) => onRateChange(key, e.target.value)}
+                placeholder="0.00"
+                step="0.01"
+                min="0"
+                required
+              />
+            ) : (
+              <input
+                type="text"
+                value={formatIndianAmount(workerRates[key], '0.00')}
+                disabled
+                style={{ background: '#f8f9fa', cursor: 'not-allowed' }}
+              />
+            )}
           </div>
         ))}
       </div>

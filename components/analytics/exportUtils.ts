@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { formatDisplayDate } from '@/lib/dateFormat'
+import { formatIndianAmount } from '@/lib/indianNumberFormat'
 
 interface AnalyticsRow {
   worker_id: number
@@ -66,13 +67,13 @@ const buildWorkerTableBody = (group: WorkerGroup) => {
   const body: (string | number)[][] = group.rows.map((row) => [
     row.section,
     formatDisplayDate(row.date),
-    row.rate.toFixed(2),
+    formatIndianAmount(row.rate),
     row.lotNumber,
     row.layer,
     row.pieces.toFixed(2),
-    row.total_amount.toFixed(2),
+    formatIndianAmount(row.total_amount),
   ])
-  body.push(['', '', '', '', 'TOTAL', group.totalPieces.toFixed(2), group.totalAmount.toFixed(2)])
+  body.push(['', '', '', '', 'TOTAL', group.totalPieces.toFixed(2), formatIndianAmount(group.totalAmount)])
   return body
 }
 
@@ -141,7 +142,7 @@ export const exportAnalyticsToPDF = (params: ExportParams) => {
   }
   pdf.setFontSize(10); pdf.setFont('helvetica', 'bold')
   pdf.text(
-    `Grand Total — Pieces: ${totals.totalPieces.toFixed(2)}   |   Amount: ${totals.totalAmount.toFixed(2)}`,
+    `Grand Total — Pieces: ${totals.totalPieces.toFixed(2)}   |   Amount: ${formatIndianAmount(totals.totalAmount)}`,
     margin,
     cursorY + 4,
   )
@@ -173,18 +174,18 @@ export const exportAnalyticsToExcel = (params: ExportParams) => {
       dataRows.push([
         row.section,
         formatDisplayDate(row.date),
-        row.rate.toFixed(2),
+        formatIndianAmount(row.rate),
         row.lotNumber,
         String(row.layer),
         row.pieces.toFixed(2),
-        row.total_amount.toFixed(2),
+        formatIndianAmount(row.total_amount),
       ])
     })
-    dataRows.push(['', '', '', '', 'TOTAL', group.totalPieces.toFixed(2), group.totalAmount.toFixed(2)])
+    dataRows.push(['', '', '', '', 'TOTAL', group.totalPieces.toFixed(2), formatIndianAmount(group.totalAmount)])
   })
 
   dataRows.push([])
-  dataRows.push(['', '', '', '', 'GRAND TOTAL', totals.totalPieces.toFixed(2), totals.totalAmount.toFixed(2)])
+  dataRows.push(['', '', '', '', 'GRAND TOTAL', totals.totalPieces.toFixed(2), formatIndianAmount(totals.totalAmount)])
 
   const csvContent = [...filterRows, ...dataRows]
     .map((row) => row.map((cell) => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(','))

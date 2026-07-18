@@ -5,6 +5,7 @@ import { getColorForShade } from '@/lib/colorUtils'
 import { JobCardProductionRow, LotWorkerRates, Worker } from '@/lib/types'
 import { getLotRateForField } from '@/lib/lotWorkerRates'
 import { formatDisplayDate } from '@/lib/dateFormat'
+import { formatIndianAmount } from '@/lib/indianNumberFormat'
 import { WorkerField } from './constants'
 
 interface JobCardProductionTableProps {
@@ -73,7 +74,7 @@ export default function JobCardProductionTable({
   const getColumnLabel = (field: WorkerField) => {
     const base = WORKER_COL_LABELS[field]
     const rate = getLotRateForField(workerRates, field)
-    return rate ? `${base} (Rs - ${rate})` : base
+    return rate ? `${base} (Rs - ${formatIndianAmount(rate)})` : base
   }
 
   const formatTotalPieces = (row: JobCardProductionRow) => {
@@ -91,7 +92,7 @@ export default function JobCardProductionTable({
     const rate = String(row[rateKey] ?? '')
     const date = String(row[dateKey] ?? '')
     const parts = [name]
-    if (!hideRate && rate) parts.push(rate)
+    if (!hideRate && rate) parts.push(formatIndianAmount(rate))
     if (date) parts.push(formatDisplayDate(date))
     return parts.join(' - ')
   }

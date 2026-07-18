@@ -1,6 +1,7 @@
 import { Ratios, AdditionalInfo, JobCardProductionRow, Worker } from '@/lib/types'
 import { getAdditionalInfoExportRows } from '@/lib/additionalInfoExport'
 import { formatDisplayDate } from '@/lib/dateFormat'
+import { formatIndianAmount } from '@/lib/indianNumberFormat'
 import { WORKER_PAIRS, WORKER_META } from './constants'
 
 const getWorkerName = (workerId: string, workers: Worker[]) => {
@@ -51,10 +52,10 @@ export const exportJobCardToExcel = (params: {
       ])
       prodRows.push([
         getWorkerName((row as any)[m1.workerKey] ?? '', workers) || '',
-        formatDisplayDate((row as any)[m1.dateKey] || ''), (row as any)[m1.rateKey] || '',
+        formatDisplayDate((row as any)[m1.dateKey] || ''), formatIndianAmount((row as any)[m1.rateKey] || ''),
         m2 ? getWorkerName((row as any)[m2.workerKey] ?? '', workers) || '' : '',
         m2 ? formatDisplayDate((row as any)[m2.dateKey] || '') : '',
-        m2 ? (row as any)[m2.rateKey] || '' : '',
+        m2 ? formatIndianAmount((row as any)[m2.rateKey] || '') : '',
       ])
       if (pIdx < WORKER_PAIRS.length - 1) prodRows.push([])
     })

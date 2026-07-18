@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Pagination from '@/components/Pagination'
 import { formatDisplayDate } from '@/lib/dateFormat'
+import { formatIndianAmount } from '@/lib/indianNumberFormat'
 
 const PAGE_SIZE = 30
 
@@ -80,11 +81,11 @@ export default function AnalyticsTable({ loading, filteredData, allCount, totals
                     <td>{row.worker_full_name}</td>
                     <td>{row.section}</td>
                     <td>{formatDisplayDate(row.date)}</td>
-                    <td>{row.rate.toFixed(2)}</td>
+                    <td>{formatIndianAmount(row.rate)}</td>
                     <td style={{ fontWeight: '600', color: '#1a1a1a' }}>{row.lotNumber}</td>
                     <td>{row.layer}</td>
                     <td>{row.pieces.toFixed(2)}</td>
-                    <td style={{ fontWeight: '600', color: '#1a1a1a' }}>{row.total_amount.toFixed(2)}</td>
+                    <td style={{ fontWeight: '600', color: '#1a1a1a' }}>{formatIndianAmount(row.total_amount)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -93,7 +94,7 @@ export default function AnalyticsTable({ loading, filteredData, allCount, totals
           <Pagination page={safePage} totalPages={totalPages} totalItems={filteredData.length} pageSize={PAGE_SIZE} onPageChange={setPage} />
           <div style={{ marginTop: '16px', padding: '12px 16px', background: '#fff9e6', borderRadius: '8px', display: 'flex', gap: '32px', fontWeight: 600, fontSize: '15px' }}>
             <span>Total Pieces: {totals.totalPieces.toFixed(2)}</span>
-            <span>Total Amount: {totals.totalAmount.toFixed(2)}</span>
+            <span>Total Amount: {formatIndianAmount(totals.totalAmount)}</span>
           </div>
         </>
       )}
