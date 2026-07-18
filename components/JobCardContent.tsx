@@ -64,8 +64,8 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
   const [lockedWorkerCells, setLockedWorkerCells] = useState<Set<string>>(() => new Set())
 
   const canEdit = isWorker
-    ? canWorkerEditJobCard(status, productionData)
-    : canAdminEditJobCard(status, productionData)
+    ? canWorkerEditJobCard(status)
+    : canAdminEditJobCard(status)
   const effectiveEditMode = isEditMode && canEdit
   const workerFieldsComplete = useMemo(
     () => hasAllRequiredWorkerFields(productionData),
@@ -189,8 +189,8 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
       toast.showToast(options?.successMessage || 'Job card updated successfully!', 'success')
 
       const stillEditable = isWorker
-        ? canWorkerEditJobCard(nextStatus, productionToSave)
-        : canAdminEditJobCard(nextStatus, productionToSave)
+        ? canWorkerEditJobCard(nextStatus)
+        : canAdminEditJobCard(nextStatus)
       if (!stillEditable) {
         router.push(`${jobCardBasePath}/${encodeURIComponent(lotNumber)}`)
       } else {

@@ -68,23 +68,17 @@ export const getJobCardDisplayStatus = (
   return deriveJobCardStatus(jobCard.productionData)
 }
 
-/** True when the card is complete (stored or all required worker fields filled). */
-export const isJobCardComplete = (
-  status?: string,
-  productionData?: JobCardProductionRow[],
-): boolean => {
-  if (normalizeJobCardStatus(status) === 'complete') return true
-  return deriveJobCardStatus(productionData) === 'complete'
-}
+/** True when the stored status is complete (or legacy pending_approval). */
+export const isJobCardComplete = (status?: string): boolean =>
+  normalizeJobCardStatus(status) === 'complete'
 
-/** Workers can edit until the card is complete. */
-export const canWorkerEditJobCard = (
-  status?: string,
-  productionData?: JobCardProductionRow[],
-) => !isJobCardComplete(status, productionData)
+/**
+ * Workers can edit until the card is saved as complete.
+ * Access uses stored status only — filling the last field in the UI must not lock them out before Save.
+ */
+export const canWorkerEditJobCard = (status?: string) =>
+  !isJobCardComplete(status)
 
-/** Admins can edit all columns (including ones workers locked) once complete. */
-export const canAdminEditJobCard = (
-  status?: string,
-  productionData?: JobCardProductionRow[],
-) => isJobCardComplete(status, productionData)
+/** Admins can edit all columns once the card is saved as complete. */
+export const canAdminEditJobCard = (status?: string) =>
+  isJobCardComplete(status)
