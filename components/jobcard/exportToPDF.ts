@@ -74,7 +74,8 @@ export const exportJobCardToPDF = (params: {
     ])
     prodBody.push([
       { content: row.serialNumber, styles: infoVal }, { content: row.layer, styles: infoVal },
-      { content: (Number(row.pieces) || 0) + (Number(row.tukda) || 0), styles: infoVal },
+      { content: (Number(row.pieces) || 0) + (Number(row.tukda) || 0)
+        + ` (${Number(row.pieces) || 0} + ${Number(row.tukda) || 0})`, styles: infoVal },
       { content: row.color || '', styles: infoVal },
       { content: row.zip_code || '', styles: infoVal }, { content: row.thread_code || '', styles: infoVal },
     ])

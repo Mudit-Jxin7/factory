@@ -45,6 +45,12 @@ export default function JobCardProductionTable({
     return rate ? `${base} (Rs - ${rate})` : base
   }
 
+  const formatTotalPieces = (row: JobCardProductionRow) => {
+    const pieces = Number(row.pieces) || 0
+    const tukda = Number(row.tukda) || 0
+    return `${pieces + tukda} (${pieces} + ${tukda})`
+  }
+
   const getWorkerCellLabel = (row: JobCardProductionRow, field: WorkerField) => {
     const workerKey = `${field}Worker` as keyof JobCardProductionRow
     const rateKey = `${field}Rate` as keyof JobCardProductionRow
@@ -89,7 +95,7 @@ export default function JobCardProductionTable({
                 <td style={{ width: '220px', minWidth: '220px', textAlign: 'center' }}>
                   <input
                     type="text"
-                    value={(Number(row.pieces) || 0) + (Number(row.tukda) || 0)}
+                    value={formatTotalPieces(row)}
                     disabled
                     className="production-table input"
                     style={{ width: '100%', background: '#f8f9fa', cursor: 'not-allowed', textAlign: 'center' }}
