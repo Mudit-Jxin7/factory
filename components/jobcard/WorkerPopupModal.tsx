@@ -2,6 +2,7 @@
 
 import { WorkerField, FIELD_LABELS, filterWorkersForField, getWorkerRole } from './constants'
 import { Worker } from '@/lib/types'
+import { todayISODateIST } from '@/lib/dateFormat'
 
 interface WorkerPopupModalProps {
   field: WorkerField
@@ -26,7 +27,7 @@ export default function WorkerPopupModal({
   field, workers, popupWorker, popupDate, popupRate,
   onWorkerChange, onDateChange, onRateChange, onSave, onCancel, hideRate = false,
 }: WorkerPopupModalProps) {
-  const today = new Date().toISOString().split('T')[0]
+  const today = todayISODateIST()
   const eligibleWorkers = filterWorkersForField(workers, field, popupWorker)
 
   const handleWorkerChange = (value: string) => {

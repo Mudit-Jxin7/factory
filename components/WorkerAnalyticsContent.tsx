@@ -12,6 +12,7 @@ import AnalyticsFilters from './analytics/AnalyticsFilters'
 import AnalyticsTable from './analytics/AnalyticsTable'
 import { exportAnalyticsToPDF, exportAnalyticsToExcel } from './analytics/exportUtils'
 import { aggregateAnalyticsRows } from '@/lib/analyticsAggregate'
+import { todayISODateIST, toISODateIST } from '@/lib/dateFormat'
 import './dashboard.css'
 
 type SectionType = 'Front' | 'Back' | 'Zip' | 'Astar' | 'Belt'
@@ -109,17 +110,11 @@ export default function WorkerAnalyticsContent() {
   }
 
   const handleDateRangePreset = (days: number) => {
-    const to = new Date()
-    const from = new Date(to)
-    from.setDate(from.getDate() - (days - 1))
-    const formatLocal = (d: Date) => {
-      const y = d.getFullYear()
-      const m = String(d.getMonth() + 1).padStart(2, '0')
-      const day = String(d.getDate()).padStart(2, '0')
-      return `${y}-${m}-${day}`
-    }
-    setFromDate(formatLocal(from))
-    setToDate(formatLocal(to))
+    const to = todayISODateIST()
+    const toMs = Date.parse(`${to}T12:00:00+05:30`)
+    const fromMs = toMs - (days - 1) * 24 * 60 * 60 * 1000
+    setFromDate(toISODateIST(new Date(fromMs)))
+    setToDate(to)
   }
 
   const handleClearFilters = () => {

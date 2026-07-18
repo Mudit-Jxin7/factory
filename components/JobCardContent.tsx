@@ -10,7 +10,7 @@ import {
 import { canAdminEditJobCard, canWorkerEditJobCard, deriveJobCardStatus, normalizeJobCardStatus } from '@/lib/jobCardStatus'
 import { hasAllRequiredWorkerFields, buildLockedWorkerCellKeys, isWorkerCellLocked } from '@/lib/jobCardWorkerCompletion'
 import { applyLotRatesToProduction, getLotRateForField, normalizeLotWorkerRates } from '@/lib/lotWorkerRates'
-import { formatDisplayDate } from '@/lib/dateFormat'
+import { formatDisplayDate, todayISODateIST } from '@/lib/dateFormat'
 import JobCardStatusBadge from './jobcards/JobCardStatusBadge'
 import NavigationBar from './NavigationBar'
 import WorkerNavigationBar from './WorkerNavigationBar'
@@ -47,7 +47,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
 
   const [status, setStatus] = useState<JobCardStatus>('incomplete')
   const [lotNumber, setLotNumber] = useState(decodedLotNumber)
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0])
+  const [date, setDate] = useState(todayISODateIST())
   const [brand, setBrand] = useState('')
   const [workers, setWorkers] = useState<Worker[]>([])
   const [ratios, setRatios] = useState<Ratios>(DEFAULT_RATIOS)
@@ -142,7 +142,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
 
   useEffect(() => { fetchJobCard() }, [fetchJobCard])
 
-  const today = new Date().toISOString().split('T')[0]
+  const today = todayISODateIST()
 
   const openWorkerPopup = (rowIndex: number, field: WorkerField) => {
     if (isWorker && isWorkerCellLocked(lockedWorkerCells, rowIndex, field)) {

@@ -9,6 +9,7 @@ vi.mock('@/lib/api', () => ({
 }))
 
 import { createJobCardFromLot } from './jobCardUtils'
+import { todayISODateIST } from './dateFormat'
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -51,7 +52,7 @@ describe('createJobCardFromLot', () => {
   })
 
   it('falls back to today\'s date when lot has no date', async () => {
-    const today = new Date().toISOString().split('T')[0]
+    const today = todayISODateIST()
 
     await createJobCardFromLot({ lotNumber: 'L003' })
 

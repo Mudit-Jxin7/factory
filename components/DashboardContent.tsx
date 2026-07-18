@@ -17,6 +17,7 @@ import JobCardAdditionalInfo from './jobcard/JobCardAdditionalInfo'
 import { isAdditionalInfoEmpty, normalizeAdditionalInfo } from '@/lib/additionalInfoExport'
 import { exportLotToPDF, exportLotToExcel } from './dashboard/exportUtils'
 import { useSaveLot } from './dashboard/useSaveLot'
+import { todayISODateIST } from '@/lib/dateFormat'
 import './dashboard.css'
 
 const BLANK_ROW = { serialNumber: 1, meter: '', layer: '1', pieces: 0, color: '', shade: '', zip_code: '', thread_code: '', tukda: '' }
@@ -36,7 +37,7 @@ export default function DashboardContent() {
   const [patterns, setPatterns] = useState<any[]>([])
   const [brands, setBrands] = useState<any[]>([])
   const [lotNumber, setLotNumber] = useState('')
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0])
+  const [date, setDate] = useState(todayISODateIST())
   const [fabric, setFabric] = useState('')
   const [pattern, setPattern] = useState('')
   const [brand, setBrand] = useState('')
@@ -68,7 +69,7 @@ export default function DashboardContent() {
       if (result.success && result.lot) {
         const lot = result.lot
         setLotNumber(lot.lotNumber || '')
-        setDate(lot.date || new Date().toISOString().split('T')[0])
+        setDate(lot.date || todayISODateIST())
         setFabric(lot.fabric || ''); setPattern(lot.pattern || ''); setBrand(lot.brand || '')
         setRatios(lot.ratios || DEFAULT_RATIOS)
         setProductionData(lot.productionData?.length > 0

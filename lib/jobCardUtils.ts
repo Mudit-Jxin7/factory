@@ -2,6 +2,7 @@ import { jobCardsAPI } from './api'
 import { DEFAULT_LOT_WORKER_RATES } from './types'
 import { normalizeLotWorkerRates } from './lotWorkerRates'
 import { normalizeAdditionalInfo } from './additionalInfoExport'
+import { todayISODateIST } from './dateFormat'
 
 export const createJobCardFromLot = async (lotData: any) => {
   try {
@@ -10,7 +11,7 @@ export const createJobCardFromLot = async (lotData: any) => {
     const jobCardData = {
       lotId: lotData._id ? String(lotData._id) : undefined,
       lotNumber: lotData.lotNumber,
-      date: lotData.date || new Date().toISOString().split('T')[0],
+      date: lotData.date || todayISODateIST(),
       brand: lotData.brand || '',
       worker: '',
       rate: '',
