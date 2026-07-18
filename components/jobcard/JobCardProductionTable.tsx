@@ -67,8 +67,8 @@ export default function JobCardProductionTable({
           <thead>
             <tr>
               <th style={{ width: '48px', minWidth: '48px', maxWidth: '48px' }}>S.No</th>
-              <th style={{ width: '56px', minWidth: '56px', maxWidth: '56px' }}>Layer</th>
-              <th style={{ width: '64px', minWidth: '64px', maxWidth: '64px' }}>Pieces</th>
+              <th style={{ width: '220px', minWidth: '220px' }}>Layer</th>
+              <th style={{ width: '220px', minWidth: '220px' }}>Pieces</th>
               <th style={{ width: '72px', minWidth: '72px', maxWidth: '90px' }}>Color</th>
               <th style={{ width: '48px', minWidth: '48px', maxWidth: '48px' }}>Shade</th>
               {WORKER_FIELDS.map((f) => (
@@ -82,13 +82,13 @@ export default function JobCardProductionTable({
             {productionData.map((row, index) => (
               <tr key={index}>
                 <td style={{ textAlign: 'center', width: '48px', maxWidth: '48px' }}>{row.serialNumber}</td>
-                <td style={{ width: '56px', maxWidth: '56px', padding: '6px 4px' }}>
+                <td style={{ width: '220px', minWidth: '220px' }}>
                   <input type="text" value={row.layer} disabled className="production-table input"
-                    style={{ width: '100%', maxWidth: '48px', padding: '6px 4px', background: '#f8f9fa', cursor: 'not-allowed', textAlign: 'center' }} />
+                    style={{ width: '100%', background: '#f8f9fa', cursor: 'not-allowed', textAlign: 'center' }} />
                 </td>
-                <td style={{ width: '64px', maxWidth: '64px', padding: '6px 4px' }}>
+                <td style={{ width: '220px', minWidth: '220px' }}>
                   <input type="number" value={row.pieces} disabled className="production-table input"
-                    style={{ width: '100%', maxWidth: '56px', padding: '6px 4px', background: '#f8f9fa', cursor: 'not-allowed', textAlign: 'center' }} />
+                    style={{ width: '100%', background: '#f8f9fa', cursor: 'not-allowed', textAlign: 'center' }} />
                 </td>
                 <td style={{ width: '72px', maxWidth: '90px', fontSize: '14px' }}>
                   <span style={{ color: '#1a1a1a' }}>{row.color || '—'}</span>
