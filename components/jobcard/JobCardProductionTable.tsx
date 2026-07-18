@@ -66,36 +66,41 @@ export default function JobCardProductionTable({
         <table className="production-table" style={{ minWidth: '1400px' }}>
           <thead>
             <tr>
-              <th style={{ width: '40px' }}>S.No</th>
-              <th>Layer</th><th>Pieces</th><th>Color</th><th>Shade</th>
+              <th style={{ width: '48px', minWidth: '48px', maxWidth: '48px' }}>S.No</th>
+              <th style={{ width: '56px', minWidth: '56px', maxWidth: '56px' }}>Layer</th>
+              <th style={{ width: '64px', minWidth: '64px', maxWidth: '64px' }}>Pieces</th>
+              <th style={{ width: '72px', minWidth: '72px', maxWidth: '90px' }}>Color</th>
+              <th style={{ width: '48px', minWidth: '48px', maxWidth: '48px' }}>Shade</th>
               {WORKER_FIELDS.map((f) => (
                 <th key={f} style={{ width: '220px', minWidth: '220px' }}>{getColumnLabel(f)}</th>
               ))}
-              <th style={{ width: '100px' }}>Zip Code</th>
-              <th style={{ width: '100px' }}>Thread Code</th>
+              <th style={{ width: '80px', minWidth: '80px' }}>Zip Code</th>
+              <th style={{ width: '80px', minWidth: '80px' }}>Thread Code</th>
             </tr>
           </thead>
           <tbody>
             {productionData.map((row, index) => (
               <tr key={index}>
-                <td style={{ textAlign: 'center' }}>{row.serialNumber}</td>
-                <td>
+                <td style={{ textAlign: 'center', width: '48px', maxWidth: '48px' }}>{row.serialNumber}</td>
+                <td style={{ width: '56px', maxWidth: '56px', padding: '6px 4px' }}>
                   <input type="text" value={row.layer} disabled className="production-table input"
-                    style={{ width: '60px', background: '#f8f9fa', cursor: 'not-allowed' }} />
+                    style={{ width: '100%', maxWidth: '48px', padding: '6px 4px', background: '#f8f9fa', cursor: 'not-allowed', textAlign: 'center' }} />
                 </td>
-                <td>
+                <td style={{ width: '64px', maxWidth: '64px', padding: '6px 4px' }}>
                   <input type="number" value={row.pieces} disabled className="production-table input"
-                    style={{ width: '80px', background: '#f8f9fa', cursor: 'not-allowed' }} />
+                    style={{ width: '100%', maxWidth: '56px', padding: '6px 4px', background: '#f8f9fa', cursor: 'not-allowed', textAlign: 'center' }} />
                 </td>
-                <td><span style={{ fontSize: '16px', color: '#1a1a1a' }}>{row.color || '—'}</span></td>
-                <td>
-                  <div style={{ display: 'flex', alignItems: 'center', minHeight: '36px' }}>
+                <td style={{ width: '72px', maxWidth: '90px', fontSize: '14px' }}>
+                  <span style={{ color: '#1a1a1a' }}>{row.color || '—'}</span>
+                </td>
+                <td style={{ width: '48px', maxWidth: '48px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '36px' }}>
                     {row.color ? (
                       <div title={row.color} style={{
                         width: '24px', height: '24px', borderRadius: '4px',
                         backgroundColor: getColorForShade(row.color), border: '1px solid #ccc',
                       }} />
-                    ) : <span style={{ fontSize: '16px', color: '#6c757d' }}>—</span>}
+                    ) : <span style={{ fontSize: '14px', color: '#6c757d' }}>—</span>}
                   </div>
                 </td>
                 {WORKER_FIELDS.map((field) => {
