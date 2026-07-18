@@ -69,30 +69,33 @@ export default function JobCardProductionTable({
     <div className="card">
       <div className="card-header"><h2>Production Data</h2></div>
       <div className="table-container" style={{ overflowX: 'auto' }}>
-        <table className="production-table" style={{ minWidth: '1400px' }}>
+        <table
+          className="production-table"
+          style={{ width: '100%', minWidth: '2300px', tableLayout: 'fixed' }}
+        >
           <thead>
             <tr>
-              <th style={{ width: '48px', minWidth: '48px', maxWidth: '48px' }}>S.No</th>
-              <th style={{ width: '220px', minWidth: '220px' }}>Layer</th>
-              <th style={{ width: '220px', minWidth: '220px' }}>Total Pieces</th>
-              <th style={{ width: '72px', minWidth: '72px', maxWidth: '90px' }}>Color</th>
-              <th style={{ width: '48px', minWidth: '48px', maxWidth: '48px' }}>Shade</th>
+              <th style={{ width: '56px' }}>S.No</th>
+              <th style={{ width: '100px' }}>Layer</th>
+              <th style={{ width: '180px' }}>Total Pieces</th>
+              <th style={{ width: '100px' }}>Color</th>
+              <th style={{ width: '72px' }}>Shade</th>
               {WORKER_FIELDS.map((f) => (
-                <th key={f} style={{ width: '220px', minWidth: '220px' }}>{getColumnLabel(f)}</th>
+                <th key={f} style={{ width: '220px' }}>{getColumnLabel(f)}</th>
               ))}
-              <th style={{ width: '80px', minWidth: '80px' }}>Zip Code</th>
-              <th style={{ width: '80px', minWidth: '80px' }}>Thread Code</th>
+              <th style={{ width: '100px' }}>Zip Code</th>
+              <th style={{ width: '110px' }}>Thread Code</th>
             </tr>
           </thead>
           <tbody>
             {productionData.map((row, index) => (
               <tr key={index}>
-                <td style={{ textAlign: 'center', width: '48px', maxWidth: '48px' }}>{row.serialNumber}</td>
-                <td style={{ width: '220px', minWidth: '220px' }}>
+                <td style={{ textAlign: 'center', overflow: 'hidden' }}>{row.serialNumber}</td>
+                <td style={{ overflow: 'hidden' }}>
                   <input type="text" value={row.layer} disabled className="production-table input"
                     style={{ width: '100%', background: '#f8f9fa', cursor: 'not-allowed', textAlign: 'center' }} />
                 </td>
-                <td style={{ width: '220px', minWidth: '220px', textAlign: 'center' }}>
+                <td style={{ textAlign: 'center', overflow: 'hidden' }}>
                   <input
                     type="text"
                     value={formatTotalPieces(row)}
@@ -101,14 +104,14 @@ export default function JobCardProductionTable({
                     style={{ width: '100%', background: '#f8f9fa', cursor: 'not-allowed', textAlign: 'center' }}
                   />
                 </td>
-                <td style={{ width: '72px', maxWidth: '90px', fontSize: '14px' }}>
+                <td style={{ overflow: 'hidden', fontSize: '14px' }}>
                   <span style={{ color: '#1a1a1a' }}>{row.color || '—'}</span>
                 </td>
-                <td style={{ width: '48px', maxWidth: '48px' }}>
+                <td style={{ overflow: 'hidden' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '36px' }}>
                     {row.color ? (
                       <div title={row.color} style={{
-                        width: '24px', height: '24px', borderRadius: '4px',
+                        width: '24px', height: '24px', borderRadius: '4px', flexShrink: 0,
                         backgroundColor: getColorForShade(row.color), border: '1px solid #ccc',
                       }} />
                     ) : <span style={{ fontSize: '14px', color: '#6c757d' }}>—</span>}
@@ -118,7 +121,7 @@ export default function JobCardProductionTable({
                   const locked = !!isCellLocked?.(index, field)
                   const editable = isEditMode && !locked
                   return (
-                    <td key={field} style={{ width: '240px', minWidth: '240px' }}>
+                    <td key={field} style={{ overflow: 'hidden' }}>
                       <button
                         type="button"
                         onClick={() => editable && onOpenWorkerPopup(index, field)}
@@ -132,11 +135,11 @@ export default function JobCardProductionTable({
                     </td>
                   )
                 })}
-                <td style={{ width: '70px', minWidth: '70px' }}>
+                <td style={{ overflow: 'hidden' }}>
                   <input type="text" value={row.zip_code ?? ''} readOnly disabled className="tbd-input"
                     style={{ background: '#f8f9fa', cursor: 'not-allowed', width: '100%' }} placeholder="Zip Code" />
                 </td>
-                <td style={{ width: '70px', minWidth: '70px' }}>
+                <td style={{ overflow: 'hidden' }}>
                   <input type="text" value={row.thread_code ?? ''} readOnly disabled className="tbd-input"
                     style={{ background: '#f8f9fa', cursor: 'not-allowed', width: '100%' }} placeholder="Thread Code" />
                 </td>
