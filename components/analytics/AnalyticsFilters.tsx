@@ -1,5 +1,7 @@
 'use client'
 
+import { useMemo, useState } from 'react'
+
 const ROLE_OPTIONS = ['Front', 'Back', 'Zip', 'Astar', 'Belt'] as const
 
 interface AnalyticsFiltersProps {
@@ -27,6 +29,29 @@ export default function AnalyticsFilters({
   onFromDateChange, onToDateChange, onWorkerChange, onRoleChange,
   onApplyFilters, onClearFilters, onDateRangePreset,
 }: AnalyticsFiltersProps) {
+  const [workerSearch, setWorkerSearch] = useState('')
+
+  const filteredWorkers = useMemo(() => {
+    const q = workerSearch.trim().toLowerCase()
+    let list = !q
+      ? workers
+      : workers.filter((w: any) =>
+        String(w.worker_id ?? '').toLowerCase().includes(q)
+        || String(w.worker_full_name ?? '').toLowerCase().includes(q)
+      )
+    // Keep current selection visible even if search doesn't match it
+    if (selectedWorker && !list.some((w: any) => w._id === selectedWorker)) {
+      const selected = workers.find((w: any) => w._id === selectedWorker)
+      if (selected) list = [selected, ...list]
+    }
+    return list
+  }, [workers, workerSearch, selectedWorker])
+
+  const handleClear = () => {
+    setWorkerSearch('')
+    onClearFilters()
+  }
+
   return (
     <div className="card filters-section" style={{ marginBottom: '20px', padding: '20px', background: '#fff9e6' }}>
       <h3 style={{ marginTop: 0, marginBottom: '15px', fontSize: '18px', fontWeight: '600' }}>Filters</h3>
@@ -48,10 +73,20 @@ export default function AnalyticsFilters({
           <input type="date" value={toDate} onChange={(e) => onToDateChange(e.target.value)} style={inputStyle} />
         </div>
         <div className="form-group" style={{ marginBottom: 0 }}>
+          <label>Search Worker</label>
+          <input
+            type="text"
+            value={workerSearch}
+            onChange={(e) => setWorkerSearch(e.target.value)}
+            placeholder="Type name or ID…"
+            style={inputStyle}
+          />
+        </div>
+        <div className="form-group" style={{ marginBottom: 0 }}>
           <label>Worker</label>
           <select value={selectedWorker} onChange={(e) => onWorkerChange(e.target.value)} style={inputStyle}>
             <option value="">All Workers</option>
-            {workers.map((worker: any) => (
+            {filteredWorkers.map((worker: any) => (
               <option key={worker._id} value={worker._id}>
                 {worker.worker_id} - {worker.worker_full_name}
               </option>
@@ -71,7 +106,7 @@ export default function AnalyticsFilters({
           <button className="btn btn-primary" onClick={onApplyFilters} style={{ padding: '10px 20px', fontSize: '16px', whiteSpace: 'nowrap', flex: '1 1 auto' }}>
             Apply Filters
           </button>
-          <button className="btn btn-secondary" onClick={onClearFilters} style={{ padding: '10px 20px', fontSize: '16px', whiteSpace: 'nowrap', flex: '1 1 auto' }}>
+          <button className="btn btn-secondary" onClick={handleClear} style={{ padding: '10px 20px', fontSize: '16px', whiteSpace: 'nowrap', flex: '1 1 auto' }}>
             Clear Filters
           </button>
         </div>
