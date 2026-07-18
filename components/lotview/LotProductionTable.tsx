@@ -13,7 +13,7 @@ export default function LotProductionTable({ productionData }: LotProductionTabl
           <thead>
             <tr>
               <th>Serial Number</th><th>Meter</th><th>Layer</th><th>Pieces</th><th>Tukda</th><th>Total Pieces</th>
-              <th>Color</th><th>Shade</th><th>TBD2</th><th>TBD3</th>
+              <th>Color</th><th>Shade</th><th>Zip Code</th><th>Thread Code</th>
             </tr>
           </thead>
           <tbody>
@@ -30,8 +30,8 @@ export default function LotProductionTable({ productionData }: LotProductionTabl
                   </td>
                   <td>{row.color || 'N/A'}</td>
                   <td>{row.shade || 'N/A'}</td>
-                  <td>{row.tbd2 || 'N/A'}</td>
-                  <td>{row.tbd3 || 'N/A'}</td>
+                  <td>{row.zip_code || 'N/A'}</td>
+                  <td>{row.thread_code || 'N/A'}</td>
                 </tr>
               ))
             ) : (

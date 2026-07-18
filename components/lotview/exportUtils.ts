@@ -30,10 +30,10 @@ export const exportLotViewToPDF = (lot: any) => {
   pdf.text('Production Data', margin, afterInfo)
   autoTable(pdf, {
     startY: afterInfo + 2, margin: { left: margin, right: margin },
-    head: [['S.No', 'Meter', 'Layer', 'Pieces', 'Tukda', 'Total Pieces', 'Color', 'Shade', 'TBD2', 'TBD3']],
+    head: [['S.No', 'Meter', 'Layer', 'Pieces', 'Tukda', 'Total Pieces', 'Color', 'Shade', 'Zip Code', 'Thread Code']],
     body: (lot.productionData || []).map((row: any) => {
       const rowTotalPieces = Number(row.pieces || 0) + Number(row.tukda || 0)
-      return [row.serialNumber, Number(row.meter || 0), Number(row.layer || 1), Number(row.pieces || 0).toFixed(2), Number(row.tukda || 0), rowTotalPieces.toFixed(2), row.color || 'N/A', row.shade || 'N/A', row.tbd2 || 'N/A', row.tbd3 || 'N/A']
+      return [row.serialNumber, Number(row.meter || 0), Number(row.layer || 1), Number(row.pieces || 0).toFixed(2), Number(row.tukda || 0), rowTotalPieces.toFixed(2), row.color || 'N/A', row.shade || 'N/A', row.zip_code || 'N/A', row.thread_code || 'N/A']
     }),
     styles: { fontSize: 8, cellPadding: 2, halign: 'center' },
     headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
@@ -73,12 +73,12 @@ export const exportLotViewToExcel = (lot: any) => {
   ]
   const prodRows = (lot.productionData || []).map((row: any) => {
     const rowTotalPieces = Number(row.pieces || 0) + Number(row.tukda || 0)
-    return [row.serialNumber, Number(row.meter || 0), Number(row.layer || 1), Number(row.pieces || 0).toFixed(2), Number(row.tukda || 0), rowTotalPieces.toFixed(2), row.color || '', row.shade || '', row.tbd2 || '', row.tbd3 || '']
+    return [row.serialNumber, Number(row.meter || 0), Number(row.layer || 1), Number(row.pieces || 0).toFixed(2), Number(row.tukda || 0), rowTotalPieces.toFixed(2), row.color || '', row.shade || '', row.zip_code || '', row.thread_code || '']
   })
   const addlRows = getAdditionalInfoExportRows(lot.flyWidth, lot.additionalInfo)
   const allRows = [
     ...infoRows,
-    ['S.No', 'Meter', 'Layer', 'Pieces', 'Tukda', 'Total Pieces', 'Color', 'Shade', 'TBD2', 'TBD3'],
+    ['S.No', 'Meter', 'Layer', 'Pieces', 'Tukda', 'Total Pieces', 'Color', 'Shade', 'Zip Code', 'Thread Code'],
     ...prodRows,
     ...(addlRows.length > 0 ? [[], ['Additional Information'], ['Field', 'Value'], ...addlRows] : []),
   ]
