@@ -2,7 +2,8 @@
 
 import { useRouter } from 'next/navigation'
 import { lotsAPI, jobCardsAPI } from '@/lib/api'
-import { Ratios, AdditionalInfo, DEFAULT_ADDITIONAL_INFO } from '@/lib/types'
+import { Ratios, AdditionalInfo, LotWorkerRates } from '@/lib/types'
+import { applyLotRatesToProduction, normalizeLotWorkerRates } from '@/lib/lotWorkerRates'
 import { useToast } from '../ToastProvider'
 
 interface ProductionRow {
@@ -32,6 +33,7 @@ interface SaveLotParams {
   average: number
   flyWidth: string
   additionalInfo: AdditionalInfo
+  workerRates: LotWorkerRates
   editLotNumber?: string | null
 }
 
@@ -40,10 +42,15 @@ export function useSaveLot() {
   const toast = useToast()
 
   const saveLot = async (params: SaveLotParams, setSaving: (v: boolean) => void) => {
-    const { lotNumber, date, fabric, pattern, brand, ratios, productionData, tukda, totalMeter, totalPieces, totalPiecesWithTukda, average, flyWidth, additionalInfo, editLotNumber } = params
+    const {
+      lotNumber, date, fabric, pattern, brand, ratios, productionData, tukda,
+      totalMeter, totalPieces, totalPiecesWithTukda, average, flyWidth, additionalInfo,
+      workerRates, editLotNumber,
+    } = params
     if (!lotNumber.trim()) { toast.showToast('Please enter a lot number', 'warning'); return }
     setSaving(true)
     try {
+      const normalizedRates = normalizeLotWorkerRates(workerRates)
       const lotData = {
         lotNumber, date, fabric, pattern, brand, ratios,
         productionData: productionData.map(row => ({
@@ -53,6 +60,7 @@ export function useSaveLot() {
         })),
         tukda, totalMeter, totalPieces, totalPiecesWithTukda, average,
         flyWidth, additionalInfo,
+        workerRates: normalizedRates,
       }
 
       const isUpdate = editLotNumber && decodeURIComponent(editLotNumber) === lotNumber
@@ -65,14 +73,27 @@ export function useSaveLot() {
             const jcResult = await jobCardsAPI.getJobCardByLotNumber(lotNumber)
             if (jcResult.success && jcResult.jobCard) {
               const existing = jcResult.jobCard
-              const mergedProdData = productionData.map((lotRow, i) => {
-                const existingRow = existing.productionData?.[i] || {}
-                return { ...existingRow, serialNumber: lotRow.serialNumber, layer: Number(lotRow.layer) || 1, pieces: Number(lotRow.pieces) || 0, color: lotRow.color || '', shade: lotRow.shade || '', zip_code: lotRow.zip_code || '', thread_code: lotRow.thread_code || '' }
-              })
+              const mergedProdData = applyLotRatesToProduction(
+                productionData.map((lotRow, i) => {
+                  const existingRow = existing.productionData?.[i] || {}
+                  return {
+                    ...existingRow,
+                    serialNumber: lotRow.serialNumber,
+                    layer: Number(lotRow.layer) || 1,
+                    pieces: Number(lotRow.pieces) || 0,
+                    color: lotRow.color || '',
+                    shade: lotRow.shade || '',
+                    zip_code: lotRow.zip_code || '',
+                    thread_code: lotRow.thread_code || '',
+                  }
+                }),
+                normalizedRates,
+              )
               await jobCardsAPI.updateJobCard(lotNumber, {
                 lotNumber, date, brand, ratios, productionData: mergedProdData, flyWidth, additionalInfo,
                 status: existing.status ?? 'incomplete',
-                workerPrices: existing.workerPrices ?? {},
+                workerRates: normalizedRates,
+                workerPrices: {},
               })
             }
           } catch (err) { console.error('Error syncing job card:', err) }
@@ -84,9 +105,19 @@ export function useSaveLot() {
             await jobCardsAPI.createJobCard({
               lotId: result.id ? String(result.id) : undefined,
               lotNumber, date, brand, worker: '', rate: '', ratios,
-              productionData: productionData.map(row => ({ serialNumber: row.serialNumber, layer: Number(row.layer) || 1, pieces: Number(row.pieces) || 0, color: row.color || '', shade: row.shade || '', front: '', back: '', zip_code: row.zip_code || '', thread_code: row.thread_code || '' })),
+              productionData: productionData.map(row => ({
+                serialNumber: row.serialNumber,
+                layer: Number(row.layer) || 1,
+                pieces: Number(row.pieces) || 0,
+                color: row.color || '',
+                shade: row.shade || '',
+                front: '', back: '',
+                zip_code: row.zip_code || '',
+                thread_code: row.thread_code || '',
+              })),
               flyWidth, additionalInfo,
               status: 'incomplete',
+              workerRates: normalizedRates,
               workerPrices: {},
             })
           } catch (err) { console.error('Error auto-creating job card:', err) }

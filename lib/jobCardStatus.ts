@@ -88,8 +88,3 @@ export const canAdminEditJobCard = (
   status?: string,
   productionData?: JobCardProductionRow[],
 ) => isJobCardComplete(status, productionData)
-
-export const canAdminViewWorkerPrices = (
-  status?: string,
-  productionData?: JobCardProductionRow[],
-) => isJobCardComplete(status, productionData)

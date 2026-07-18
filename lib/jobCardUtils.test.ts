@@ -150,6 +150,19 @@ describe('createJobCardFromLot', () => {
     expect(payload.status).toBe('incomplete')
   })
 
+  it('copies workerRates from the lot onto the job card', async () => {
+    await createJobCardFromLot({
+      lotNumber: 'L013',
+      workerRates: { front: '10', back: '12', zip: '', astar: '8', belt: '9' },
+    })
+
+    const [payload] = mockCreateJobCard.mock.calls[0]
+    expect(payload.workerRates).toEqual({
+      front: '10', back: '12', zip: '', astar: '8', belt: '9',
+    })
+    expect(payload.workerPrices).toEqual({})
+  })
+
   it('does not throw when createJobCard rejects', async () => {
     mockCreateJobCard.mockRejectedValue(new Error('DB error'))
 

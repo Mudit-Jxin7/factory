@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { lotsAPI, colorsAPI, brandsAPI, patternsAPI, fabricsAPI, jobCardsAPI } from '@/lib/api'
-import { Ratios, AdditionalInfo, DEFAULT_RATIOS, DEFAULT_ADDITIONAL_INFO } from '@/lib/types'
+import { Ratios, AdditionalInfo, LotWorkerRates, DEFAULT_RATIOS, DEFAULT_ADDITIONAL_INFO, DEFAULT_LOT_WORKER_RATES } from '@/lib/types'
 import NavigationBar from './NavigationBar'
 import ActionBar from './ActionBar'
 import { useToast } from './ToastProvider'
@@ -11,6 +11,7 @@ import LotInfoForm from './dashboard/LotInfoForm'
 import RatiosForm from './dashboard/RatiosForm'
 import ProductionTable from './dashboard/ProductionTable'
 import SummarySection from './dashboard/SummarySection'
+import LotRatesForm from './dashboard/LotRatesForm'
 import JobCardAdditionalInfo from './jobcard/JobCardAdditionalInfo'
 import { isAdditionalInfoEmpty } from '@/lib/additionalInfoExport'
 import { exportLotToPDF, exportLotToExcel } from './dashboard/exportUtils'
@@ -43,6 +44,7 @@ export default function DashboardContent() {
   const [tukdaSize, setTukdaSize] = useState('28')
   const [flyWidth, setFlyWidth] = useState('')
   const [additionalInfo, setAdditionalInfo] = useState<AdditionalInfo>(DEFAULT_ADDITIONAL_INFO)
+  const [workerRates, setWorkerRates] = useState<LotWorkerRates>(DEFAULT_LOT_WORKER_RATES)
 
   useEffect(() => {
     colorsAPI.getAllColors().then(r => { if (r.success) setColors(r.colors || []) })
@@ -80,6 +82,7 @@ export default function DashboardContent() {
         setTukdaSize(lot.tukda?.size || '28')
         setFlyWidth(lot.flyWidth || '')
         setAdditionalInfo({ ...DEFAULT_ADDITIONAL_INFO, ...(lot.additionalInfo || {}) })
+        setWorkerRates({ ...DEFAULT_LOT_WORKER_RATES, ...(lot.workerRates || {}) })
         if (isAdditionalInfoEmpty(lot.additionalInfo, lot.flyWidth)) {
           const jcResult = await jobCardsAPI.getJobCardByLotNumber(lot.lotNumber)
           if (jcResult.success && jcResult.jobCard && !isAdditionalInfoEmpty(jcResult.jobCard.additionalInfo, jcResult.jobCard.flyWidth)) {
@@ -177,11 +180,11 @@ export default function DashboardContent() {
   }
 
   const handleSave = () => saveLotFn(
-    { lotNumber, date, fabric, pattern, brand, ratios, productionData, tukda, totalMeter, totalPieces, totalPiecesWithTukda, average, flyWidth, additionalInfo, editLotNumber: searchParams?.get('edit') },
+    { lotNumber, date, fabric, pattern, brand, ratios, productionData, tukda, totalMeter, totalPieces, totalPiecesWithTukda, average, flyWidth, additionalInfo, workerRates, editLotNumber: searchParams?.get('edit') },
     setSaving
   )
 
-  const exportParams = { lotNumber, date, fabric, pattern, brand, ratios, sumOfRatios, productionData, tukda, totalMeter, totalPieces, totalPiecesWithTukda, average, flyWidth, additionalInfo }
+  const exportParams = { lotNumber, date, fabric, pattern, brand, ratios, sumOfRatios, productionData, tukda, totalMeter, totalPieces, totalPiecesWithTukda, average, flyWidth, additionalInfo, workerRates }
 
   if (loadingLot) {
     return (
@@ -229,6 +232,10 @@ export default function DashboardContent() {
             tukda={tukda} totalMeter={totalMeter} totalPieces={totalPieces}
             totalPiecesWithTukda={totalPiecesWithTukda} average={average}
             onTukdaSizeChange={setTukdaSize}
+          />
+          <LotRatesForm
+            workerRates={workerRates}
+            onRateChange={(key, value) => setWorkerRates((prev) => ({ ...prev, [key]: value }))}
           />
           <JobCardAdditionalInfo
             flyWidth={flyWidth} additionalInfo={additionalInfo} isEditMode

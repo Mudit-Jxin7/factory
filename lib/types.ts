@@ -95,3 +95,21 @@ export const DEFAULT_ADDITIONAL_INFO: AdditionalInfo = {
   label: '', tanki: '', kaajButton: '', finishing: '',
   addition1: '', addition2: '', addition3: '',
 }
+
+/** Role rates set on the lot; applied to job-card production columns. */
+export interface LotWorkerRates {
+  front: string
+  back: string
+  zip: string
+  astar: string
+  belt: string
+}
+
+export const DEFAULT_LOT_WORKER_RATES: LotWorkerRates = {
+  front: '',
+  back: '',
+  zip: '',
+  astar: '',
+  belt: '',
+}
+

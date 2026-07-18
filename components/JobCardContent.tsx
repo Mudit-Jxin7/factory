@@ -3,9 +3,13 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { jobCardsAPI, workersAPI, lotsAPI } from '@/lib/api'
-import { JobCardProductionRow, Worker, Ratios, AdditionalInfo, JobCardStatus, DEFAULT_RATIOS, DEFAULT_ADDITIONAL_INFO } from '@/lib/types'
-import { canAdminEditJobCard, canAdminViewWorkerPrices, canWorkerEditJobCard, deriveJobCardStatus, normalizeJobCardStatus } from '@/lib/jobCardStatus'
+import {
+  JobCardProductionRow, Worker, Ratios, AdditionalInfo, LotWorkerRates, JobCardStatus,
+  DEFAULT_RATIOS, DEFAULT_ADDITIONAL_INFO, DEFAULT_LOT_WORKER_RATES,
+} from '@/lib/types'
+import { canAdminEditJobCard, canWorkerEditJobCard, deriveJobCardStatus, normalizeJobCardStatus } from '@/lib/jobCardStatus'
 import { hasAllRequiredWorkerFields, buildLockedWorkerCellKeys, isWorkerCellLocked } from '@/lib/jobCardWorkerCompletion'
+import { applyLotRatesToProduction, getLotRateForField, normalizeLotWorkerRates } from '@/lib/lotWorkerRates'
 import JobCardStatusBadge from './jobcards/JobCardStatusBadge'
 import NavigationBar from './NavigationBar'
 import WorkerNavigationBar from './WorkerNavigationBar'
@@ -16,8 +20,7 @@ import WorkerPopupModal from './jobcard/WorkerPopupModal'
 import JobCardRatios from './jobcard/JobCardRatios'
 import JobCardProductionTable from './jobcard/JobCardProductionTable'
 import JobCardAdditionalInfo from './jobcard/JobCardAdditionalInfo'
-import JobCardWorkerPrices from './jobcard/JobCardWorkerPrices'
-import { applyWorkerPricesToProduction, getWorkerRateFromPrices, getWorkersAssignedToProduction, sanitizeWorkerPrices, WorkerPrices } from '@/lib/jobCardWorkerPrices'
+import LotRatesForm from './dashboard/LotRatesForm'
 import { exportJobCardToPDF } from './jobcard/exportToPDF'
 import { exportJobCardToExcel } from './jobcard/exportToExcel'
 import './dashboard.css'
@@ -40,7 +43,6 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
   const decodedLotNumber = initialLotNumber ? decodeURIComponent(initialLotNumber) : ''
 
   const [status, setStatus] = useState<JobCardStatus>('incomplete')
-
   const [lotNumber, setLotNumber] = useState(decodedLotNumber)
   const [date, setDate] = useState(new Date().toISOString().split('T')[0])
   const [brand, setBrand] = useState('')
@@ -49,6 +51,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
   const [productionData, setProductionData] = useState<JobCardProductionRow[]>([{ serialNumber: 1, ...DEFAULT_PRODUCTION_ROW }])
   const [flyWidth, setFlyWidth] = useState('')
   const [additionalInfo, setAdditionalInfo] = useState<AdditionalInfo>(DEFAULT_ADDITIONAL_INFO)
+  const [workerRates, setWorkerRates] = useState<LotWorkerRates>(DEFAULT_LOT_WORKER_RATES)
   const [loading, setLoading] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -58,41 +61,43 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
   const [editingWorkerCell, setEditingWorkerCell] = useState<{ rowIndex: number; field: WorkerField } | null>(null)
   const [popupWorker, setPopupWorker] = useState('')
   const [popupDate, setPopupDate] = useState('')
-  const [popupRate, setPopupRate] = useState('')
-  const [workerPrices, setWorkerPrices] = useState<WorkerPrices>({})
   const [lockedWorkerCells, setLockedWorkerCells] = useState<Set<string>>(() => new Set())
 
   const canEdit = isWorker
     ? canWorkerEditJobCard(status, productionData)
     : canAdminEditJobCard(status, productionData)
-  const showWorkerPrices = !isWorker && canAdminViewWorkerPrices(status, productionData)
   const effectiveEditMode = isEditMode && canEdit
-  const effectiveWorkerPricesEdit = showWorkerPrices && effectiveEditMode
   const workerFieldsComplete = useMemo(
     () => hasAllRequiredWorkerFields(productionData),
     [productionData],
   )
 
   const sumOfRatios = useMemo(() => Object.values(ratios).reduce((sum, val) => sum + (Number(val) || 0), 0), [ratios])
-  const assignedWorkers = useMemo(
-    () => getWorkersAssignedToProduction(productionData, workers),
-    [productionData, workers],
-  )
 
   const fetchJobCard = useCallback(async (isRefresh = false) => {
     if (!lotNumber) return
     if (isRefresh) setRefreshing(true)
     else setLoading(true)
     try {
-      const [result, workersResult] = await Promise.all([
+      const [result, workersResult, lotResult] = await Promise.all([
         jobCardsAPI.getJobCardByLotNumber(lotNumber),
         workersAPI.getAllWorkers(),
+        lotsAPI.getLotByNumber(lotNumber),
       ])
       const workerList = workersResult.success ? workersResult.workers || [] : []
       setWorkers(workerList)
+
+      const lotRates = normalizeLotWorkerRates(
+        lotResult.success && lotResult.lot?.workerRates
+          ? lotResult.lot.workerRates
+          : result.success && result.jobCard?.workerRates
+            ? result.jobCard.workerRates
+            : {},
+      )
+      setWorkerRates(lotRates)
+
       if (result.success && result.jobCard) {
         const jc = result.jobCard
-        const prices = jc.workerPrices || {}
         setError(null)
         setDate(jc.date || '')
         setBrand(jc.brand || '')
@@ -100,9 +105,8 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
         setFlyWidth(jc.flyWidth || '')
         setAdditionalInfo({ ...DEFAULT_ADDITIONAL_INFO, ...(jc.additionalInfo || {}) })
         setStatus(normalizeJobCardStatus(jc.status))
-        setWorkerPrices(prices)
         const rows = jc.productionData?.length ? jc.productionData : [{ serialNumber: 1, ...DEFAULT_PRODUCTION_ROW }]
-        setProductionData(rows)
+        setProductionData(applyLotRatesToProduction(rows, lotRates))
         setLockedWorkerCells(isWorker ? buildLockedWorkerCellKeys(rows) : new Set())
         if (isRefresh) toast.showToast('Job card refreshed', 'success')
       } else {
@@ -129,15 +133,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
     const workerMongoId = String((row as any)[`${field}Worker`] ?? '')
     setPopupWorker(workerMongoId)
     setPopupDate(isWorker ? today : String((row as any)[`${field}Date`] ?? '') || today)
-    const presetRate = getWorkerRateFromPrices(workerMongoId, workers, workerPrices)
-    setPopupRate(presetRate || String((row as any)[`${field}Rate`] ?? ''))
     setEditingWorkerCell({ rowIndex, field })
-  }
-
-  const handlePopupWorkerChange = (value: string) => {
-    setPopupWorker(value)
-    const presetRate = getWorkerRateFromPrices(value, workers, workerPrices)
-    setPopupRate(presetRate)
   }
 
   const saveWorkerPopup = () => {
@@ -148,48 +144,29 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
       toast.showToast('This column is already saved and cannot be changed', 'warning')
       return
     }
-    const presetRate = getWorkerRateFromPrices(popupWorker, workers, workerPrices)
+    const lotRate = getLotRateForField(workerRates, field)
     setProductionData(prev => prev.map((row, i) => {
       if (i !== rowIndex) return row
-      const rateKey = `${field}Rate`
       return {
         ...row,
         [`${field}Worker`]: popupWorker,
         [`${field}Date`]: isWorker ? today : popupDate,
-        [rateKey]: presetRate || (row as any)[rateKey],
+        [`${field}Rate`]: popupWorker ? lotRate : '',
       }
     }))
     setEditingWorkerCell(null)
   }
 
-  const handleWorkerPriceChange = (workerId: string, rate: string) => {
-    setWorkerPrices((prev) => {
-      if (String(rate).trim() === '') {
-        const { [workerId]: _removed, ...rest } = prev
-        return rest
-      }
-      return { ...prev, [workerId]: rate }
-    })
-  }
-
   const persistJobCard = async (options?: { nextStatus?: JobCardStatus; successMessage?: string }) => {
-    const productionForStatus = showWorkerPrices
-      ? applyWorkerPricesToProduction(productionData, sanitizeWorkerPrices(workerPrices), workers)
-      : productionData
-    const nextStatus = options?.nextStatus ?? deriveJobCardStatus(productionForStatus)
-    const pricesToSave = showWorkerPrices ? sanitizeWorkerPrices(workerPrices) : undefined
-    const productionToSave = showWorkerPrices
-      ? applyWorkerPricesToProduction(productionData, pricesToSave ?? {}, workers)
-      : productionData
-    if (showWorkerPrices && pricesToSave !== undefined) {
-      setWorkerPrices(pricesToSave)
-      setProductionData(productionToSave)
-    }
+    const productionToSave = applyLotRatesToProduction(productionData, workerRates)
+    const nextStatus = options?.nextStatus ?? deriveJobCardStatus(productionToSave)
+    setProductionData(productionToSave)
     const result = await jobCardsAPI.updateJobCard(lotNumber, {
       lotNumber, date, brand, ratios,
       productionData: productionToSave.map(row => ({ ...row, layer: Number(row.layer) || 1, pieces: Number(row.pieces) || 0 })),
       flyWidth, additionalInfo,
-      ...(showWorkerPrices && pricesToSave !== undefined ? { workerPrices: pricesToSave } : {}),
+      workerRates,
+      workerPrices: {},
       status: nextStatus,
     })
     if (result.success) {
@@ -201,6 +178,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
             ...lotWithoutId,
             flyWidth,
             additionalInfo,
+            workerRates,
           })
         }
       } catch (err) {
@@ -223,7 +201,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
       const nextStatus = deriveJobCardStatus(productionData)
       const message = isWorker
         ? (nextStatus === 'complete'
-          ? 'Job card completed! Admin can now edit rates.'
+          ? 'Job card completed! Admin can now review and edit.'
           : 'Job card saved successfully!')
         : 'Job card updated successfully!'
       await persistJobCard({ nextStatus, successMessage: message })
@@ -329,11 +307,13 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
           </div>
 
           <JobCardRatios ratios={ratios} sumOfRatios={sumOfRatios} />
+          {!isWorker && (
+            <LotRatesForm workerRates={workerRates} isEditMode={false} onRateChange={() => {}} />
+          )}
           <JobCardProductionTable
             productionData={productionData} workers={workers}
             isEditMode={effectiveEditMode} onOpenWorkerPopup={openWorkerPopup}
             hideRate={isWorker}
-            // Workers: saved columns stay read-only. Admins: all columns editable once complete.
             isCellLocked={
               isWorker
                 ? (rowIndex, field) => isWorkerCellLocked(lockedWorkerCells, rowIndex, field)
@@ -345,24 +325,16 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
             onFlyWidthChange={() => {}}
             onAdditionalInfoChange={() => {}}
           />
-          {showWorkerPrices && (
-            <JobCardWorkerPrices
-              workers={assignedWorkers}
-              workerPrices={workerPrices}
-              isEditMode={effectiveWorkerPricesEdit}
-              onPriceChange={handleWorkerPriceChange}
-            />
-          )}
         </div>
       </div>
 
       {editingWorkerCell && (
         <WorkerPopupModal
           field={editingWorkerCell.field} workers={workers}
-          popupWorker={popupWorker} popupDate={popupDate} popupRate={popupRate}
-          onWorkerChange={handlePopupWorkerChange} onDateChange={setPopupDate} onRateChange={setPopupRate}
+          popupWorker={popupWorker} popupDate={popupDate} popupRate=""
+          onWorkerChange={setPopupWorker} onDateChange={setPopupDate} onRateChange={() => {}}
           onSave={saveWorkerPopup} onCancel={() => setEditingWorkerCell(null)}
-          hideRate={isWorker}
+          hideRate
         />
       )}
     </>
