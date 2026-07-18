@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest'
-import { getJobCardDisplayStatus } from '@/lib/jobCardStatus'
+import {
+  canAdminEditJobCard,
+  canWorkerEditJobCard,
+  deriveJobCardStatus,
+  getJobCardDisplayStatus,
+  normalizeJobCardStatus,
+} from '@/lib/jobCardStatus'
 import { applyWorkerPricesToProduction, hasAllProductionRates } from '@/lib/jobCardWorkerPrices'
 import { JobCardProductionRow } from '@/lib/types'
 
@@ -38,6 +44,18 @@ const productionWithMissingRate: JobCardProductionRow[] = [{
   add2Date: '',
   add2Rate: '',
 }]
+
+const fullyAssignedRow: JobCardProductionRow = {
+  ...productionWithMissingRate[0],
+  backWorker: 'w2',
+  backDate: '2024-01-02',
+  zipWorker: 'w3',
+  zipDate: '2024-01-02',
+  astarWorker: 'w4',
+  astarDate: '2024-01-02',
+  beltProdWorker: 'w5',
+  beltProdDate: '2024-01-02',
+}
 
 describe('hasAllProductionRates', () => {
   it('returns false when no workers are assigned', () => {
@@ -91,77 +109,82 @@ describe('applyWorkerPricesToProduction', () => {
   })
 })
 
-describe('getJobCardDisplayStatus', () => {
-  it('shows rate pending to admin for approved cards with no assigned workers', () => {
-    expect(getJobCardDisplayStatus(
-      { status: 'complete', productionData: [] },
-      { variant: 'admin' },
-    )).toBe('rate_pending')
+describe('deriveJobCardStatus', () => {
+  it('returns incomplete when no required fields are filled', () => {
+    const rows = [{ ...productionWithMissingRate[0], frontWorker: '', frontDate: '' }]
+    expect(deriveJobCardStatus(rows)).toBe('incomplete')
   })
 
-  it('shows rate pending to admin for approved cards with missing production rates', () => {
+  it('returns in_progress when some required fields are filled', () => {
+    expect(deriveJobCardStatus(productionWithMissingRate)).toBe('in_progress')
+  })
+
+  it('returns complete when all required fields are filled', () => {
+    expect(deriveJobCardStatus([fullyAssignedRow])).toBe('complete')
+  })
+})
+
+describe('normalizeJobCardStatus', () => {
+  it('maps legacy pending_approval to complete', () => {
+    expect(normalizeJobCardStatus('pending_approval')).toBe('complete')
+  })
+
+  it('keeps the three current statuses', () => {
+    expect(normalizeJobCardStatus('incomplete')).toBe('incomplete')
+    expect(normalizeJobCardStatus('in_progress')).toBe('in_progress')
+    expect(normalizeJobCardStatus('complete')).toBe('complete')
+  })
+})
+
+describe('access rules', () => {
+  it('allows workers to edit incomplete and in-progress cards only', () => {
+    expect(canWorkerEditJobCard('incomplete')).toBe(true)
+    expect(canWorkerEditJobCard('in_progress')).toBe(true)
+    expect(canWorkerEditJobCard('complete')).toBe(false)
+    expect(canWorkerEditJobCard('pending_approval')).toBe(false)
+  })
+
+  it('allows admins to edit complete cards only', () => {
+    expect(canAdminEditJobCard('incomplete')).toBe(false)
+    expect(canAdminEditJobCard('in_progress')).toBe(false)
+    expect(canAdminEditJobCard('complete')).toBe(true)
+    expect(canAdminEditJobCard('pending_approval')).toBe(true)
+  })
+})
+
+describe('getJobCardDisplayStatus', () => {
+  it('shows complete for stored complete cards', () => {
     expect(getJobCardDisplayStatus(
       { status: 'complete', productionData: productionWithMissingRate },
-      { variant: 'admin' },
-    )).toBe('rate_pending')
-  })
-
-  it('shows complete to admin once all production rates are saved', () => {
-    expect(getJobCardDisplayStatus(
-      { status: 'complete', productionData: [{ ...productionWithMissingRate[0], frontRate: '12' }] },
       { variant: 'admin' },
     )).toBe('complete')
   })
 
-  it('shows partial complete to worker when required fields are partially filled', () => {
+  it('shows in progress when required fields are partially filled', () => {
     expect(getJobCardDisplayStatus(
       { status: 'incomplete', productionData: productionWithMissingRate },
       { variant: 'worker' },
-    )).toBe('partial_complete')
+    )).toBe('in_progress')
   })
 
-  it('shows pending approval to worker when all required fields are filled before submit', () => {
+  it('shows complete when all required fields are filled even if stored status is incomplete', () => {
     expect(getJobCardDisplayStatus(
-      {
-        status: 'incomplete',
-        productionData: [{
-          ...productionWithMissingRate[0],
-          backWorker: 'w2',
-          backDate: '2024-01-02',
-          zipWorker: 'w3',
-          zipDate: '2024-01-02',
-          astarWorker: 'w4',
-          astarDate: '2024-01-02',
-          beltProdWorker: 'w5',
-          beltProdDate: '2024-01-02',
-        }],
-      },
+      { status: 'incomplete', productionData: [fullyAssignedRow] },
       { variant: 'worker' },
-    )).toBe('pending_approval')
+    )).toBe('complete')
   })
 
-  it('shows incomplete to worker when no required fields are filled', () => {
-    const rows = [{
-      ...productionWithMissingRate[0],
-      frontWorker: '',
-      frontDate: '',
-    }]
+  it('shows incomplete when no required fields are filled', () => {
+    const rows = [{ ...productionWithMissingRate[0], frontWorker: '', frontDate: '' }]
     expect(getJobCardDisplayStatus(
       { status: 'incomplete', productionData: rows },
       { variant: 'worker' },
     )).toBe('incomplete')
   })
 
-  it('shows pending approval to worker for submitted cards', () => {
+  it('shows complete for legacy pending approval cards', () => {
     expect(getJobCardDisplayStatus(
       { status: 'pending_approval', productionData: productionWithMissingRate },
-      { variant: 'worker' },
-    )).toBe('pending_approval')
-  })
-
-  it('shows complete to worker for approved cards even when production rates are missing', () => {
-    expect(getJobCardDisplayStatus(
-      { status: 'complete', productionData: productionWithMissingRate },
       { variant: 'worker' },
     )).toBe('complete')
   })

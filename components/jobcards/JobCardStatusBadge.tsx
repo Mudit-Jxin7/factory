@@ -1,7 +1,6 @@
 'use client'
 
-import { JobCardProductionRow, Worker } from '@/lib/types'
-import { WorkerPrices } from '@/lib/jobCardWorkerPrices'
+import { JobCardProductionRow } from '@/lib/types'
 import {
   getJobCardDisplayStatus,
   JOB_CARD_DISPLAY_STATUS_COLORS,
@@ -12,22 +11,18 @@ interface JobCardStatusBadgeProps {
   status?: string
   jobCard?: {
     productionData?: JobCardProductionRow[]
-    workerPrices?: WorkerPrices
   }
-  workers?: Pick<Worker, '_id' | 'worker_id'>[]
   variant?: 'admin' | 'worker'
 }
 
 export default function JobCardStatusBadge({
   status,
   jobCard,
-  workers = [],
   variant = 'admin',
 }: JobCardStatusBadgeProps) {
   const displayStatus = getJobCardDisplayStatus(
-    { status, productionData: jobCard?.productionData, workerPrices: jobCard?.workerPrices },
+    { status, productionData: jobCard?.productionData },
     { variant },
-    workers,
   )
   const colors = JOB_CARD_DISPLAY_STATUS_COLORS[displayStatus]
   return (

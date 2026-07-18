@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Pagination from '@/components/Pagination'
 import JobCardStatusBadge from './JobCardStatusBadge'
-import { canAdminApproveJobCard, canAdminEditJobCard, canWorkerEditJobCard } from '@/lib/jobCardStatus'
+import { canAdminEditJobCard, canWorkerEditJobCard } from '@/lib/jobCardStatus'
 
 const PAGE_SIZE = 15
 
@@ -13,7 +13,6 @@ interface JobCardsTableProps {
   allCount: number
   loading: boolean
   deletingJobCard?: string | null
-  approvingJobCard?: string | null
   bulkDeleting?: boolean
   selectedIds?: Set<string>
   onSelectId?: (id: string, checked: boolean) => void
@@ -21,15 +20,14 @@ interface JobCardsTableProps {
   onDeleteSelected?: () => void
   onView: (lotNumber: string) => void
   onDelete?: (lotNumber: string) => void
-  onApprove?: (lotNumber: string) => void
   onRefresh?: () => void
   refreshing?: boolean
   variant?: 'admin' | 'worker'
 }
 
 export default function JobCardsTable({
-  jobCards, allCount, loading, deletingJobCard, approvingJobCard, bulkDeleting,
-  selectedIds = new Set(), onSelectId, onSelectAll, onDeleteSelected, onView, onDelete, onApprove,
+  jobCards, allCount, loading, deletingJobCard, bulkDeleting,
+  selectedIds = new Set(), onSelectId, onSelectAll, onDeleteSelected, onView, onDelete,
   onRefresh, refreshing = false,
   variant = 'admin',
 }: JobCardsTableProps) {
@@ -158,7 +156,6 @@ export default function JobCardsTable({
               const isSelected = !isWorker && selectedIds.has(id)
               const showWorkerEdit = isWorker && canWorkerEditJobCard(jobCard.status)
               const showAdminEdit = !isWorker && canAdminEditJobCard(jobCard.status)
-              const showApprove = !isWorker && canAdminApproveJobCard(jobCard.status) && onApprove
               return (
                 <tr key={id} style={isSelected ? { background: '#eef4ff' } : undefined}>
                   {!isWorker && (
@@ -180,16 +177,6 @@ export default function JobCardsTable({
                       <button className="btn btn-secondary" onClick={() => onView(jobCard.lotNumber)} style={{ padding: '8px 16px', fontSize: '14px' }}>View</button>
                       {(showWorkerEdit || showAdminEdit) && (
                         <button className="btn btn-primary" onClick={() => router.push(`${jobCardBasePath}/${encodeURIComponent(jobCard.lotNumber)}?edit=true`)} style={{ padding: '8px 16px', fontSize: '14px' }}>Edit</button>
-                      )}
-                      {showApprove && (
-                        <button
-                          className="btn btn-primary"
-                          onClick={() => onApprove!(jobCard.lotNumber)}
-                          disabled={approvingJobCard === jobCard.lotNumber}
-                          style={{ padding: '8px 16px', fontSize: '14px' }}
-                        >
-                          {approvingJobCard === jobCard.lotNumber ? 'Approving...' : 'Approve'}
-                        </button>
                       )}
                       {!isWorker && onDelete && (
                         <button className="btn btn-logout" onClick={() => onDelete(jobCard.lotNumber)} disabled={deletingJobCard === jobCard.lotNumber} style={{ padding: '8px 16px', fontSize: '14px' }}>

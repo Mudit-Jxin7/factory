@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { jobCardsAPI, workersAPI, lotsAPI } from '@/lib/api'
 import { JobCardProductionRow, Worker, Ratios, AdditionalInfo, JobCardStatus, DEFAULT_RATIOS, DEFAULT_ADDITIONAL_INFO } from '@/lib/types'
-import { canAdminApproveJobCard, canAdminEditJobCard, canAdminViewWorkerPrices, canWorkerEditJobCard, normalizeJobCardStatus } from '@/lib/jobCardStatus'
+import { canAdminEditJobCard, canAdminViewWorkerPrices, canWorkerEditJobCard, deriveJobCardStatus, normalizeJobCardStatus } from '@/lib/jobCardStatus'
 import { hasAllRequiredWorkerFields } from '@/lib/jobCardWorkerCompletion'
 import JobCardStatusBadge from './jobcards/JobCardStatusBadge'
 import NavigationBar from './NavigationBar'
@@ -65,16 +65,15 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
   const showWorkerPrices = !isWorker && canAdminViewWorkerPrices(status)
   const effectiveEditMode = isEditMode && canEdit
   const effectiveWorkerPricesEdit = showWorkerPrices && effectiveEditMode
-  const canApprove = !isWorker && canAdminApproveJobCard(status)
+  const workerFieldsComplete = useMemo(
+    () => hasAllRequiredWorkerFields(productionData),
+    [productionData],
+  )
 
   const sumOfRatios = useMemo(() => Object.values(ratios).reduce((sum, val) => sum + (Number(val) || 0), 0), [ratios])
   const assignedWorkers = useMemo(
     () => getWorkersAssignedToProduction(productionData, workers),
     [productionData, workers],
-  )
-  const workerSubmitReady = useMemo(
-    () => isWorker && hasAllRequiredWorkerFields(productionData),
-    [isWorker, productionData],
   )
 
   const fetchJobCard = useCallback(async (isRefresh = false) => {
@@ -162,7 +161,10 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
   }
 
   const persistJobCard = async (options?: { nextStatus?: JobCardStatus; successMessage?: string }) => {
-    const nextStatus = options?.nextStatus ?? (isWorker ? 'pending_approval' : status)
+    const productionForStatus = showWorkerPrices
+      ? applyWorkerPricesToProduction(productionData, sanitizeWorkerPrices(workerPrices), workers)
+      : productionData
+    const nextStatus = options?.nextStatus ?? deriveJobCardStatus(productionForStatus)
     const pricesToSave = showWorkerPrices ? sanitizeWorkerPrices(workerPrices) : undefined
     const productionToSave = showWorkerPrices
       ? applyWorkerPricesToProduction(productionData, pricesToSave ?? {}, workers)
@@ -206,31 +208,15 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
     if (!canEdit) { toast.showToast('This job card cannot be edited', 'warning'); return }
     setSaving(true)
     try {
-      const nextStatus: JobCardStatus = isWorker
-        ? (workerSubmitReady ? 'pending_approval' : 'incomplete')
-        : status
+      const nextStatus = deriveJobCardStatus(productionData)
       const message = isWorker
-        ? (workerSubmitReady ? 'Job card submitted for approval!' : 'Job card saved successfully!')
+        ? (nextStatus === 'complete'
+          ? 'Job card completed! Admin can now edit rates.'
+          : 'Job card saved successfully!')
         : 'Job card updated successfully!'
       await persistJobCard({ nextStatus, successMessage: message })
     } catch (err: any) {
       toast.showToast('Error saving job card: ' + err.message, 'error')
-    } finally { setSaving(false) }
-  }
-
-  const handleApprove = async () => {
-    setSaving(true)
-    try {
-      const result = await jobCardsAPI.approveJobCard(lotNumber)
-      if (result.success) {
-        setStatus('complete')
-        toast.showToast('Job card approved successfully!', 'success')
-        router.push(`${jobCardBasePath}/${encodeURIComponent(lotNumber)}`)
-      } else {
-        toast.showToast('Error approving job card: ' + result.error, 'error')
-      }
-    } catch (err: any) {
-      toast.showToast('Error approving job card: ' + err.message, 'error')
     } finally { setSaving(false) }
   }
 
@@ -265,8 +251,17 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
     <>
       <NavBar />
       <ActionBar actions={[
-        ...(effectiveEditMode ? [{ label: isWorker ? (workerSubmitReady ? 'Submit for Approval' : 'Save Job Card') : 'Update Job Card', shortLabel: 'Save', icon: '💾', onClick: handleSave, disabled: saving || !lotNumber, loading: saving, loadingLabel: 'Saving…' } as ActionBarItem] : []),
-        ...(canApprove ? [{ label: 'Approve Job Card', shortLabel: 'Approve', icon: '✅', onClick: handleApprove, disabled: saving, loading: saving, loadingLabel: 'Approving…' } as ActionBarItem] : []),
+        ...(effectiveEditMode ? [{
+          label: isWorker
+            ? (workerFieldsComplete ? 'Complete Job Card' : 'Save Job Card')
+            : 'Update Job Card',
+          shortLabel: 'Save',
+          icon: '💾',
+          onClick: handleSave,
+          disabled: saving || !lotNumber,
+          loading: saving,
+          loadingLabel: 'Saving…',
+        } as ActionBarItem] : []),
         ...(!isWorker ? [
           { label: 'Download PDF', shortLabel: 'PDF', icon: '📄', onClick: handleExportPDF, loading: generatingPDF, loadingLabel: '…' },
           { label: 'Download Excel', shortLabel: 'Excel', icon: '📊', onClick: handleExportExcel, loading: generatingExcel, loadingLabel: '…' },
@@ -284,7 +279,6 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
             <JobCardStatusBadge
               status={status}
               jobCard={{ productionData }}
-              workers={workers}
               variant={isWorker ? 'worker' : 'admin'}
             />
             <button
