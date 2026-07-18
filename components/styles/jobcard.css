@@ -23,6 +23,10 @@
   font-size: 19px;
 }
 
+.job-card-page .job-card-production-table tbody tr:hover td.job-card-sticky-col {
+  background: #fff9e6 !important;
+}
+
 @media (max-width: 1024px) {
   .job-card-page .card h2 { font-size: 22px; }
   .job-card-page .form-group label { font-size: 16px; }

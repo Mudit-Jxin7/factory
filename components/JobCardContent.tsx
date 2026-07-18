@@ -105,7 +105,26 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
         setFlyWidth(jc.flyWidth || '')
         setAdditionalInfo({ ...DEFAULT_ADDITIONAL_INFO, ...(jc.additionalInfo || {}) })
         setStatus(normalizeJobCardStatus(jc.status))
-        const rows = jc.productionData?.length ? jc.productionData : [{ serialNumber: 1, ...DEFAULT_PRODUCTION_ROW }]
+        const lotRows = lotResult.success && Array.isArray(lotResult.lot?.productionData)
+          ? lotResult.lot.productionData
+          : []
+        const jcRows = jc.productionData?.length ? jc.productionData : [{ serialNumber: 1, ...DEFAULT_PRODUCTION_ROW }]
+        // Prefer lot layer/pieces/tukda/color when present so older job cards still show production info
+        const rows = jcRows.map((row: JobCardProductionRow, i: number) => {
+          const lotRow = lotRows[i] || {}
+          return {
+            ...row,
+            serialNumber: row.serialNumber ?? lotRow.serialNumber ?? i + 1,
+            // Lot owns production quantities/colors; job card owns worker assignments
+            layer: lotRow.layer != null && String(lotRow.layer) !== '' ? String(lotRow.layer) : String(row.layer ?? '1'),
+            pieces: Number(lotRow.pieces ?? row.pieces) || 0,
+            tukda: Number(lotRow.tukda ?? row.tukda) || 0,
+            color: lotRow.color || row.color || '',
+            shade: lotRow.shade || row.shade || '',
+            zip_code: lotRow.zip_code || row.zip_code || '',
+            thread_code: lotRow.thread_code || row.thread_code || '',
+          }
+        })
         setProductionData(applyLotRatesToProduction(rows, lotRates))
         setLockedWorkerCells(isWorker ? buildLockedWorkerCellKeys(rows) : new Set())
         if (isRefresh) toast.showToast('Job card refreshed', 'success')

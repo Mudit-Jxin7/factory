@@ -1,5 +1,6 @@
 'use client'
 
+import { CSSProperties } from 'react'
 import { getColorForShade } from '@/lib/colorUtils'
 import { JobCardProductionRow, LotWorkerRates, Worker } from '@/lib/types'
 import { getLotRateForField } from '@/lib/lotWorkerRates'
@@ -21,6 +22,35 @@ const WORKER_COL_LABELS: Record<WorkerField, string> = {
   front: 'Front', back: 'Back', zip: 'Zip', astar: 'Astar',
   beltProd: 'Belt', add1: 'Additional 1', add2: 'Additional 2',
 }
+
+const COL = {
+  sno: 56,
+  layer: 90,
+  pieces: 180,
+  color: 120,
+  shade: 72,
+  worker: 220,
+  zip: 100,
+  thread: 110,
+} as const
+
+const stickyLeft = {
+  sno: 0,
+  layer: COL.sno,
+  pieces: COL.sno + COL.layer,
+  color: COL.sno + COL.layer + COL.pieces,
+  shade: COL.sno + COL.layer + COL.pieces + COL.color,
+} as const
+
+const stickyStyle = (left: number, width: number, isHeader = false): CSSProperties => ({
+  position: 'sticky',
+  left,
+  width,
+  minWidth: width,
+  maxWidth: width,
+  zIndex: isHeader ? 4 : 2,
+  background: isHeader ? '#f8f9fa' : '#fff',
+})
 
 const workerBtnStyle = (editable: boolean, locked: boolean) => ({
   width: '100%', padding: '8px 12px', border: `1px solid ${locked ? '#ced4da' : '#ddd'}`, borderRadius: '4px',
@@ -65,63 +95,76 @@ export default function JobCardProductionTable({
     return parts.join(' - ')
   }
 
+  const tableMinWidth =
+    COL.sno + COL.layer + COL.pieces + COL.color + COL.shade
+    + WORKER_FIELDS.length * COL.worker
+    + COL.zip + COL.thread
+
   return (
     <div className="card">
       <div className="card-header"><h2>Production Data</h2></div>
       <div className="table-container" style={{ overflowX: 'auto' }}>
         <table
-          className="production-table"
-          style={{ width: '100%', minWidth: '2300px', tableLayout: 'fixed' }}
+          className="production-table job-card-production-table"
+          style={{ width: tableMinWidth, minWidth: tableMinWidth, tableLayout: 'fixed', borderCollapse: 'separate' }}
         >
           <thead>
             <tr>
-              <th style={{ width: '56px' }}>S.No</th>
-              <th style={{ width: '100px' }}>Layer</th>
-              <th style={{ width: '180px' }}>Total Pieces</th>
-              <th style={{ width: '100px' }}>Color</th>
-              <th style={{ width: '72px' }}>Shade</th>
+              <th className="job-card-sticky-col" style={stickyStyle(stickyLeft.sno, COL.sno, true)}>S.No</th>
+              <th className="job-card-sticky-col" style={stickyStyle(stickyLeft.layer, COL.layer, true)}>Layer</th>
+              <th className="job-card-sticky-col" style={stickyStyle(stickyLeft.pieces, COL.pieces, true)}>Total Pieces</th>
+              <th className="job-card-sticky-col" style={stickyStyle(stickyLeft.color, COL.color, true)}>Color</th>
+              <th
+                className="job-card-sticky-col"
+                style={{ ...stickyStyle(stickyLeft.shade, COL.shade, true), boxShadow: '2px 0 4px rgba(0,0,0,0.06)' }}
+              >
+                Shade
+              </th>
               {WORKER_FIELDS.map((f) => (
-                <th key={f} style={{ width: '220px' }}>{getColumnLabel(f)}</th>
+                <th key={f} style={{ width: COL.worker, minWidth: COL.worker }}>{getColumnLabel(f)}</th>
               ))}
-              <th style={{ width: '100px' }}>Zip Code</th>
-              <th style={{ width: '110px' }}>Thread Code</th>
+              <th style={{ width: COL.zip, minWidth: COL.zip }}>Zip Code</th>
+              <th style={{ width: COL.thread, minWidth: COL.thread }}>Thread Code</th>
             </tr>
           </thead>
           <tbody>
             {productionData.map((row, index) => (
               <tr key={index}>
-                <td style={{ textAlign: 'center', overflow: 'hidden' }}>{row.serialNumber}</td>
-                <td style={{ overflow: 'hidden' }}>
-                  <input type="text" value={row.layer} disabled className="production-table input"
-                    style={{ width: '100%', background: '#f8f9fa', cursor: 'not-allowed', textAlign: 'center' }} />
+                <td className="job-card-sticky-col" style={{ ...stickyStyle(stickyLeft.sno, COL.sno), textAlign: 'center' }}>
+                  {row.serialNumber}
                 </td>
-                <td style={{ textAlign: 'center', overflow: 'hidden' }}>
-                  <input
-                    type="text"
-                    value={formatTotalPieces(row)}
-                    disabled
-                    className="production-table input"
-                    style={{ width: '100%', background: '#f8f9fa', cursor: 'not-allowed', textAlign: 'center' }}
-                  />
+                <td className="job-card-sticky-col" style={{ ...stickyStyle(stickyLeft.layer, COL.layer), textAlign: 'center', fontWeight: 600, color: '#1a1a1a' }}>
+                  {row.layer !== undefined && row.layer !== null && String(row.layer) !== '' ? String(row.layer) : '—'}
                 </td>
-                <td style={{ overflow: 'hidden', fontSize: '14px' }}>
-                  <span style={{ color: '#1a1a1a' }}>{row.color || '—'}</span>
+                <td className="job-card-sticky-col" style={{ ...stickyStyle(stickyLeft.pieces, COL.pieces), textAlign: 'center', fontWeight: 600, color: '#1a1a1a', whiteSpace: 'nowrap' }}>
+                  {formatTotalPieces(row)}
                 </td>
-                <td style={{ overflow: 'hidden' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '36px' }}>
+                <td className="job-card-sticky-col" style={{ ...stickyStyle(stickyLeft.color, COL.color), fontWeight: 600, color: '#1a1a1a' }}>
+                  {row.color || '—'}
+                </td>
+                <td
+                  className="job-card-sticky-col"
+                  style={{ ...stickyStyle(stickyLeft.shade, COL.shade), boxShadow: '2px 0 4px rgba(0,0,0,0.06)' }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 36 }}>
                     {row.color ? (
-                      <div title={row.color} style={{
-                        width: '24px', height: '24px', borderRadius: '4px', flexShrink: 0,
-                        backgroundColor: getColorForShade(row.color), border: '1px solid #ccc',
-                      }} />
-                    ) : <span style={{ fontSize: '14px', color: '#6c757d' }}>—</span>}
+                      <div
+                        title={row.color}
+                        style={{
+                          width: 24, height: 24, borderRadius: 4, flexShrink: 0,
+                          backgroundColor: getColorForShade(row.color), border: '1px solid #ccc',
+                        }}
+                      />
+                    ) : (
+                      <span style={{ color: '#6c757d' }}>—</span>
+                    )}
                   </div>
                 </td>
                 {WORKER_FIELDS.map((field) => {
                   const locked = !!isCellLocked?.(index, field)
                   const editable = isEditMode && !locked
                   return (
-                    <td key={field} style={{ overflow: 'hidden' }}>
+                    <td key={field} style={{ width: COL.worker, minWidth: COL.worker }}>
                       <button
                         type="button"
                         onClick={() => editable && onOpenWorkerPopup(index, field)}
@@ -135,11 +178,11 @@ export default function JobCardProductionTable({
                     </td>
                   )
                 })}
-                <td style={{ overflow: 'hidden' }}>
+                <td style={{ width: COL.zip, minWidth: COL.zip }}>
                   <input type="text" value={row.zip_code ?? ''} readOnly disabled className="tbd-input"
                     style={{ background: '#f8f9fa', cursor: 'not-allowed', width: '100%' }} placeholder="Zip Code" />
                 </td>
-                <td style={{ overflow: 'hidden' }}>
+                <td style={{ width: COL.thread, minWidth: COL.thread }}>
                   <input type="text" value={row.thread_code ?? ''} readOnly disabled className="tbd-input"
                     style={{ background: '#f8f9fa', cursor: 'not-allowed', width: '100%' }} placeholder="Thread Code" />
                 </td>
