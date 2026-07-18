@@ -73,6 +73,7 @@ export default function JobCardProductionTable({
 
   const getColumnLabel = (field: WorkerField) => {
     const base = WORKER_COL_LABELS[field]
+    if (hideRate) return base
     const rate = getLotRateForField(workerRates, field)
     return rate ? `${base} (Rs - ${formatIndianAmount(rate)})` : base
   }
@@ -85,14 +86,11 @@ export default function JobCardProductionTable({
 
   const getWorkerCellLabel = (row: JobCardProductionRow, field: WorkerField) => {
     const workerKey = `${field}Worker` as keyof JobCardProductionRow
-    const rateKey = `${field}Rate` as keyof JobCardProductionRow
     const dateKey = `${field}Date` as keyof JobCardProductionRow
     const name = getWorkerName(String(row[workerKey] ?? ''))
     if (!name) return ''
-    const rate = String(row[rateKey] ?? '')
     const date = String(row[dateKey] ?? '')
     const parts = [name]
-    if (!hideRate && rate) parts.push(formatIndianAmount(rate))
     if (date) parts.push(formatDisplayDate(date))
     return parts.join(' - ')
   }
