@@ -314,6 +314,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
             productionData={productionData} workers={workers}
             isEditMode={effectiveEditMode} onOpenWorkerPopup={openWorkerPopup}
             hideRate={isWorker}
+            workerRates={workerRates}
             isCellLocked={
               isWorker
                 ? (rowIndex, field) => isWorkerCellLocked(lockedWorkerCells, rowIndex, field)

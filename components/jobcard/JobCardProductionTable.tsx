@@ -1,7 +1,8 @@
 'use client'
 
 import { getColorForShade } from '@/lib/colorUtils'
-import { JobCardProductionRow, Worker } from '@/lib/types'
+import { JobCardProductionRow, LotWorkerRates, Worker } from '@/lib/types'
+import { getLotRateForField } from '@/lib/lotWorkerRates'
 import { WorkerField } from './constants'
 
 interface JobCardProductionTableProps {
@@ -10,6 +11,7 @@ interface JobCardProductionTableProps {
   isEditMode: boolean
   onOpenWorkerPopup: (rowIndex: number, field: WorkerField) => void
   hideRate?: boolean
+  workerRates?: LotWorkerRates | null
   /** When true for a cell, it stays read-only even in edit mode (already saved by worker). */
   isCellLocked?: (rowIndex: number, field: WorkerField) => boolean
 }
@@ -29,12 +31,18 @@ const workerBtnStyle = (editable: boolean, locked: boolean) => ({
 })
 
 export default function JobCardProductionTable({
-  productionData, workers, isEditMode, onOpenWorkerPopup, hideRate = false, isCellLocked,
+  productionData, workers, isEditMode, onOpenWorkerPopup, hideRate = false, workerRates, isCellLocked,
 }: JobCardProductionTableProps) {
   const getWorkerName = (workerId: string) => {
     if (!workerId) return ''
     const w = workers.find((x) => x._id === workerId)
     return w ? (w.worker_full_name || String(w.worker_id)) : ''
+  }
+
+  const getColumnLabel = (field: WorkerField) => {
+    const base = WORKER_COL_LABELS[field]
+    const rate = getLotRateForField(workerRates, field)
+    return rate ? `${base} (${rate})` : base
   }
 
   const getWorkerCellLabel = (row: JobCardProductionRow, field: WorkerField) => {
@@ -61,7 +69,7 @@ export default function JobCardProductionTable({
               <th style={{ width: '40px' }}>S.No</th>
               <th>Layer</th><th>Pieces</th><th>Color</th><th>Shade</th>
               {WORKER_FIELDS.map((f) => (
-                <th key={f} style={{ width: '220px', minWidth: '220px' }}>{WORKER_COL_LABELS[f]}</th>
+                <th key={f} style={{ width: '220px', minWidth: '220px' }}>{getColumnLabel(f)}</th>
               ))}
               <th style={{ width: '100px' }}>Zip Code</th>
               <th style={{ width: '100px' }}>Thread Code</th>
