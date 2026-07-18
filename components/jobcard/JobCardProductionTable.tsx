@@ -68,7 +68,7 @@ export default function JobCardProductionTable({
             <tr>
               <th style={{ width: '48px', minWidth: '48px', maxWidth: '48px' }}>S.No</th>
               <th style={{ width: '220px', minWidth: '220px' }}>Layer</th>
-              <th style={{ width: '220px', minWidth: '220px' }}>Pieces</th>
+              <th style={{ width: '220px', minWidth: '220px' }}>Total Pieces</th>
               <th style={{ width: '72px', minWidth: '72px', maxWidth: '90px' }}>Color</th>
               <th style={{ width: '48px', minWidth: '48px', maxWidth: '48px' }}>Shade</th>
               {WORKER_FIELDS.map((f) => (
@@ -86,9 +86,14 @@ export default function JobCardProductionTable({
                   <input type="text" value={row.layer} disabled className="production-table input"
                     style={{ width: '100%', background: '#f8f9fa', cursor: 'not-allowed', textAlign: 'center' }} />
                 </td>
-                <td style={{ width: '220px', minWidth: '220px' }}>
-                  <input type="number" value={row.pieces} disabled className="production-table input"
-                    style={{ width: '100%', background: '#f8f9fa', cursor: 'not-allowed', textAlign: 'center' }} />
+                <td style={{ width: '220px', minWidth: '220px', textAlign: 'center' }}>
+                  <input
+                    type="text"
+                    value={(Number(row.pieces) || 0) + (Number(row.tukda) || 0)}
+                    disabled
+                    className="production-table input"
+                    style={{ width: '100%', background: '#f8f9fa', cursor: 'not-allowed', textAlign: 'center' }}
+                  />
                 </td>
                 <td style={{ width: '72px', maxWidth: '90px', fontSize: '14px' }}>
                   <span style={{ color: '#1a1a1a' }}>{row.color || '—'}</span>

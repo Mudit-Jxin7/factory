@@ -69,12 +69,13 @@ export const exportJobCardToPDF = (params: {
     const prodBody: CellDef[][] = []
     prodBody.push([
       { content: 'S.No', styles: infoHdr }, { content: 'Layer', styles: infoHdr },
-      { content: 'Pieces', styles: infoHdr }, { content: 'Color', styles: infoHdr },
+      { content: 'Total Pieces', styles: infoHdr }, { content: 'Color', styles: infoHdr },
       { content: 'Zip Code', styles: infoHdr }, { content: 'Thread Code', styles: infoHdr },
     ])
     prodBody.push([
       { content: row.serialNumber, styles: infoVal }, { content: row.layer, styles: infoVal },
-      { content: row.pieces, styles: infoVal }, { content: row.color || '', styles: infoVal },
+      { content: (Number(row.pieces) || 0) + (Number(row.tukda) || 0), styles: infoVal },
+      { content: row.color || '', styles: infoVal },
       { content: row.zip_code || '', styles: infoVal }, { content: row.thread_code || '', styles: infoVal },
     ])
     prodBody.push(blankRow)

@@ -47,7 +47,7 @@ export const FIELD_LABELS: Record<WorkerField, string> = {
 }
 
 export const DEFAULT_PRODUCTION_ROW: Omit<JobCardProductionRow, 'serialNumber'> = {
-  layer: '1', pieces: 0, color: '', shade: '',
+  layer: '1', pieces: 0, tukda: 0, color: '', shade: '',
   front: '', frontWorker: '', frontDate: '', frontRate: '',
   back: '', backWorker: '', backDate: '', backRate: '',
   zip: '', zipWorker: '', zipDate: '', zipRate: '',

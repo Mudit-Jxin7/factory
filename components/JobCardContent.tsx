@@ -163,7 +163,12 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
     setProductionData(productionToSave)
     const result = await jobCardsAPI.updateJobCard(lotNumber, {
       lotNumber, date, brand, ratios,
-      productionData: productionToSave.map(row => ({ ...row, layer: Number(row.layer) || 1, pieces: Number(row.pieces) || 0 })),
+      productionData: productionToSave.map(row => ({
+        ...row,
+        layer: Number(row.layer) || 1,
+        pieces: Number(row.pieces) || 0,
+        tukda: Number(row.tukda) || 0,
+      })),
       flyWidth, additionalInfo,
       workerRates,
       workerPrices: {},

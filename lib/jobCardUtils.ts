@@ -20,6 +20,7 @@ export const createJobCardFromLot = async (lotData: any) => {
         serialNumber: index + 1,
         layer: Number(row.layer) || 1,
         pieces: Number(row.pieces) || 0,
+        tukda: Number(row.tukda) || 0,
         color: row.color || '',
         shade: row.shade || '',
         front: '',

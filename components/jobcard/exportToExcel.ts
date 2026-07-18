@@ -29,8 +29,15 @@ export const exportJobCardToExcel = (params: {
 
   const prodRows: any[][] = []
   productionData.forEach((row, idx) => {
-    prodRows.push(['S.No', 'Layer', 'Pieces', 'Color', 'Zip Code', 'Thread Code'])
-    prodRows.push([row.serialNumber, row.layer, row.pieces, row.color || '', row.zip_code || '', row.thread_code || ''])
+    prodRows.push(['S.No', 'Layer', 'Total Pieces', 'Color', 'Zip Code', 'Thread Code'])
+    prodRows.push([
+      row.serialNumber,
+      row.layer,
+      (Number(row.pieces) || 0) + (Number(row.tukda) || 0),
+      row.color || '',
+      row.zip_code || '',
+      row.thread_code || '',
+    ])
     prodRows.push([])
 
     WORKER_PAIRS.forEach(([w1, w2], pIdx) => {

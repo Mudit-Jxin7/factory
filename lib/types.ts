@@ -35,6 +35,7 @@ export interface JobCardProductionRow {
   serialNumber: number
   layer: string
   pieces: number
+  tukda?: number
   color: string
   shade: string
   zip_code?: string

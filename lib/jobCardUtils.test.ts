@@ -79,8 +79,8 @@ describe('createJobCardFromLot', () => {
 
   it('maps productionData rows to job card format with serial numbers', async () => {
     const productionData = [
-      { layer: '2', pieces: '50', color: 'Blue', shade: 'Light' },
-      { layer: '3', pieces: '80', color: 'Red', shade: 'Dark' },
+      { layer: '2', pieces: '50', tukda: '3', color: 'Blue', shade: 'Light' },
+      { layer: '3', pieces: '80', tukda: '1', color: 'Red', shade: 'Dark' },
     ]
 
     await createJobCardFromLot({ lotNumber: 'L006', productionData })
@@ -88,11 +88,11 @@ describe('createJobCardFromLot', () => {
     const [payload] = mockCreateJobCard.mock.calls[0]
     expect(payload.productionData).toHaveLength(2)
     expect(payload.productionData[0]).toMatchObject({
-      serialNumber: 1, layer: 2, pieces: 50, color: 'Blue', shade: 'Light',
+      serialNumber: 1, layer: 2, pieces: 50, tukda: 3, color: 'Blue', shade: 'Light',
       front: '', back: '', zip_code: '', thread_code: '',
     })
     expect(payload.productionData[1]).toMatchObject({
-      serialNumber: 2, layer: 3, pieces: 80, color: 'Red', shade: 'Dark',
+      serialNumber: 2, layer: 3, pieces: 80, tukda: 1, color: 'Red', shade: 'Dark',
     })
   })
 
@@ -107,7 +107,7 @@ describe('createJobCardFromLot', () => {
     expect(payload.productionData[0].pieces).toBe(120)
   })
 
-  it('defaults layer to 1 and pieces to 0 for invalid values', async () => {
+  it('defaults layer to 1 and pieces/tukda to 0 for invalid values', async () => {
     await createJobCardFromLot({
       lotNumber: 'L008',
       productionData: [{ layer: 'bad', pieces: null, color: '', shade: '' }],
@@ -116,6 +116,7 @@ describe('createJobCardFromLot', () => {
     const [payload] = mockCreateJobCard.mock.calls[0]
     expect(payload.productionData[0].layer).toBe(1)
     expect(payload.productionData[0].pieces).toBe(0)
+    expect(payload.productionData[0].tukda).toBe(0)
   })
 
   it('initializes additionalInfo with empty strings', async () => {
