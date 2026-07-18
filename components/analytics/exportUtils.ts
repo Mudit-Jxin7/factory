@@ -23,6 +23,16 @@ interface ExportParams {
   totals: { totalPieces: number; totalAmount: number }
 }
 
+interface WorkerGroup {
+  worker_id: number
+  worker_full_name: string
+  rows: AnalyticsRow[]
+  totalPieces: number
+  totalAmount: number
+}
+
+const TABLE_HEAD = [['Section', 'Date', 'Rate', 'Lot Number', 'Layer', 'Pieces', 'Total Amount']]
+
 const getFilename = (base: string, { fromDate, toDate, selectedWorker, selectedRole, workers }: Pick<ExportParams, 'fromDate' | 'toDate' | 'selectedWorker' | 'selectedRole' | 'workers'>) => {
   const dateRange = fromDate && toDate ? `_${fromDate}_to_${toDate}` : ''
   const workerSuffix = selectedWorker ? `_${workers.find((w: any) => w._id === selectedWorker)?.worker_full_name || 'worker'}` : ''
@@ -30,10 +40,46 @@ const getFilename = (base: string, { fromDate, toDate, selectedWorker, selectedR
   return `${base}${dateRange}${workerSuffix}${roleSuffix}`
 }
 
+const groupRowsByWorker = (filteredData: AnalyticsRow[]): WorkerGroup[] => {
+  const map = new Map<number, WorkerGroup>()
+  filteredData.forEach((row) => {
+    const existing = map.get(row.worker_id)
+    if (!existing) {
+      map.set(row.worker_id, {
+        worker_id: row.worker_id,
+        worker_full_name: row.worker_full_name,
+        rows: [row],
+        totalPieces: row.pieces,
+        totalAmount: row.total_amount,
+      })
+      return
+    }
+    existing.rows.push(row)
+    existing.totalPieces += row.pieces
+    existing.totalAmount += row.total_amount
+  })
+  return [...map.values()].sort((a, b) => a.worker_id - b.worker_id)
+}
+
+const buildWorkerTableBody = (group: WorkerGroup) => {
+  const body: (string | number)[][] = group.rows.map((row) => [
+    row.section,
+    row.date,
+    row.rate.toFixed(2),
+    row.lotNumber,
+    row.layer,
+    row.pieces.toFixed(2),
+    row.total_amount.toFixed(2),
+  ])
+  body.push(['', '', '', '', 'TOTAL', group.totalPieces.toFixed(2), group.totalAmount.toFixed(2)])
+  return body
+}
+
 export const exportAnalyticsToPDF = (params: ExportParams) => {
   const { filteredData, workers, fromDate, toDate, selectedWorker, selectedRole, totals } = params
   const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
   const pageW = pdf.internal.pageSize.getWidth()
+  const pageH = pdf.internal.pageSize.getHeight()
   const margin = 10
 
   pdf.setFontSize(16); pdf.setFont('helvetica', 'bold')
@@ -48,46 +94,56 @@ export const exportAnalyticsToPDF = (params: ExportParams) => {
   if (selectedRole) filterParts.push(`Role: ${selectedRole}`)
   if (filterParts.length > 0) pdf.text(filterParts.join('   |   '), pageW / 2, 20, { align: 'center' })
 
-  let tableStartY = filterParts.length > 0 ? 24 : 18
+  let cursorY = filterParts.length > 0 ? 26 : 20
+  const groups = groupRowsByWorker(filteredData)
 
-  // Worker detail block (only when a single worker is selected)
-  if (selectedWorkerObj) {
-    const detailLines: string[] = [
-      `Worker ID: ${selectedWorkerObj.worker_id}   |   Name: ${selectedWorkerObj.worker_full_name}`,
-    ]
-    const tbdParts: string[] = []
-    const workerRole = selectedWorkerObj.role || selectedWorkerObj.tbd1
-    if (workerRole) tbdParts.push(`Role: ${workerRole}`)
-    if (selectedWorkerObj.tbd2) tbdParts.push(`TBD2: ${selectedWorkerObj.tbd2}`)
-    if (selectedWorkerObj.tbd3) tbdParts.push(`TBD3: ${selectedWorkerObj.tbd3}`)
-    if (tbdParts.length > 0) detailLines.push(tbdParts.join('   |   '))
-
-    pdf.setFillColor(230, 244, 255)
-    const blockH = detailLines.length * 5 + 5
-    pdf.rect(margin, tableStartY, pageW - margin * 2, blockH, 'F')
-    pdf.setFontSize(8.5); pdf.setFont('helvetica', 'bold')
-    detailLines.forEach((line, i) => {
-      pdf.text(line, pageW / 2, tableStartY + 4 + i * 5, { align: 'center' })
-    })
-    pdf.setFont('helvetica', 'normal')
-    tableStartY += blockH + 2
+  if (groups.length === 0) {
+    pdf.setFontSize(11)
+    pdf.text('No data found matching the filters', pageW / 2, cursorY + 10, { align: 'center' })
+    pdf.save(`${getFilename('WorkerAnalytics', params)}.pdf`)
+    return
   }
 
-  const head = [['Worker ID', 'Worker Name', 'Section', 'Date', 'Rate', 'Lot Number', 'Layer', 'Pieces', 'Total Amount']]
-  const body: any[][] = filteredData.map(row => [row.worker_id, row.worker_full_name, row.section, row.date, row.rate.toFixed(2), row.lotNumber, row.layer, row.pieces.toFixed(2), row.total_amount.toFixed(2)])
-  body.push(['', 'TOTAL', '', '', '', '', '', totals.totalPieces.toFixed(2), totals.totalAmount.toFixed(2)])
+  groups.forEach((group, index) => {
+    if (cursorY > pageH - 40) {
+      pdf.addPage()
+      cursorY = 16
+    }
 
-  autoTable(pdf, {
-    startY: tableStartY, margin: { left: margin, right: margin },
-    head, body,
-    styles: { fontSize: 8, cellPadding: 2, halign: 'center' },
-    headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
-    alternateRowStyles: { fillColor: [240, 247, 255] },
-    didParseCell: (data) => {
-      if (data.row.index === body.length - 1) { data.cell.styles.fontStyle = 'bold'; data.cell.styles.fillColor = [255, 249, 230] }
-    },
-    theme: 'grid',
+    pdf.setFontSize(11); pdf.setFont('helvetica', 'bold')
+    pdf.text(`Worker ID: ${group.worker_id}  —  ${group.worker_full_name}`, margin, cursorY)
+    cursorY += 3
+
+    const body = buildWorkerTableBody(group)
+    autoTable(pdf, {
+      startY: cursorY, margin: { left: margin, right: margin },
+      head: TABLE_HEAD,
+      body,
+      styles: { fontSize: 8, cellPadding: 2, halign: 'center' },
+      headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
+      alternateRowStyles: { fillColor: [240, 247, 255] },
+      didParseCell: (data) => {
+        if (data.row.index === body.length - 1) {
+          data.cell.styles.fontStyle = 'bold'
+          data.cell.styles.fillColor = [255, 249, 230]
+        }
+      },
+      theme: 'grid',
+    })
+
+    cursorY = ((pdf as any).lastAutoTable?.finalY ?? cursorY + 30) + (index < groups.length - 1 ? 10 : 8)
   })
+
+  if (cursorY > pageH - 20) {
+    pdf.addPage()
+    cursorY = 16
+  }
+  pdf.setFontSize(10); pdf.setFont('helvetica', 'bold')
+  pdf.text(
+    `Grand Total — Pieces: ${totals.totalPieces.toFixed(2)}   |   Amount: ${totals.totalAmount.toFixed(2)}`,
+    margin,
+    cursorY + 4,
+  )
 
   pdf.save(`${getFilename('WorkerAnalytics', params)}.pdf`)
 }
@@ -102,23 +158,36 @@ export const exportAnalyticsToExcel = (params: ExportParams) => {
     ['To Date', toDate || 'All'],
     ['Worker', selectedWorkerName],
     ['Role', selectedRole || 'All'],
+    [],
   ]
 
-  if (selectedWorkerObj) {
-    filterRows.push(['Worker ID', String(selectedWorkerObj.worker_id)])
-    const workerRole = selectedWorkerObj.role || selectedWorkerObj.tbd1
-    if (workerRole) filterRows.push(['Role', workerRole])
-    if (selectedWorkerObj.tbd2) filterRows.push(['TBD2', selectedWorkerObj.tbd2])
-    if (selectedWorkerObj.tbd3) filterRows.push(['TBD3', selectedWorkerObj.tbd3])
-  }
+  const groups = groupRowsByWorker(filteredData)
+  const dataRows: string[][] = []
 
-  filterRows.push([])
+  groups.forEach((group, index) => {
+    if (index > 0) dataRows.push([])
+    dataRows.push([`Worker ID: ${group.worker_id}`, group.worker_full_name])
+    dataRows.push(['Section', 'Date', 'Rate', 'Lot Number', 'Layer', 'Pieces', 'Total Amount'])
+    group.rows.forEach((row) => {
+      dataRows.push([
+        row.section,
+        row.date,
+        row.rate.toFixed(2),
+        row.lotNumber,
+        String(row.layer),
+        row.pieces.toFixed(2),
+        row.total_amount.toFixed(2),
+      ])
+    })
+    dataRows.push(['', '', '', '', 'TOTAL', group.totalPieces.toFixed(2), group.totalAmount.toFixed(2)])
+  })
 
-  const headers = ['Worker ID', 'Worker Name', 'Section', 'Date', 'Rate', 'Lot Number', 'Layer', 'Pieces', 'Total Amount']
-  const rows = filteredData.map((row) => [row.worker_id.toString(), row.worker_full_name, row.section, row.date, row.rate.toString(), row.lotNumber, row.layer.toString(), row.pieces.toString(), row.total_amount.toFixed(2)])
-  rows.push(['', 'TOTAL', '', '', '', '', '', totals.totalPieces.toFixed(2), totals.totalAmount.toFixed(2)])
+  dataRows.push([])
+  dataRows.push(['', '', '', '', 'GRAND TOTAL', totals.totalPieces.toFixed(2), totals.totalAmount.toFixed(2)])
 
-  const csvContent = [...filterRows.map((r) => r.map((cell) => `"${cell}"`).join(',')), headers.join(','), ...rows.map((row) => row.map((cell) => `"${cell}"`).join(','))].join('\n')
+  const csvContent = [...filterRows, ...dataRows]
+    .map((row) => row.map((cell) => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(','))
+    .join('\n')
 
   const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' })
   const link = document.createElement('a')

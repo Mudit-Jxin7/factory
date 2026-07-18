@@ -3,12 +3,14 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 // Mock jspdf and jspdf-autotable before importing the module under test
 vi.mock('jspdf', () => {
   class MockJsPDF {
-    internal = { pageSize: { getWidth: () => 297 } }
+    internal = { pageSize: { getWidth: () => 297, getHeight: () => 210 } }
+    lastAutoTable = { finalY: 40 }
     setFontSize = vi.fn()
     setFont = vi.fn()
     text = vi.fn()
     setFillColor = vi.fn()
     rect = vi.fn()
+    addPage = vi.fn()
     save = vi.fn()
   }
   return { default: MockJsPDF }
@@ -142,7 +144,7 @@ describe('exportAnalyticsToExcel', () => {
   it('CSV contains correct header columns', () => {
     exportAnalyticsToExcel(baseParams)
 
-    expect(blobContent).toContain('Worker ID,Worker Name,Section,Date,Rate,Lot Number,Layer,Pieces,Total Amount')
+    expect(blobContent).toContain('"Section","Date","Rate","Lot Number","Layer","Pieces","Total Amount"')
   })
 
   it('CSV contains a TOTAL row', () => {
@@ -151,6 +153,22 @@ describe('exportAnalyticsToExcel', () => {
     expect(blobContent).toContain('"TOTAL"')
     expect(blobContent).toContain('"100.00"')
     expect(blobContent).toContain('"1000.00"')
+  })
+
+  it('CSV groups data under a worker heading', () => {
+    exportAnalyticsToExcel({
+      ...baseParams,
+      selectedWorker: '',
+      filteredData: [
+        makeRow({ worker_id: 1, worker_full_name: 'Alice', section: 'Front' }),
+        makeRow({ worker_id: 2, worker_full_name: 'Bob', section: 'Back', pieces: 50, total_amount: 500 }),
+      ],
+      totals: { totalPieces: 150, totalAmount: 1500 },
+    })
+
+    expect(blobContent).toContain('"Worker ID: 1","Alice"')
+    expect(blobContent).toContain('"Worker ID: 2","Bob"')
+    expect(blobContent).toContain('"GRAND TOTAL"')
   })
 
   it('CSV rows contain data from filteredData', () => {
