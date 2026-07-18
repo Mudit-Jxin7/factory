@@ -79,7 +79,7 @@ const buildWorkerTableBody = (group: WorkerGroup) => {
 
 export const exportAnalyticsToPDF = (params: ExportParams) => {
   const { filteredData, workers, fromDate, toDate, selectedWorker, selectedRole, totals } = params
-  const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
+  const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
   const pageW = pdf.internal.pageSize.getWidth()
   const pageH = pdf.internal.pageSize.getHeight()
   const margin = 10
