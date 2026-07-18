@@ -31,7 +31,7 @@ interface WorkerGroup {
   totalAmount: number
 }
 
-const TABLE_HEAD = [['Section', 'Date', 'Rate', 'Lot Number', 'Layer', 'Pieces', 'Total Amount']]
+const TABLE_HEAD = [['Section', 'Date', 'Rate', 'Lot Number', 'Layer', 'Total Pieces', 'Total Amount']]
 
 const getFilename = (base: string, { fromDate, toDate, selectedWorker, selectedRole, workers }: Pick<ExportParams, 'fromDate' | 'toDate' | 'selectedWorker' | 'selectedRole' | 'workers'>) => {
   const dateRange = fromDate && toDate ? `_${fromDate}_to_${toDate}` : ''
@@ -167,7 +167,7 @@ export const exportAnalyticsToExcel = (params: ExportParams) => {
   groups.forEach((group, index) => {
     if (index > 0) dataRows.push([])
     dataRows.push([`Worker ID: ${group.worker_id}`, group.worker_full_name])
-    dataRows.push(['Section', 'Date', 'Rate', 'Lot Number', 'Layer', 'Pieces', 'Total Amount'])
+    dataRows.push(['Section', 'Date', 'Rate', 'Lot Number', 'Layer', 'Total Pieces', 'Total Amount'])
     group.rows.forEach((row) => {
       dataRows.push([
         row.section,

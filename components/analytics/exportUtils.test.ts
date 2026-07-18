@@ -144,7 +144,7 @@ describe('exportAnalyticsToExcel', () => {
   it('CSV contains correct header columns', () => {
     exportAnalyticsToExcel(baseParams)
 
-    expect(blobContent).toContain('"Section","Date","Rate","Lot Number","Layer","Pieces","Total Amount"')
+    expect(blobContent).toContain('"Section","Date","Rate","Lot Number","Layer","Total Pieces","Total Amount"')
   })
 
   it('CSV contains a TOTAL row', () => {

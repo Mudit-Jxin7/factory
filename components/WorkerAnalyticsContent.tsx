@@ -65,7 +65,7 @@ export default function WorkerAnalyticsContent() {
     jobCards.forEach((jobCard: any) => {
       if (!Array.isArray(jobCard.productionData)) return
       jobCard.productionData.forEach((row: any) => {
-        const pieces = Number(row.pieces) || 0
+        const pieces = (Number(row.pieces) || 0) + (Number(row.tukda) || 0)
         const layer = Number(row.layer) || 0
         SECTIONS.forEach(({ key, workerKey, dateKey, rateKey }) => {
           const workerId = row[workerKey]
