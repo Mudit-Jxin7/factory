@@ -27,28 +27,9 @@ export const exportLotViewToPDF = (lot: any) => {
 
   const afterInfo = (pdf as any).lastAutoTable.finalY + 6
   pdf.setFontSize(11); pdf.setFont('helvetica', 'bold')
-  pdf.text('Ratios', margin, afterInfo)
-
-  const ratioKeys = Object.keys(lot.ratios || {})
-  const ratioVals = Object.values(lot.ratios || {}).map((v) => String(v))
-  const sumOfRatios = Object.values(lot.ratios || {}).reduce((s: number, v: any) => s + (Number(v) || 0), 0).toFixed(2)
-
+  pdf.text('Production Data', margin, afterInfo)
   autoTable(pdf, {
     startY: afterInfo + 2, margin: { left: margin, right: margin },
-    head: [ratioKeys.map(k => k.toUpperCase())], body: [ratioVals],
-    styles: { fontSize: 8, cellPadding: 2, halign: 'center' },
-    headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' }, theme: 'grid',
-  })
-
-  const afterRatios = (pdf as any).lastAutoTable.finalY + 2
-  pdf.setFontSize(9); pdf.setFont('helvetica', 'normal')
-  pdf.text(`Sum of Ratios: ${sumOfRatios}`, margin, afterRatios + 4)
-
-  const afterRatioSum = afterRatios + 10
-  pdf.setFontSize(11); pdf.setFont('helvetica', 'bold')
-  pdf.text('Production Data', margin, afterRatioSum)
-  autoTable(pdf, {
-    startY: afterRatioSum + 2, margin: { left: margin, right: margin },
     head: [['S.No', 'Meter', 'Layer', 'Pieces', 'Tukda', 'Total Pieces', 'Color', 'Shade', 'TBD2', 'TBD3']],
     body: (lot.productionData || []).map((row: any) => {
       const rowTotalPieces = Number(row.pieces || 0) + Number(row.tukda || 0)
@@ -60,26 +41,12 @@ export const exportLotViewToPDF = (lot: any) => {
   })
 
   const afterProd = (pdf as any).lastAutoTable.finalY + 6
-  pdf.setFontSize(11); pdf.setFont('helvetica', 'bold')
-  pdf.text('Summary & Calculations', margin, afterProd)
-  const totalTukda = (lot.productionData || []).reduce((sum: number, row: any) => sum + (Number(row.tukda) || 0), 0)
-  const tukdaCount = totalTukda || Number(lot.tukda?.count || 0)
-  const grandTotal = Number(lot.totalPiecesWithTukda ?? (Number(lot.totalPieces || 0) + tukdaCount)).toFixed(2)
-  autoTable(pdf, {
-    startY: afterProd + 2, margin: { left: margin, right: margin },
-    head: [['# Tukda', 'Tukda Size', 'Total Meter', 'Total Pieces', 'Grand Total Pieces', 'Average']],
-    body: [[tukdaCount, lot.tukda?.size || 'N/A', Number(lot.totalMeter || 0).toFixed(2), Number(lot.totalPieces || 0).toFixed(2), grandTotal, Number(lot.average || 0).toFixed(4)]],
-    styles: { fontSize: 8, cellPadding: 2, halign: 'center' },
-    headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' }, theme: 'grid',
-  })
-
-  const afterSummary = (pdf as any).lastAutoTable.finalY + 6
   const addlRows = getAdditionalInfoExportRows(lot.flyWidth, lot.additionalInfo)
   if (addlRows.length > 0) {
     pdf.setFontSize(11); pdf.setFont('helvetica', 'bold')
-    pdf.text('Additional Information', margin, afterSummary)
+    pdf.text('Additional Information', margin, afterProd)
     autoTable(pdf, {
-      startY: afterSummary + 2, margin: { left: margin, right: margin },
+      startY: afterProd + 2, margin: { left: margin, right: margin },
       head: [['Field', 'Value', 'Field', 'Value', 'Field', 'Value']],
       body: buildAdditionalInfoPdfBody(addlRows),
       styles: { fontSize: 10, cellPadding: 2 },
@@ -102,13 +69,8 @@ export const exportLotViewToExcel = (lot: any) => {
     ['Lot Number', lot.lotNumber || ''], ['Date', displayDate],
     ['Fabric', lot.fabric || ''], ['Pattern', lot.pattern || ''],
     ['Brand', lot.brand || ''], ['Created At', lot.createdAt ? formatDisplayDateTime(lot.createdAt) : ''],
-    [], ['Ratios'],
-    Object.keys(lot.ratios || {}).map((k: string) => k.toUpperCase()),
-    Object.values(lot.ratios || {}).map((v: any) => String(v)), [],
+    [],
   ]
-  const totalTukda = (lot.productionData || []).reduce((sum: number, row: any) => sum + (Number(row.tukda) || 0), 0)
-  const tukdaCount = totalTukda || Number(lot.tukda?.count || 0)
-  const grandTotal = Number(lot.totalPiecesWithTukda ?? (Number(lot.totalPieces || 0) + tukdaCount)).toFixed(2)
   const prodRows = (lot.productionData || []).map((row: any) => {
     const rowTotalPieces = Number(row.pieces || 0) + Number(row.tukda || 0)
     return [row.serialNumber, Number(row.meter || 0), Number(row.layer || 1), Number(row.pieces || 0).toFixed(2), Number(row.tukda || 0), rowTotalPieces.toFixed(2), row.color || '', row.shade || '', row.tbd2 || '', row.tbd3 || '']
@@ -117,9 +79,7 @@ export const exportLotViewToExcel = (lot: any) => {
   const allRows = [
     ...infoRows,
     ['S.No', 'Meter', 'Layer', 'Pieces', 'Tukda', 'Total Pieces', 'Color', 'Shade', 'TBD2', 'TBD3'],
-    ...prodRows, [],
-    ['Summary'], ['# Tukda', 'Tukda Size', 'Total Meter', 'Total Pieces', 'Grand Total Pieces', 'Average'],
-    [tukdaCount, lot.tukda?.size || '', Number(lot.totalMeter || 0).toFixed(2), Number(lot.totalPieces || 0).toFixed(2), grandTotal, Number(lot.average || 0).toFixed(4)],
+    ...prodRows,
     ...(addlRows.length > 0 ? [[], ['Additional Information'], ['Field', 'Value'], ...addlRows] : []),
   ]
   const csvContent = allRows.map((row) => (row as any[]).map((cell) => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(',')).join('\n')

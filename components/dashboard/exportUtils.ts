@@ -23,7 +23,7 @@ interface ExportParams {
 }
 
 export const exportLotToPDF = (params: ExportParams) => {
-  const { lotNumber, date, fabric, pattern, brand, ratios, sumOfRatios, productionData, tukda, totalMeter, totalPieces, totalPiecesWithTukda, average, flyWidth, additionalInfo } = params
+  const { lotNumber, date, fabric, pattern, brand, productionData, flyWidth, additionalInfo } = params
   const displayDate = formatDisplayDate(date, '—')
   const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
   const pageW = pdf.internal.pageSize.getWidth()
@@ -48,25 +48,9 @@ export const exportLotToPDF = (params: ExportParams) => {
 
   const afterInfo = (pdf as any).lastAutoTable.finalY + 6
   pdf.setFontSize(11); pdf.setFont('helvetica', 'bold')
-  pdf.text('Ratios', margin, afterInfo)
+  pdf.text('Production Data', margin, afterInfo)
   autoTable(pdf, {
     startY: afterInfo + 2, margin: { left: margin, right: margin },
-    head: [Object.keys(ratios).map(k => k.toUpperCase())],
-    body: [Object.values(ratios).map(v => String(v))],
-    styles: { fontSize: 8, cellPadding: 2, halign: 'center' },
-    headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
-    theme: 'grid',
-  })
-
-  const afterRatios = (pdf as any).lastAutoTable.finalY + 2
-  pdf.setFontSize(9); pdf.setFont('helvetica', 'normal')
-  pdf.text(`Sum of Ratios: ${sumOfRatios.toFixed(2)}`, margin, afterRatios + 4)
-
-  const afterRatioSum = afterRatios + 10
-  pdf.setFontSize(11); pdf.setFont('helvetica', 'bold')
-  pdf.text('Production Data', margin, afterRatioSum)
-  autoTable(pdf, {
-    startY: afterRatioSum + 2, margin: { left: margin, right: margin },
     head: [['S.No', 'Meter', 'Layer', 'Pieces', 'Tukda', 'Total Pieces', 'Color', 'Zip Code', 'Thread Code']],
     body: productionData.map(row => {
       const rowTotalPieces = (Number(row.pieces) || 0) + (Number(row.tukda) || 0)
@@ -82,23 +66,12 @@ export const exportLotToPDF = (params: ExportParams) => {
   })
 
   const afterProd = (pdf as any).lastAutoTable.finalY + 6
-  pdf.setFontSize(11); pdf.setFont('helvetica', 'bold')
-  pdf.text('Summary & Calculations', margin, afterProd)
-  autoTable(pdf, {
-    startY: afterProd + 2, margin: { left: margin, right: margin },
-    head: [['# Tukda', 'Tukda Size', 'Total Meter', 'Total Pieces', 'Grand Total Pieces', 'Average']],
-    body: [[tukda.count, tukda.size, totalMeter.toFixed(2), totalPieces.toFixed(2), totalPiecesWithTukda.toFixed(2), average.toFixed(4)]],
-    styles: { fontSize: 8, cellPadding: 2, halign: 'center' },
-    headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' }, theme: 'grid',
-  })
-
-  const afterSummary = (pdf as any).lastAutoTable.finalY + 6
   const addlRows = getAdditionalInfoExportRows(flyWidth, additionalInfo)
   if (addlRows.length > 0) {
     pdf.setFontSize(11); pdf.setFont('helvetica', 'bold')
-    pdf.text('Additional Information', margin, afterSummary)
+    pdf.text('Additional Information', margin, afterProd)
     autoTable(pdf, {
-      startY: afterSummary + 2, margin: { left: margin, right: margin },
+      startY: afterProd + 2, margin: { left: margin, right: margin },
       head: [['Field', 'Value', 'Field', 'Value', 'Field', 'Value']],
       body: buildAdditionalInfoPdfBody(addlRows),
       styles: { fontSize: 10, cellPadding: 2 },
@@ -116,12 +89,11 @@ export const exportLotToPDF = (params: ExportParams) => {
 }
 
 export const exportLotToExcel = (params: ExportParams) => {
-  const { lotNumber, date, fabric, pattern, brand, ratios, productionData, tukda, totalMeter, totalPieces, totalPiecesWithTukda, average, flyWidth, additionalInfo } = params
+  const { lotNumber, date, fabric, pattern, brand, productionData, flyWidth, additionalInfo } = params
   const displayDate = formatDisplayDate(date)
 
   const infoRows = [
     ['Lot Number', lotNumber], ['Date', displayDate], ['Fabric', fabric], ['Pattern', pattern], ['Brand', brand], [],
-    ['Ratios'], Object.keys(ratios).map(k => k.toUpperCase()), Object.values(ratios).map(v => String(v)), [],
   ]
   const prodHeaders = ['S.No', 'Meter', 'Layer', 'Pieces', 'Tukda', 'Total Pieces', 'Color', 'Zip Code', 'Thread Code']
   const prodRows = productionData.map(row => {
@@ -131,12 +103,10 @@ export const exportLotToExcel = (params: ExportParams) => {
       row.color || '', row.zip_code || '', row.thread_code || '',
     ]
   })
-  const summaryRow = [tukda.count, tukda.size, totalMeter.toFixed(2), totalPieces.toFixed(2), totalPiecesWithTukda.toFixed(2), average.toFixed(4)]
   const addlRows = getAdditionalInfoExportRows(flyWidth, additionalInfo)
   const allRows = [
     ...infoRows,
-    prodHeaders, ...prodRows, [],
-    ['Summary'], ['# Tukda', 'Tukda Size', 'Total Meter', 'Total Pieces', 'Grand Total', 'Average'], summaryRow,
+    prodHeaders, ...prodRows,
     ...(addlRows.length > 0 ? [[], ['Additional Information'], ['Field', 'Value'], ...addlRows] : []),
   ]
 
@@ -153,4 +123,3 @@ export const exportLotToExcel = (params: ExportParams) => {
   link.click()
   document.body.removeChild(link)
 }
-
