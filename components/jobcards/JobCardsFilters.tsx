@@ -27,7 +27,7 @@ export default function JobCardsFilters({
   return (
     <div className="card" style={{ marginBottom: '20px', padding: '20px', background: '#fff9e6' }}>
       <h3 style={{ marginTop: 0, marginBottom: '15px', fontSize: '18px', fontWeight: '600', color: '#1a1a1a' }}>Filters</h3>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px', alignItems: 'end' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))', gap: '15px', alignItems: 'end' }}>
         <div className="form-group" style={{ marginBottom: 0 }}>
           <label style={labelStyle}>Lot Number</label>
           <input type="text" value={filterLotNumber} onChange={(e) => onLotNumberChange(e.target.value)} placeholder="Search lot number…" style={inputStyle} />

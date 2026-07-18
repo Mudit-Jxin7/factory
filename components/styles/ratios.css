@@ -79,10 +79,16 @@
   .ratios-grid { grid-template-columns: repeat(5, 1fr); gap: 12px; }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   .ratios-grid { grid-template-columns: repeat(3, 1fr); }
 }
 
-@media (max-width: 480px) {
-  .ratios-grid { grid-template-columns: repeat(2, 1fr); }
+@media (max-width: 600px) {
+  .ratios-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .ratios-grid .form-group { padding: 10px; }
+  .ratios-summary { padding: 14px 16px; font-size: 14px; }
+}
+
+@media (max-width: 380px) {
+  .ratios-grid { grid-template-columns: 1fr 1fr; }
 }

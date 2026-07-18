@@ -76,7 +76,22 @@
 .info-item label { font-size: 14px; font-weight: 600; color: #6c757d; text-transform: uppercase; letter-spacing: 0.5px; }
 .info-value { font-size: 18px; font-weight: 500; color: #1a1a1a; padding: 4px 0; }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .card { padding: 24px; }
-  .card-header { flex-direction: column; align-items: flex-start; gap: 16px; }
+  .form-grid { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 18px; }
+}
+
+@media (max-width: 768px) {
+  .card { padding: 16px; border-radius: 12px; }
+  .card h2 { font-size: 20px; margin-bottom: 16px; }
+  .card-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  .card-header .btn { width: 100%; justify-content: center; }
+  .form-grid { grid-template-columns: 1fr; gap: 16px; }
+  .form-group input,
+  .form-group select { font-size: 16px; padding: 11px 14px; }
+  .info-value { font-size: 16px; }
 }

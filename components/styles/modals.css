@@ -118,8 +118,21 @@
 @keyframes slideInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
 @media (max-width: 768px) {
-  .modal-content { padding: 24px; }
-  .confirm-box { padding: 24px; }
-  .confirm-actions { flex-direction: column; }
+  .modal-content {
+    padding: 20px;
+    width: calc(100% - 24px);
+    max-height: 85vh;
+    border-radius: 16px;
+  }
+  .modal-header h3 { font-size: 18px; }
+  .modal-footer { flex-direction: column-reverse; }
+  .modal-footer .btn { width: 100%; justify-content: center; }
+  .confirm-box {
+    padding: 24px 20px;
+    width: calc(100% - 24px);
+    border-radius: 16px;
+  }
+  .confirm-box h3 { font-size: 18px; }
+  .confirm-actions { flex-direction: column-reverse; }
   .confirm-actions .btn { width: 100%; justify-content: center; }
 }

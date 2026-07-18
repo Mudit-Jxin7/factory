@@ -15,12 +15,12 @@ export default function WorkerNavigationBar() {
   return (
     <nav className="main-navbar">
       <div className="navbar-container">
-        <div className="navbar-brand">
+        <div className="navbar-brand" onClick={() => router.push('/worker')}>
           <span className="navbar-icon">🏭</span>
           <span className="navbar-title">Factory Worker</span>
         </div>
 
-        <div className="navbar-links">
+        <div className="navbar-links navbar-links--desktop">
           <button className="navbar-link active">
             <span className="navbar-link-icon">📄</span>
             Job Cards
@@ -30,7 +30,7 @@ export default function WorkerNavigationBar() {
         <div className="navbar-actions">
           <button className="navbar-logout" onClick={handleLogout}>
             <span className="navbar-link-icon">🚪</span>
-            Logout
+            <span className="navbar-logout-label">Logout</span>
           </button>
         </div>
       </div>

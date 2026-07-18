@@ -58,5 +58,10 @@
 .login-button:hover { background: #2d2d2d; transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12); }
 
 @media (max-width: 768px) {
-  .btn { width: 100%; justify-content: center; }
+  .header-actions .btn,
+  .modal-footer .btn,
+  .confirm-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
 }

@@ -33,7 +33,7 @@ export default function AnalyticsFilters({
           Last 30 Days
         </button>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '15px', alignItems: 'end' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: '15px', alignItems: 'end' }}>
         <div className="form-group" style={{ marginBottom: 0 }}>
           <label>From Date</label>
           <input type="date" value={fromDate} onChange={(e) => onFromDateChange(e.target.value)} style={inputStyle} />
@@ -53,11 +53,11 @@ export default function AnalyticsFilters({
             ))}
           </select>
         </div>
-        <div style={{ display: 'flex', alignItems: 'end', gap: '10px' }}>
-          <button className="btn btn-primary" onClick={onApplyFilters} style={{ padding: '10px 20px', fontSize: '16px', whiteSpace: 'nowrap' }}>
+        <div style={{ display: 'flex', alignItems: 'end', gap: '10px', flexWrap: 'wrap' }}>
+          <button className="btn btn-primary" onClick={onApplyFilters} style={{ padding: '10px 20px', fontSize: '16px', whiteSpace: 'nowrap', flex: '1 1 auto' }}>
             Apply Filters
           </button>
-          <button className="btn btn-secondary" onClick={onClearFilters} style={{ padding: '10px 20px', fontSize: '16px', whiteSpace: 'nowrap' }}>
+          <button className="btn btn-secondary" onClick={onClearFilters} style={{ padding: '10px 20px', fontSize: '16px', whiteSpace: 'nowrap', flex: '1 1 auto' }}>
             Clear Filters
           </button>
         </div>

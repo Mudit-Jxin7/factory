@@ -107,10 +107,10 @@ export default function JobCardsTable({
 
   return (
     <>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', flexWrap: 'wrap', gap: '12px' }}>
         {renderTableHeading(`${jobCards.length} of ${allCount}`)}
         {!isWorker && totalSelected > 0 && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
             <span style={{ fontSize: '14px', color: '#495057', fontWeight: 500 }}>
               {totalSelected} selected
             </span>

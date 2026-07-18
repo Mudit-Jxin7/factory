@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
 import "@/components/dashboard.css";
@@ -14,6 +14,12 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   title: "Factory Dashboard",
   description: "Lot Production Dashboard - Track and manage production data",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
 };
 
 export default function RootLayout({

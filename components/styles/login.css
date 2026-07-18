@@ -64,3 +64,15 @@
 }
 
 .login-form { display: flex; flex-direction: column; gap: 20px; }
+
+@media (max-width: 768px) {
+  .login-container { padding: 16px; }
+  .login-card { padding: 32px 24px; }
+  .login-header h1 { font-size: 28px; }
+  .login-header p { font-size: 15px; }
+}
+
+@media (max-width: 480px) {
+  .login-card { padding: 28px 18px; border-radius: 12px; }
+  .login-header h1 { font-size: 24px; }
+}

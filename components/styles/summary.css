@@ -51,7 +51,15 @@
 .summary-value { font-size: 28px; font-weight: 700; color: #1a1a1a; letter-spacing: -0.5px; }
 .average-value { color: #1a1a1a; }
 
+@media (max-width: 1024px) {
+  .summary-cards-row { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
+  .tukda-inputs { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; }
+  .summary-value { font-size: 24px; }
+}
+
 @media (max-width: 768px) {
-  .summary-cards-row, .tukda-inputs { grid-template-columns: 1fr; }
-  .summary-card { flex-direction: column; text-align: center; }
+  .summary-cards-row, .tukda-inputs { grid-template-columns: 1fr; gap: 12px; }
+  .summary-card { flex-direction: row; text-align: left; padding: 16px; }
+  .summary-icon { width: 48px; height: 48px; font-size: 28px; flex-shrink: 0; }
+  .summary-value { font-size: 22px; }
 }
