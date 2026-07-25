@@ -2,7 +2,7 @@ import { JobCardProductionRow, Worker } from '@/lib/types'
 
 export type WorkerPrices = Record<string, string>
 
-const WORKER_PRICE_FIELDS = ['front', 'back', 'zip', 'astar', 'beltProd', 'add1', 'add2'] as const
+const WORKER_PRICE_FIELDS = ['front', 'back', 'zip', 'astar', 'beltProd'] as const
 
 const normalizeWorkerId = (id: unknown) => String(id ?? '').trim()
 

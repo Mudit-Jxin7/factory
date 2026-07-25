@@ -1,6 +1,6 @@
 import { JobCardProductionRow, Worker, WorkerRole } from '@/lib/types'
 
-export type WorkerField = 'front' | 'back' | 'zip' | 'astar' | 'beltProd' | 'add1' | 'add2'
+export type WorkerField = 'front' | 'back' | 'zip' | 'astar' | 'beltProd'
 
 export const FIELD_TO_ROLE: Partial<Record<WorkerField, WorkerRole>> = {
   front: 'FRONT',
@@ -27,8 +27,7 @@ export const filterWorkersForField = (workers: Worker[], field: WorkerField, sel
 export const WORKER_PAIRS: [string, string | null][] = [
   ['Front', 'Back'],
   ['Zip',   'Astar'],
-  ['Belt',  'Add1'],
-  ['Add2',  null],
+  ['Belt',  null],
 ]
 
 export const WORKER_META: Record<string, { workerKey: string; dateKey: string; rateKey: string }> = {
@@ -37,13 +36,11 @@ export const WORKER_META: Record<string, { workerKey: string; dateKey: string; r
   Zip:   { workerKey: 'zipWorker',      dateKey: 'zipDate',      rateKey: 'zipRate'      },
   Astar: { workerKey: 'astarWorker',    dateKey: 'astarDate',    rateKey: 'astarRate'    },
   Belt:  { workerKey: 'beltProdWorker', dateKey: 'beltProdDate', rateKey: 'beltProdRate' },
-  Add1:  { workerKey: 'add1Worker',     dateKey: 'add1Date',     rateKey: 'add1Rate'     },
-  Add2:  { workerKey: 'add2Worker',     dateKey: 'add2Date',     rateKey: 'add2Rate'     },
 }
 
 export const FIELD_LABELS: Record<WorkerField, string> = {
   front: 'Front', back: 'Back', zip: 'Zip', astar: 'Astar',
-  beltProd: 'Belt', add1: 'Additional 1', add2: 'Additional 2',
+  beltProd: 'Belt',
 }
 
 export const DEFAULT_PRODUCTION_ROW: Omit<JobCardProductionRow, 'serialNumber'> = {

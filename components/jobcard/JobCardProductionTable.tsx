@@ -19,10 +19,10 @@ interface JobCardProductionTableProps {
   isCellLocked?: (rowIndex: number, field: WorkerField) => boolean
 }
 
-const WORKER_FIELDS: WorkerField[] = ['front', 'back', 'zip', 'astar', 'beltProd', 'add1', 'add2']
+const WORKER_FIELDS: WorkerField[] = ['front', 'back', 'zip', 'astar', 'beltProd']
 const WORKER_COL_LABELS: Record<WorkerField, string> = {
   front: 'Front', back: 'Back', zip: 'Zip', astar: 'Astar',
-  beltProd: 'Belt', add1: 'Additional 1', add2: 'Additional 2',
+  beltProd: 'Belt',
 }
 
 const COL = {

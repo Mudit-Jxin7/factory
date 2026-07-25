@@ -2,7 +2,7 @@ import { JobCardProductionRow } from '@/lib/types'
 
 export const WORKER_REQUIRED_FIELDS = ['front', 'back', 'zip', 'astar', 'beltProd'] as const
 export const WORKER_EDITABLE_FIELDS = [
-  'front', 'back', 'zip', 'astar', 'beltProd', 'add1', 'add2',
+  'front', 'back', 'zip', 'astar', 'beltProd',
 ] as const
 
 type RequiredWorkerField = typeof WORKER_REQUIRED_FIELDS[number]
