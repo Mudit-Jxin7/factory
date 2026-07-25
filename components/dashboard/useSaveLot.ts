@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { lotsAPI, jobCardsAPI } from '@/lib/api'
 import { Ratios, AdditionalInfo, LotWorkerRates } from '@/lib/types'
-import { applyLotRatesToProduction, getMissingLotWorkerRateLabels, normalizeLotWorkerRates } from '@/lib/lotWorkerRates'
+import { applyLotRatesToProduction, normalizeLotWorkerRates } from '@/lib/lotWorkerRates'
 import { useToast } from '../ToastProvider'
 
 interface ProductionRow {
@@ -48,11 +48,6 @@ export function useSaveLot() {
       workerRates, editLotNumber,
     } = params
     if (!lotNumber.trim()) { toast.showToast('Please enter a lot number', 'warning'); return }
-    const missingRates = getMissingLotWorkerRateLabels(workerRates)
-    if (missingRates.length > 0) {
-      toast.showToast(`Please enter worker rates for: ${missingRates.join(', ')}`, 'warning')
-      return
-    }
     setSaving(true)
     try {
       const normalizedRates = normalizeLotWorkerRates(workerRates)

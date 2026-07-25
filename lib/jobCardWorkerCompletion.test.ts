@@ -40,4 +40,14 @@ describe('hasAllRequiredWorkerFields', () => {
       frontWorker: 'w1', backWorker: 'w2', zipWorker: 'w3', astarWorker: 'w4', beltProdWorker: 'w5',
     })])).toBe(true)
   })
+
+  it('only requires columns that have a worker rate set', () => {
+    const rates = { front: '10', back: '12', zip: '', astar: '', belt: '' }
+    expect(hasAllRequiredWorkerFields([emptyRow({ frontWorker: 'w1' })], rates)).toBe(false)
+    expect(hasAllRequiredWorkerFields([emptyRow({ frontWorker: 'w1', backWorker: 'w2' })], rates)).toBe(true)
+  })
+
+  it('returns true when no rates are configured', () => {
+    expect(hasAllRequiredWorkerFields([emptyRow()], {})).toBe(true)
+  })
 })

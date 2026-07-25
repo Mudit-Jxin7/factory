@@ -1,8 +1,8 @@
-import { Ratios, AdditionalInfo, JobCardProductionRow, Worker } from '@/lib/types'
+import { Ratios, AdditionalInfo, JobCardProductionRow, Worker, LotWorkerRates } from '@/lib/types'
 import { getAdditionalInfoExportRows } from '@/lib/additionalInfoExport'
 import { formatDisplayDate } from '@/lib/dateFormat'
 import { formatIndianAmount } from '@/lib/indianNumberFormat'
-import { WORKER_PAIRS, WORKER_META } from './constants'
+import { WORKER_META, getActiveWorkerPairs } from './constants'
 
 const getWorkerName = (workerId: string, workers: Worker[]) => {
   if (!workerId) return ''
@@ -19,8 +19,10 @@ export const exportJobCardToExcel = (params: {
   flyWidth: string
   additionalInfo: AdditionalInfo
   workers: Worker[]
+  workerRates?: LotWorkerRates | null
 }) => {
-  const { lotNumber, brand, date, ratios, productionData, flyWidth, additionalInfo, workers } = params
+  const { lotNumber, brand, date, ratios, productionData, flyWidth, additionalInfo, workers, workerRates } = params
+  const workerPairs = getActiveWorkerPairs(workerRates ?? {})
   const displayDate = formatDisplayDate(date)
 
   const infoRows = [
@@ -43,7 +45,7 @@ export const exportJobCardToExcel = (params: {
     ])
     prodRows.push([])
 
-    WORKER_PAIRS.forEach(([w1, w2], pIdx) => {
+    workerPairs.forEach(([w1, w2], pIdx) => {
       const m1 = WORKER_META[w1]
       const m2 = w2 ? WORKER_META[w2] : null
       prodRows.push([
@@ -57,7 +59,7 @@ export const exportJobCardToExcel = (params: {
         m2 ? formatDisplayDate((row as any)[m2.dateKey] || '') : '',
         m2 ? formatIndianAmount((row as any)[m2.rateKey] || '') : '',
       ])
-      if (pIdx < WORKER_PAIRS.length - 1) prodRows.push([])
+      if (pIdx < workerPairs.length - 1) prodRows.push([])
     })
 
     if (idx < productionData.length - 1) { prodRows.push([]); prodRows.push([]) }

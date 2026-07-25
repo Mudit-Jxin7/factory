@@ -11,12 +11,21 @@ export const LOT_RATE_FIELD_MAP = {
 
 export type LotRateProductionField = keyof typeof LOT_RATE_FIELD_MAP
 
+export const ALL_LOT_RATE_PRODUCTION_FIELDS = Object.keys(LOT_RATE_FIELD_MAP) as LotRateProductionField[]
+
 export const normalizeLotWorkerRates = (
   rates?: Partial<LotWorkerRates> | null,
 ): LotWorkerRates => ({
   ...DEFAULT_LOT_WORKER_RATES,
   ...(rates || {}),
 })
+
+export const isLotWorkerRateFilled = (value: unknown): boolean => {
+  const trimmed = String(value ?? '').trim()
+  if (!trimmed) return false
+  const num = Number(trimmed)
+  return Number.isFinite(num) && num >= 0
+}
 
 export const getLotRateForField = (
   rates: Partial<LotWorkerRates> | null | undefined,
@@ -27,6 +36,21 @@ export const getLotRateForField = (
   return String(normalizeLotWorkerRates(rates)[key] || '').trim()
 }
 
+/**
+ * Production fields that have a rate set on the lot.
+ * When `rates` is undefined/null (legacy), returns all fields.
+ * When rates exist but are all empty, returns [].
+ */
+export const getActiveWorkerFields = (
+  rates?: Partial<LotWorkerRates> | null,
+): LotRateProductionField[] => {
+  if (rates === undefined || rates === null) return [...ALL_LOT_RATE_PRODUCTION_FIELDS]
+  const normalized = normalizeLotWorkerRates(rates)
+  return ALL_LOT_RATE_PRODUCTION_FIELDS.filter((field) =>
+    isLotWorkerRateFilled(normalized[LOT_RATE_FIELD_MAP[field]]),
+  )
+}
+
 /** Stamp lot role rates onto production rows that have a worker assigned. */
 export const applyLotRatesToProduction = (
   productionData: JobCardProductionRow[] = [],
@@ -35,7 +59,7 @@ export const applyLotRatesToProduction = (
   const normalized = normalizeLotWorkerRates(rates)
   return productionData.map((row) => {
     const updated = { ...row }
-    ;(Object.keys(LOT_RATE_FIELD_MAP) as LotRateProductionField[]).forEach((field) => {
+    ALL_LOT_RATE_PRODUCTION_FIELDS.forEach((field) => {
       const workerKey = `${field}Worker` as keyof JobCardProductionRow
       const rateKey = `${field}Rate` as keyof JobCardProductionRow
       const hasWorker = String(row[workerKey] ?? '').trim() !== ''
@@ -61,17 +85,10 @@ export const getMissingLotWorkerRateLabels = (
 ): string[] => {
   const normalized = normalizeLotWorkerRates(rates)
   return (Object.keys(LOT_WORKER_RATE_LABELS) as (keyof LotWorkerRates)[])
-    .filter((key) => {
-      const value = String(normalized[key] ?? '').trim()
-      if (!value) return true
-      const num = Number(value)
-      return !Number.isFinite(num) || num < 0
-    })
+    .filter((key) => !isLotWorkerRateFilled(normalized[key]))
     .map((key) => LOT_WORKER_RATE_LABELS[key])
 }
 
 export const areLotWorkerRatesComplete = (
   rates?: Partial<LotWorkerRates> | null,
 ): boolean => getMissingLotWorkerRateLabels(rates).length === 0
-
-

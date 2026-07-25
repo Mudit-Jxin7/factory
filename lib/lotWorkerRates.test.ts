@@ -44,6 +44,23 @@ describe('lotWorkerRates', () => {
   })
 })
 
+describe('getActiveWorkerFields', () => {
+  it('returns all fields when rates are undefined (legacy)', async () => {
+    const { getActiveWorkerFields } = await import('./lotWorkerRates')
+    expect(getActiveWorkerFields(undefined)).toEqual(['front', 'back', 'zip', 'astar', 'beltProd'])
+  })
+
+  it('returns only fields with rates when rates object is provided', async () => {
+    const { getActiveWorkerFields } = await import('./lotWorkerRates')
+    expect(getActiveWorkerFields({ front: '10', back: '5', zip: '', astar: '', belt: '' })).toEqual(['front', 'back'])
+  })
+
+  it('returns empty when rates object has no values', async () => {
+    const { getActiveWorkerFields } = await import('./lotWorkerRates')
+    expect(getActiveWorkerFields({})).toEqual([])
+  })
+})
+
 describe('areLotWorkerRatesComplete', () => {
   it('requires all five rates to be present and non-negative', async () => {
     const { areLotWorkerRatesComplete, getMissingLotWorkerRateLabels } = await import('./lotWorkerRates')

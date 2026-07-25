@@ -1,4 +1,5 @@
-import { JobCardProductionRow, Worker, WorkerRole } from '@/lib/types'
+import { JobCardProductionRow, LotWorkerRates, Worker, WorkerRole } from '@/lib/types'
+import { getActiveWorkerFields } from '@/lib/lotWorkerRates'
 
 export type WorkerField = 'front' | 'back' | 'zip' | 'astar' | 'beltProd'
 
@@ -30,12 +31,28 @@ export const WORKER_PAIRS: [string, string | null][] = [
   ['Belt',  null],
 ]
 
-export const WORKER_META: Record<string, { workerKey: string; dateKey: string; rateKey: string }> = {
-  Front: { workerKey: 'frontWorker',    dateKey: 'frontDate',    rateKey: 'frontRate'    },
-  Back:  { workerKey: 'backWorker',     dateKey: 'backDate',     rateKey: 'backRate'     },
-  Zip:   { workerKey: 'zipWorker',      dateKey: 'zipDate',      rateKey: 'zipRate'      },
-  Astar: { workerKey: 'astarWorker',    dateKey: 'astarDate',    rateKey: 'astarRate'    },
-  Belt:  { workerKey: 'beltProdWorker', dateKey: 'beltProdDate', rateKey: 'beltProdRate' },
+export const WORKER_META: Record<string, { workerKey: string; dateKey: string; rateKey: string; field: WorkerField }> = {
+  Front: { workerKey: 'frontWorker',    dateKey: 'frontDate',    rateKey: 'frontRate',    field: 'front' },
+  Back:  { workerKey: 'backWorker',     dateKey: 'backDate',     rateKey: 'backRate',     field: 'back' },
+  Zip:   { workerKey: 'zipWorker',      dateKey: 'zipDate',      rateKey: 'zipRate',      field: 'zip' },
+  Astar: { workerKey: 'astarWorker',    dateKey: 'astarDate',    rateKey: 'astarRate',    field: 'astar' },
+  Belt:  { workerKey: 'beltProdWorker', dateKey: 'beltProdDate', rateKey: 'beltProdRate', field: 'beltProd' },
+}
+
+/** Worker pairs limited to roles that have a lot rate set. */
+export const getActiveWorkerPairs = (
+  workerRates?: Partial<LotWorkerRates> | null,
+): [string, string | null][] => {
+  const active = new Set(getActiveWorkerFields(workerRates ?? {}))
+  const pairs: [string, string | null][] = []
+  for (const [w1, w2] of WORKER_PAIRS) {
+    const a1 = active.has(WORKER_META[w1].field)
+    const a2 = w2 ? active.has(WORKER_META[w2].field) : false
+    if (a1 && a2) pairs.push([w1, w2])
+    else if (a1) pairs.push([w1, null])
+    else if (a2 && w2) pairs.push([w2, null])
+  }
+  return pairs
 }
 
 export const FIELD_LABELS: Record<WorkerField, string> = {

@@ -70,8 +70,8 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
     : canAdminEditJobCard(status)
   const effectiveEditMode = isEditMode && canEdit
   const workerFieldsComplete = useMemo(
-    () => hasAllRequiredWorkerFields(productionData),
-    [productionData],
+    () => hasAllRequiredWorkerFields(productionData, workerRates),
+    [productionData, workerRates],
   )
 
   const sumOfRatios = useMemo(() => Object.values(ratios).reduce((sum, val) => sum + (Number(val) || 0), 0), [ratios])
@@ -127,7 +127,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
           }
         })
         setProductionData(applyLotRatesToProduction(rows, lotRates))
-        setLockedWorkerCells(isWorker ? buildLockedWorkerCellKeys(rows) : new Set())
+        setLockedWorkerCells(isWorker ? buildLockedWorkerCellKeys(rows, lotRates) : new Set())
         if (isRefresh) toast.showToast('Job card refreshed', 'success')
       } else {
         setError('Job card not found. Job cards are automatically created when a lot is saved.')
@@ -179,7 +179,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
 
   const persistJobCard = async (options?: { nextStatus?: JobCardStatus; successMessage?: string }) => {
     const productionToSave = applyLotRatesToProduction(productionData, workerRates)
-    const nextStatus = options?.nextStatus ?? deriveJobCardStatus(productionToSave)
+    const nextStatus = options?.nextStatus ?? deriveJobCardStatus(productionToSave, workerRates)
     setProductionData(productionToSave)
     const result = await jobCardsAPI.updateJobCard(lotNumber, {
       lotNumber, date, brand, ratios,
@@ -210,7 +210,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
         console.error('Error syncing additional info to lot:', err)
       }
       setStatus(nextStatus)
-      if (isWorker) setLockedWorkerCells(buildLockedWorkerCellKeys(productionToSave))
+      if (isWorker) setLockedWorkerCells(buildLockedWorkerCellKeys(productionToSave, workerRates))
       toast.showToast(options?.successMessage || 'Job card updated successfully!', 'success')
 
       const stillEditable = isWorker
@@ -232,7 +232,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
     if (!canEdit) { toast.showToast('This job card cannot be edited', 'warning'); return }
     setSaving(true)
     try {
-      const nextStatus = deriveJobCardStatus(productionData)
+      const nextStatus = deriveJobCardStatus(productionData, workerRates)
       const message = isWorker
         ? (nextStatus === 'complete'
           ? 'Job card completed!'
@@ -247,7 +247,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
   const handleExportPDF = () => {
     setGeneratingPDF(true)
     try {
-      exportJobCardToPDF({ lotNumber, brand, date, ratios, productionData, flyWidth: additionalInfo.flyWidth, additionalInfo, workers })
+      exportJobCardToPDF({ lotNumber, brand, date, ratios, productionData, flyWidth: additionalInfo.flyWidth, additionalInfo, workers, workerRates })
     } catch (err: any) { toast.showToast('Error generating PDF: ' + err.message, 'error') }
     finally { setGeneratingPDF(false) }
   }
@@ -255,7 +255,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
   const handleExportExcel = () => {
     setGeneratingExcel(true)
     try {
-      exportJobCardToExcel({ lotNumber, brand, date, ratios, productionData, flyWidth: additionalInfo.flyWidth, additionalInfo, workers })
+      exportJobCardToExcel({ lotNumber, brand, date, ratios, productionData, flyWidth: additionalInfo.flyWidth, additionalInfo, workers, workerRates })
       toast.showToast('Excel file exported successfully!', 'success')
     } catch (err: any) { toast.showToast('Error generating Excel: ' + err.message, 'error') }
     finally { setGeneratingExcel(false) }

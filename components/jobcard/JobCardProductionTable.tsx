@@ -1,9 +1,9 @@
 'use client'
 
-import { CSSProperties } from 'react'
+import { CSSProperties, useMemo } from 'react'
 import { getColorForShade } from '@/lib/colorUtils'
 import { JobCardProductionRow, LotWorkerRates, Worker } from '@/lib/types'
-import { getLotRateForField } from '@/lib/lotWorkerRates'
+import { getActiveWorkerFields, getLotRateForField } from '@/lib/lotWorkerRates'
 import { formatDisplayDate } from '@/lib/dateFormat'
 import { formatIndianAmount } from '@/lib/indianNumberFormat'
 import { WorkerField } from './constants'
@@ -19,7 +19,7 @@ interface JobCardProductionTableProps {
   isCellLocked?: (rowIndex: number, field: WorkerField) => boolean
 }
 
-const WORKER_FIELDS: WorkerField[] = ['front', 'back', 'zip', 'astar', 'beltProd']
+const ALL_WORKER_FIELDS: WorkerField[] = ['front', 'back', 'zip', 'astar', 'beltProd']
 const WORKER_COL_LABELS: Record<WorkerField, string> = {
   front: 'Front', back: 'Back', zip: 'Zip', astar: 'Astar',
   beltProd: 'Belt',
@@ -65,6 +65,11 @@ const workerBtnStyle = (editable: boolean, locked: boolean) => ({
 export default function JobCardProductionTable({
   productionData, workers, isEditMode, onOpenWorkerPopup, workerRates, isCellLocked,
 }: JobCardProductionTableProps) {
+  const workerFields = useMemo(() => {
+    const active = new Set(getActiveWorkerFields(workerRates ?? {}))
+    return ALL_WORKER_FIELDS.filter((f) => active.has(f))
+  }, [workerRates])
+
   const getWorkerName = (workerId: string) => {
     if (!workerId) return ''
     const w = workers.find((x) => x._id === workerId)
@@ -97,7 +102,7 @@ export default function JobCardProductionTable({
 
   const tableMinWidth =
     COL.sno + COL.layer + COL.pieces + COL.color + COL.shade
-    + WORKER_FIELDS.length * COL.worker
+    + workerFields.length * COL.worker
     + COL.zip + COL.thread
 
   return (
@@ -120,7 +125,7 @@ export default function JobCardProductionTable({
               >
                 Shade
               </th>
-              {WORKER_FIELDS.map((f) => (
+              {workerFields.map((f) => (
                 <th key={f} style={{ width: COL.worker, minWidth: COL.worker }}>{getColumnLabel(f)}</th>
               ))}
               <th style={{ width: COL.zip, minWidth: COL.zip }}>Zip Code</th>
@@ -160,7 +165,7 @@ export default function JobCardProductionTable({
                     )}
                   </div>
                 </td>
-                {WORKER_FIELDS.map((field) => {
+                {workerFields.map((field) => {
                   const locked = !!isCellLocked?.(index, field)
                   const editable = isEditMode && !locked
                   return (
