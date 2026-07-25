@@ -47,13 +47,21 @@ export default function LotsTable({ lots, allCount, loading, deletingLot, bulkDe
   if (loading) {
     return (
       <>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+        <div className="table-toolbar">
           <h2>All Lots</h2>
         </div>
-        <div style={{ overflowX: 'auto' }}>
-          <table className="production-table" style={{ width: '100%' }}>
+        <div className="table-container">
+          <table className="production-table">
             <thead>
-              <tr><th style={{ width: '40px' }}></th><th>Lot Number</th><th>Date</th><th>Fabric</th><th>Pattern</th><th>Brand</th><th style={{ textAlign: 'center' }}>Actions</th></tr>
+              <tr>
+                <th className="cell-check"></th>
+                <th>Lot Number</th>
+                <th>Date</th>
+                <th>Fabric</th>
+                <th>Pattern</th>
+                <th>Brand</th>
+                <th className="cell-center">Actions</th>
+              </tr>
             </thead>
             <tbody>
               {Array.from({ length: 6 }).map((_, i) => (
@@ -76,19 +84,18 @@ export default function LotsTable({ lots, allCount, loading, deletingLot, bulkDe
 
   return (
     <>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', flexWrap: 'wrap', gap: '15px' }}>
+      <div className="table-toolbar">
         <h2>All Lots ({lots.length} of {allCount})</h2>
         {totalSelected > 0 && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <span style={{ fontSize: '14px', color: '#495057', fontWeight: 500 }}>
+          <div className="table-toolbar-actions">
+            <span className="table-selection-count">
               {totalSelected} selected
             </span>
             {onDeleteSelected && (
               <button
-                className="btn btn-logout"
+                className="btn btn-logout btn-sm"
                 onClick={onDeleteSelected}
                 disabled={bulkDeleting}
-                style={{ padding: '6px 14px', fontSize: '14px' }}
               >
                 {bulkDeleting ? 'Deleting...' : 'Delete Selected'}
               </button>
@@ -96,52 +103,60 @@ export default function LotsTable({ lots, allCount, loading, deletingLot, bulkDe
           </div>
         )}
       </div>
-      <div style={{ overflowX: 'auto' }}>
-        <table className="production-table" style={{ width: '100%' }}>
+      <div className="table-container">
+        <table className="production-table">
           <thead>
             <tr>
-              <th style={{ width: '40px', textAlign: 'center' }}>
+              <th className="cell-check">
                 <input
                   ref={selectAllRef}
                   type="checkbox"
+                  className="table-checkbox"
                   checked={allPageSelected}
                   onChange={e => onSelectAll(pageIds, e.target.checked)}
                   disabled={pageLots.length === 0}
-                  style={{ cursor: 'pointer', width: '16px', height: '16px' }}
                   title="Select all on this page"
                 />
               </th>
-              <th>Lot Number</th><th>Date</th><th>Fabric</th><th>Pattern</th><th>Brand</th>
-              <th style={{ textAlign: 'center' }}>Actions</th>
+              <th>Lot Number</th>
+              <th>Date</th>
+              <th>Fabric</th>
+              <th>Pattern</th>
+              <th>Brand</th>
+              <th className="cell-center">Actions</th>
             </tr>
           </thead>
           <tbody>
             {pageLots.length === 0 ? (
-              <tr><td colSpan={7} style={{ padding: '40px', textAlign: 'center', color: '#6c757d', fontSize: '18px' }}>
-                {allCount === 0 ? 'No lots found' : 'No lots match the filters'}
-              </td></tr>
+              <tr>
+                <td colSpan={7} className="table-empty">
+                  {allCount === 0 ? 'No lots found' : 'No lots match the filters'}
+                </td>
+              </tr>
             ) : pageLots.map((lot: any) => {
               const id = lot._id
               const isSelected = selectedIds.has(id)
               return (
-                <tr key={id} style={isSelected ? { background: '#eef4ff' } : undefined}>
-                  <td style={{ textAlign: 'center' }}>
+                <tr key={id} className={isSelected ? 'is-selected' : undefined}>
+                  <td className="cell-center">
                     <input
                       type="checkbox"
+                      className="table-checkbox"
                       checked={isSelected}
                       onChange={e => onSelectId(id, e.target.checked)}
-                      style={{ cursor: 'pointer', width: '16px', height: '16px' }}
                     />
                   </td>
-                  <td style={{ fontWeight: '600', color: '#1a1a1a' }}>{lot.lotNumber || '-'}</td>
-                  <td>{formatDisplayDate(lot.date, '-')}</td><td>{lot.fabric || '-'}</td>
-                  <td>{lot.pattern || '-'}</td><td>{lot.brand || '-'}</td>
-                  <td style={{ textAlign: 'center' }}>
-                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
-                      <button className="btn btn-secondary" onClick={() => onView(lot.lotNumber)} style={{ padding: '8px 16px', fontSize: '14px' }}>View</button>
-                      <button className="btn btn-primary" onClick={() => router.push(`/dashboard?edit=${encodeURIComponent(lot.lotNumber)}`)} style={{ padding: '8px 16px', fontSize: '14px' }}>Edit</button>
-                      <button className="btn btn-secondary" onClick={() => router.push(`/jobcard/${encodeURIComponent(lot.lotNumber)}?edit=true`)} style={{ padding: '8px 16px', fontSize: '14px' }}>Job Card</button>
-                      <button className="btn btn-logout" onClick={() => onDelete(lot.lotNumber)} disabled={deletingLot === lot.lotNumber} style={{ padding: '8px 16px', fontSize: '14px' }}>
+                  <td className="cell-strong">{lot.lotNumber || '-'}</td>
+                  <td>{formatDisplayDate(lot.date, '-')}</td>
+                  <td>{lot.fabric || '-'}</td>
+                  <td>{lot.pattern || '-'}</td>
+                  <td>{lot.brand || '-'}</td>
+                  <td className="cell-center">
+                    <div className="row-actions">
+                      <button className="btn btn-secondary" onClick={() => onView(lot.lotNumber)}>View</button>
+                      <button className="btn btn-primary" onClick={() => router.push(`/dashboard?edit=${encodeURIComponent(lot.lotNumber)}`)}>Edit</button>
+                      <button className="btn btn-secondary" onClick={() => router.push(`/jobcard/${encodeURIComponent(lot.lotNumber)}?edit=true`)}>Job Card</button>
+                      <button className="btn btn-logout" onClick={() => onDelete(lot.lotNumber)} disabled={deletingLot === lot.lotNumber}>
                         {deletingLot === lot.lotNumber ? 'Deleting...' : 'Delete'}
                       </button>
                     </div>

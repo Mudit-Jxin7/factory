@@ -1,22 +1,30 @@
 .btn {
-  padding: 11px 20px;
+  padding: 11px 18px;
   border: none;
   border-radius: var(--radius-sm);
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 500;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  transition: background var(--duration) var(--ease-out), transform var(--duration) var(--ease-out), box-shadow var(--duration) var(--ease-out), border-color var(--duration) var(--ease-out);
+  transition: background var(--duration) var(--ease-out), transform var(--duration-fast) var(--ease-out), box-shadow var(--duration) var(--ease-out), border-color var(--duration) var(--ease-out), color var(--duration) var(--ease-out);
   position: relative;
   box-shadow: var(--shadow-xs);
   font-family: inherit;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
+  line-height: 1.3;
 }
 
-.btn-primary { background: var(--color-ink); color: white; }
-.btn-primary:hover { background: #2a2a2a; transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+.btn-primary {
+  background: var(--color-ink);
+  color: white;
+}
+.btn-primary:hover {
+  background: #262626;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
 .btn-primary:active { transform: translateY(0); }
 
 .btn-secondary {
@@ -27,9 +35,19 @@
 .btn-secondary:hover {
   background: var(--color-accent-hover);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(232, 185, 35, 0.2);
+  box-shadow: 0 4px 14px rgba(212, 160, 23, 0.22);
 }
 .btn-secondary:active { transform: translateY(0); }
+
+.btn-sm {
+  padding: 8px 14px;
+  font-size: 13px;
+}
+
+.btn-icon-only {
+  padding: 8px 10px;
+  min-width: auto;
+}
 
 .btn-icon {
   display: flex;
@@ -48,12 +66,13 @@
   cursor: pointer;
   padding: 6px 8px;
   opacity: 0.55;
-  transition: opacity var(--duration) var(--ease-out), color var(--duration) var(--ease-out);
+  transition: opacity var(--duration) var(--ease-out), color var(--duration) var(--ease-out), background var(--duration) var(--ease-out);
   color: var(--color-danger);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: var(--radius-sm);
+  box-shadow: none;
 }
 
 .btn-delete:hover:not(:disabled) {
@@ -63,35 +82,53 @@
 
 .btn-delete:disabled { opacity: 0.25; cursor: not-allowed; }
 
-.btn-logout { background: var(--color-ink); color: white; }
-.btn-logout:hover { background: #2a2a2a; transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+.btn-logout {
+  background: var(--color-ink);
+  color: white;
+}
+.btn-logout:hover {
+  background: #262626;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
 .btn-logout:active { transform: translateY(0); }
 
-.btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none !important; }
+.btn-danger-soft {
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+  border: 1px solid var(--color-danger-border);
+}
+.btn-danger-soft:hover {
+  background: #ffe5e5;
+  transform: translateY(-1px);
+}
+
+.btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
 
 .login-button {
   width: 100%;
   margin-top: 8px;
-  padding: 14px;
-  font-size: 16px;
+  padding: 15px;
+  font-size: 15px;
   background: var(--color-ink);
   color: white;
   border-radius: var(--radius-sm);
   border: none;
   font-weight: 600;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
   transition: background var(--duration) var(--ease-out), transform var(--duration) var(--ease-out), box-shadow var(--duration) var(--ease-out);
   font-family: inherit;
   cursor: pointer;
+  box-shadow: var(--shadow-sm);
 }
 
 .login-button:hover:not(:disabled) {
-  background: #2a2a2a;
+  background: #262626;
   transform: translateY(-1px);
   box-shadow: var(--shadow-md);
 }
 
-.login-button:disabled { opacity: 0.6; cursor: not-allowed; }
+.login-button:disabled { opacity: 0.55; cursor: not-allowed; }
 
 @media (max-width: 768px) {
   .header-actions .btn,

@@ -1,14 +1,15 @@
 import type { Metadata, Viewport } from "next";
-import { Poppins } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import "@/components/dashboard.css";
 import { Providers } from "@/components/Providers";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
-const poppins = Poppins({
-  weight: ['300', '400', '500', '600', '700'],
+const jakarta = Plus_Jakarta_Sans({
+  weight: ['400', '500', '600', '700', '800'],
   subsets: ["latin"],
-  variable: "--font-poppins",
+  variable: "--font-jakarta",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -30,7 +31,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${poppins.variable} antialiased`}
+        className={`${jakarta.variable} antialiased`}
       >
         <Providers>
           {children}

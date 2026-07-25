@@ -20,9 +20,9 @@ export const JOB_CARD_DISPLAY_STATUS_LABELS: Record<JobCardDisplayStatus, string
 }
 
 export const JOB_CARD_STATUS_COLORS: Record<JobCardStatus, { bg: string; color: string }> = {
-  incomplete: { bg: '#fff3cd', color: '#856404' },
-  in_progress: { bg: '#cce5ff', color: '#004085' },
-  complete: { bg: '#d4edda', color: '#155724' },
+  incomplete: { bg: '#fbf6e8', color: '#7a5c00' },
+  in_progress: { bg: '#eef3f7', color: '#2c4a5e' },
+  complete: { bg: '#ecf8ef', color: '#1b5e3b' },
 }
 
 export const JOB_CARD_DISPLAY_STATUS_COLORS: Record<JobCardDisplayStatus, { bg: string; color: string }> = {

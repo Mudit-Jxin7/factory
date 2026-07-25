@@ -4,7 +4,8 @@
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 12px;
-  margin-top: 18px;
+  margin-top: 20px;
+  padding-top: 4px;
 }
 
 .pagination-info {
@@ -35,6 +36,7 @@
   justify-content: center;
   transition: all var(--duration) var(--ease-out);
   font-family: inherit;
+  box-shadow: var(--shadow-xs);
 }
 
 .pagination-btn:hover:not(:disabled):not(.active) {
@@ -47,11 +49,13 @@
   background: var(--color-ink);
   color: #fff;
   border-color: var(--color-ink);
+  box-shadow: var(--shadow-sm);
 }
 
 .pagination-btn:disabled {
   opacity: 0.35;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 .pagination-ellipsis {

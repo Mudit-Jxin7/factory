@@ -37,7 +37,7 @@ export default function Login() {
             <IconFactory size={28} />
           </div>
           <h1>Factory</h1>
-          <p>Sign in to manage production</p>
+          <p>Sign in to your production workspace</p>
         </div>
 
         <div className="login-role-toggle" role="tablist" aria-label="Login role">

@@ -60,17 +60,16 @@ export default function JobCardsTable({
   const tableTitle = isWorker ? 'Job Cards' : 'All Job Cards'
 
   const renderTableHeading = (countLabel?: string) => (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-      <h2 style={{ margin: 0 }}>{countLabel ? `${tableTitle} (${countLabel})` : tableTitle}</h2>
+    <div className="table-title-group">
+      <h2>{countLabel ? `${tableTitle} (${countLabel})` : tableTitle}</h2>
       {onRefresh && (
         <button
           type="button"
-          className="btn btn-secondary"
+          className="btn btn-secondary btn-icon-only"
           onClick={onRefresh}
           disabled={refreshing || loading}
           title="Refresh job cards"
           aria-label="Refresh job cards"
-          style={{ padding: '8px 12px', minWidth: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
         >
           <span className={`btn-icon${refreshing ? ' spinning' : ''}`}><IconRefresh size={16} /></span>
         </button>
@@ -81,12 +80,21 @@ export default function JobCardsTable({
   if (loading) {
     return (
       <>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+        <div className="table-toolbar">
           {renderTableHeading()}
         </div>
-        <div style={{ overflowX: 'auto' }}>
-          <table className="production-table" style={{ width: '100%' }}>
-            <thead><tr>{!isWorker && <th style={{ width: '40px' }}></th>}<th>Lot Number</th><th>Date</th><th>Brand</th><th>Status</th><th style={{ textAlign: 'center' }}>Actions</th></tr></thead>
+        <div className="table-container">
+          <table className="production-table">
+            <thead>
+              <tr>
+                {!isWorker && <th className="cell-check"></th>}
+                <th>Lot Number</th>
+                <th>Date</th>
+                <th>Brand</th>
+                <th>Status</th>
+                <th className="cell-center">Actions</th>
+              </tr>
+            </thead>
             <tbody>
               {Array.from({ length: 6 }).map((_, i) => (
                 <tr key={i} className="skeleton-row">
@@ -107,19 +115,18 @@ export default function JobCardsTable({
 
   return (
     <>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', flexWrap: 'wrap', gap: '12px' }}>
+      <div className="table-toolbar">
         {renderTableHeading(`${jobCards.length} of ${allCount}`)}
         {!isWorker && totalSelected > 0 && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '14px', color: '#495057', fontWeight: 500 }}>
+          <div className="table-toolbar-actions">
+            <span className="table-selection-count">
               {totalSelected} selected
             </span>
             {onDeleteSelected && (
               <button
-                className="btn btn-logout"
+                className="btn btn-logout btn-sm"
                 onClick={onDeleteSelected}
                 disabled={bulkDeleting}
-                style={{ padding: '6px 14px', fontSize: '14px' }}
               >
                 {bulkDeleting ? 'Deleting...' : 'Delete Selected'}
               </button>
@@ -127,61 +134,66 @@ export default function JobCardsTable({
           </div>
         )}
       </div>
-      <div style={{ overflowX: 'auto' }}>
-        <table className="production-table" style={{ width: '100%' }}>
+      <div className="table-container">
+        <table className="production-table">
           <thead>
             <tr>
               {!isWorker && (
-                <th style={{ width: '40px', textAlign: 'center' }}>
+                <th className="cell-check">
                   <input
                     ref={selectAllRef}
                     type="checkbox"
+                    className="table-checkbox"
                     checked={allPageSelected}
                     onChange={e => onSelectAll?.(pageIds, e.target.checked)}
                     disabled={pageCards.length === 0}
-                    style={{ cursor: 'pointer', width: '16px', height: '16px' }}
                     title="Select all on this page"
                   />
                 </th>
               )}
-              <th>Lot Number</th><th>Date</th><th>Brand</th><th>Status</th>
-              <th style={{ textAlign: 'center' }}>Actions</th>
+              <th>Lot Number</th>
+              <th>Date</th>
+              <th>Brand</th>
+              <th>Status</th>
+              <th className="cell-center">Actions</th>
             </tr>
           </thead>
           <tbody>
             {pageCards.length === 0 ? (
-              <tr><td colSpan={colSpan} style={{ padding: '40px', textAlign: 'center', color: '#6c757d', fontSize: '18px' }}>
-                {allCount === 0 ? 'No job cards found' : 'No job cards match the filters'}
-              </td></tr>
+              <tr>
+                <td colSpan={colSpan} className="table-empty">
+                  {allCount === 0 ? 'No job cards found' : 'No job cards match the filters'}
+                </td>
+              </tr>
             ) : pageCards.map((jobCard: any) => {
               const id = jobCard._id
               const isSelected = !isWorker && selectedIds.has(id)
               const showWorkerEdit = isWorker && canWorkerEditJobCard(jobCard.status)
               const showAdminEdit = !isWorker && canAdminEditJobCard(jobCard.status)
               return (
-                <tr key={id} style={isSelected ? { background: '#eef4ff' } : undefined}>
+                <tr key={id} className={isSelected ? 'is-selected' : undefined}>
                   {!isWorker && (
-                    <td style={{ textAlign: 'center' }}>
+                    <td className="cell-center">
                       <input
                         type="checkbox"
+                        className="table-checkbox"
                         checked={isSelected}
                         onChange={e => onSelectId?.(id, e.target.checked)}
-                        style={{ cursor: 'pointer', width: '16px', height: '16px' }}
                       />
                     </td>
                   )}
-                  <td style={{ fontWeight: '600', color: '#1a1a1a' }}>{jobCard.lotNumber || '-'}</td>
+                  <td className="cell-strong">{jobCard.lotNumber || '-'}</td>
                   <td>{formatDisplayDate(jobCard.date, '-')}</td>
                   <td>{jobCard.brand || '-'}</td>
                   <td><JobCardStatusBadge status={jobCard.status} jobCard={{ productionData: jobCard.productionData }} variant={variant} /></td>
-                  <td style={{ textAlign: 'center' }}>
-                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
-                      <button className="btn btn-secondary" onClick={() => onView(jobCard.lotNumber)} style={{ padding: '8px 16px', fontSize: '14px' }}>View</button>
+                  <td className="cell-center">
+                    <div className="row-actions">
+                      <button className="btn btn-secondary" onClick={() => onView(jobCard.lotNumber)}>View</button>
                       {(showWorkerEdit || showAdminEdit) && (
-                        <button className="btn btn-primary" onClick={() => router.push(`${jobCardBasePath}/${encodeURIComponent(jobCard.lotNumber)}?edit=true`)} style={{ padding: '8px 16px', fontSize: '14px' }}>Edit</button>
+                        <button className="btn btn-primary" onClick={() => router.push(`${jobCardBasePath}/${encodeURIComponent(jobCard.lotNumber)}?edit=true`)}>Edit</button>
                       )}
                       {!isWorker && onDelete && (
-                        <button className="btn btn-logout" onClick={() => onDelete(jobCard.lotNumber)} disabled={deletingJobCard === jobCard.lotNumber} style={{ padding: '8px 16px', fontSize: '14px' }}>
+                        <button className="btn btn-logout" onClick={() => onDelete(jobCard.lotNumber)} disabled={deletingJobCard === jobCard.lotNumber}>
                           {deletingJobCard === jobCard.lotNumber ? 'Deleting...' : 'Delete'}
                         </button>
                       )}

@@ -41,11 +41,11 @@ export default function AnalyticsTable({ loading, filteredData, allCount, totals
   if (loading) {
     return (
       <>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+        <div className="table-toolbar">
           <h2>Worker Analytics</h2>
         </div>
-        <div style={{ overflowX: 'auto' }}>
-          <table className="production-table" style={{ width: '100%' }}>
+        <div className="table-container">
+          <table className="production-table">
             <thead><tr>{headers.map(h => <th key={h}>{h}</th>)}</tr></thead>
             <tbody>
               {Array.from({ length: 7 }).map((_, i) => (
@@ -64,35 +64,35 @@ export default function AnalyticsTable({ loading, filteredData, allCount, totals
 
   return (
     <>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+      <div className="table-toolbar">
         <h2>Worker Analytics ({filteredData.length} records)</h2>
       </div>
       {filteredData.length === 0 ? (
-        <div style={{ padding: '40px', textAlign: 'center', color: '#6c757d' }}>No data found matching the filters</div>
+        <div className="table-empty">No data found matching the filters</div>
       ) : (
         <>
-          <div style={{ overflowX: 'auto' }}>
-            <table className="production-table" style={{ width: '100%' }}>
+          <div className="table-container">
+            <table className="production-table">
               <thead><tr>{headers.map(h => <th key={h}>{h}</th>)}</tr></thead>
               <tbody>
                 {pageData.map((row, index) => (
                   <tr key={index}>
-                    <td style={{ fontWeight: '600', color: '#1a1a1a' }}>{row.worker_id}</td>
+                    <td className="cell-strong">{row.worker_id}</td>
                     <td>{row.worker_full_name}</td>
                     <td>{row.section}</td>
                     <td>{formatDisplayDate(row.date)}</td>
                     <td>{formatIndianAmount(row.rate)}</td>
-                    <td style={{ fontWeight: '600', color: '#1a1a1a' }}>{row.lotNumber}</td>
+                    <td className="cell-strong">{row.lotNumber}</td>
                     <td>{row.layer}</td>
                     <td>{row.pieces.toFixed(2)}</td>
-                    <td style={{ fontWeight: '600', color: '#1a1a1a' }}>{formatIndianAmount(row.total_amount)}</td>
+                    <td className="cell-strong">{formatIndianAmount(row.total_amount)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
           <Pagination page={safePage} totalPages={totalPages} totalItems={filteredData.length} pageSize={PAGE_SIZE} onPageChange={setPage} />
-          <div style={{ marginTop: '16px', padding: '12px 16px', background: '#fff9e6', borderRadius: '8px', display: 'flex', gap: '32px', fontWeight: 600, fontSize: '15px' }}>
+          <div className="analytics-totals">
             <span>Total Pieces: {totals.totalPieces.toFixed(2)}</span>
             <span>Total Amount: {formatIndianAmount(totals.totalAmount)}</span>
           </div>

@@ -31,6 +31,7 @@ export default function JobCardStatusBadge({
       style={{
         background: colors.bg,
         color: colors.color,
+        borderColor: colors.color + '22',
       }}
     >
       {JOB_CARD_DISPLAY_STATUS_LABELS[displayStatus]}
