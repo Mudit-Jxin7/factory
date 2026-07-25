@@ -273,6 +273,7 @@ export default function DashboardContent() {
           <SummarySection
             tukda={tukda} totalMeter={totalMeter} totalPieces={totalPieces}
             totalPiecesWithTukda={totalPiecesWithTukda} average={average}
+            productionData={productionData}
             onTukdaSizeChange={setTukdaSize}
           />
           <LotRatesForm

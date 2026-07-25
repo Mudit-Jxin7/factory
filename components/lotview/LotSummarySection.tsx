@@ -1,17 +1,25 @@
 'use client'
 
+import { useMemo } from 'react'
 import { IconRuler, IconFile, IconChart, IconCalc } from '../Icons'
+import { aggregatePiecesByColor } from '@/lib/colorPieces'
+import ColorPiecesTable from '../dashboard/ColorPiecesTable'
 
 interface LotSummarySectionProps {
   lot: any
 }
 
 export default function LotSummarySection({ lot }: LotSummarySectionProps) {
-  const totalTukda = (lot.productionData || []).reduce((sum: number, row: any) => sum + (Number(row.tukda) || 0), 0)
+  const productionData = lot.productionData || []
+  const totalTukda = productionData.reduce((sum: number, row: any) => sum + (Number(row.tukda) || 0), 0)
   const tukdaCount = totalTukda || Number(lot.tukda?.count || 0)
   const grandTotal = Number(
     lot.totalPiecesWithTukda ?? (Number(lot.totalPieces || 0) + tukdaCount)
   ).toFixed(2)
+  const colorRows = useMemo(
+    () => aggregatePiecesByColor(lot.productionData || []),
+    [lot.productionData]
+  )
 
   const summaryCards = [
     { icon: <IconRuler size={20} />, label: 'Total Meter', value: Number(lot.totalMeter || 0).toFixed(2) },
@@ -42,6 +50,7 @@ export default function LotSummarySection({ lot }: LotSummarySectionProps) {
           </div>
         ))}
       </div>
+      <ColorPiecesTable rows={colorRows} />
     </div>
   )
 }

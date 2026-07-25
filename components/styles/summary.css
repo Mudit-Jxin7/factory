@@ -62,6 +62,22 @@
 
 .average-value { color: var(--color-ink); }
 
+.color-pieces-table-wrap {
+  margin-top: 24px;
+}
+
+.color-pieces-heading {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-ink);
+  margin: 0 0 12px;
+  letter-spacing: 0.2px;
+}
+
+.color-pieces-table {
+  max-width: 420px;
+}
+
 @media (max-width: 1024px) {
   .summary-cards-row { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
   .tukda-inputs { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; }

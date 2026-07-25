@@ -1,6 +1,9 @@
 'use client'
 
+import { useMemo } from 'react'
 import { IconRuler, IconFile, IconChart, IconCalc } from '../Icons'
+import { aggregatePiecesByColor } from '@/lib/colorPieces'
+import ColorPiecesTable from './ColorPiecesTable'
 
 const TUKDA_SIZES = ['28', '30', '32', '34', '36', '38', '40', '42', '44']
 
@@ -10,13 +13,17 @@ interface SummarySectionProps {
   totalPieces: number
   totalPiecesWithTukda: number
   average: number
+  productionData?: Array<{ color?: string; pieces?: number | string; tukda?: number | string }>
   onTukdaSizeChange: (value: string) => void
 }
 
 export default function SummarySection({
   tukda, totalMeter, totalPieces, totalPiecesWithTukda, average,
+  productionData = [],
   onTukdaSizeChange,
 }: SummarySectionProps) {
+  const colorRows = useMemo(() => aggregatePiecesByColor(productionData), [productionData])
+
   return (
     <div className="card">
       <h2>Summary & Calculations</h2>
@@ -52,6 +59,7 @@ export default function SummarySection({
           </div>
         ))}
       </div>
+      <ColorPiecesTable rows={colorRows} />
     </div>
   )
 }
