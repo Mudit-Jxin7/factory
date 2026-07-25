@@ -50,7 +50,7 @@ export const resolveWorkerProcesses = (processes?: WorkerProcess[] | null): Work
  */
 export const resolveWorkerProcessesForLot = (
   processes?: WorkerProcess[] | null,
-  rates?: Record<string, string> | null,
+  rates?: Partial<Record<string, string>> | null,
 ): WorkerProcess[] => {
   const source = (processes && processes.length > 0)
     ? processes
