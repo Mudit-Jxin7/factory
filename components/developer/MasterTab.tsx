@@ -5,6 +5,7 @@ import { useToast } from '../ToastProvider'
 import { useConfirm } from '../ConfirmProvider'
 import { MasterTab, MasterItem, MASTER_TAB_CONFIG } from './types'
 import Pagination from '../Pagination'
+import { CardSkeleton } from '../Skeleton'
 
 const PAGE_SIZE = 15
 
@@ -76,7 +77,7 @@ export default function MasterTabComponent({
         </div>
       </div>
       {loading ? (
-        <div className="card-loading"><div className="spinner" /><p>Loading {config.title.toLowerCase()}&hellip;</p></div>
+        <CardSkeleton rows={5} />
       ) : (
         <>
         <div style={{ overflowX: 'auto' }}>

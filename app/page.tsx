@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { PageSkeleton } from '@/components/Skeleton'
 import '@/components/dashboard.css'
 
 export default function Home() {
@@ -14,8 +15,7 @@ export default function Home() {
 
   useEffect(() => {
     if (!mounted) return
-    
-    // Check if user is authenticated
+
     const isAuthenticated = localStorage.getItem('isAuthenticated')
     if (isAuthenticated === 'true') {
       const role = localStorage.getItem('userRole')
@@ -26,10 +26,8 @@ export default function Home() {
   }, [router, mounted])
 
   return (
-    <div className="dashboard-container">
-      <div className="loading-container">
-        <p>Loading...</p>
-      </div>
+    <div className="dashboard-container px-3 sm:px-5 md:px-6 lg:px-8 xl:px-10">
+      <PageSkeleton cards={2} variant="form" />
     </div>
   )
 }

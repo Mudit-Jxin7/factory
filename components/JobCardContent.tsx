@@ -26,6 +26,7 @@ import LotRatesForm from './dashboard/LotRatesForm'
 import { exportJobCardToPDF } from './jobcard/exportToPDF'
 import { exportJobCardToExcel } from './jobcard/exportToExcel'
 import { normalizeAdditionalInfo } from '@/lib/additionalInfoExport'
+import { PageSkeleton } from './Skeleton'
 import './dashboard.css'
 
 interface JobCardContentProps {
@@ -271,8 +272,8 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
   if (loading) {
     return (
       <><NavBar />
-        <div className="dashboard-container">
-          <div className="loading-container"><div className="spinner" /><p>Loading job card&hellip;</p></div>
+        <div className="dashboard-container px-3 sm:px-5 md:px-6 lg:px-8 xl:px-10">
+          <PageSkeleton cards={3} variant="table" />
         </div>
       </>
     )
@@ -300,7 +301,7 @@ export default function JobCardContent({ lotNumber: initialLotNumber, isEdit: in
         ...(!effectiveEditMode && canEdit ? [{ label: 'Edit Job Card', shortLabel: 'Edit', icon: <IconEdit size={14} />, onClick: () => router.push(`${jobCardBasePath}/${encodeURIComponent(lotNumber)}?edit=true`) } as ActionBarItem] : []),
         { label: 'Back to Job Cards', shortLabel: 'Back', icon: <IconBack size={14} />, onClick: () => router.push(jobCardsListPath), variant: 'secondary' as const },
       ]} />
-      <div className="dashboard-container job-card-page">
+      <div className="dashboard-container job-card-page px-3 sm:px-5 md:px-6 lg:px-8 xl:px-10">
         <div className="dashboard-header">
           <div className="header-title">
             <h1>{effectiveEditMode ? 'Edit Job Card' : 'View Job Card'}</h1>

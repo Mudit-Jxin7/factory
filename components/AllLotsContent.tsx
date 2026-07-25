@@ -128,9 +128,12 @@ export default function AllLotsContent() {
   return (
     <>
       <NavigationBar />
-      <div className="dashboard-container">
+      <div className="dashboard-container px-3 sm:px-5 md:px-6 lg:px-8 xl:px-10">
         <div className="dashboard-header">
-          <div className="header-title"><h1>All Lots</h1><p>View and manage all production lots</p></div>
+          <div className="header-title">
+            <h1 >All Lots</h1>
+            <p >View and manage all production lots</p>
+          </div>
           <div className="header-actions">
             {selectedCount > 0 && (
               <button

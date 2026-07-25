@@ -53,9 +53,9 @@ export default function WorkerJobCardsContent() {
   return (
     <>
       <WorkerNavigationBar />
-      <div className="dashboard-container">
+      <div className="dashboard-container px-3 sm:px-5 md:px-6 lg:px-8 xl:px-10">
         <div className="dashboard-header">
-          <div className="header-title"><h1>Job Cards</h1><p>View and update job cards</p></div>
+          <div className="header-title"><h1 >Job Cards</h1><p >View and update job cards</p></div>
           <div className="header-actions">
             <button className="btn btn-secondary" onClick={() => fetchAllJobCards(true)} disabled={refreshing}>
               <span className="btn-icon"><IconRefresh size={16} /></span>Refresh

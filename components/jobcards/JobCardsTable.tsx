@@ -98,12 +98,12 @@ export default function JobCardsTable({
             <tbody>
               {Array.from({ length: 6 }).map((_, i) => (
                 <tr key={i} className="skeleton-row">
-                  {!isWorker && <td><div className="skeleton-cell" style={{ width: '20px', height: '20px' }} /></td>}
-                  <td><div className="skeleton-cell" style={{ width: '75%' }} /></td>
-                  <td><div className="skeleton-cell" style={{ width: '65%' }} /></td>
-                  <td><div className="skeleton-cell" style={{ width: '55%' }} /></td>
-                  <td><div className="skeleton-cell" style={{ width: '70%' }} /></td>
-                  <td><div className="skeleton-cell" style={{ width: '85%', margin: '0 auto' }} /></td>
+                  {!isWorker && <td><div className="skeleton skeleton--circle" style={{ width: 18, height: 18 }} /></td>}
+                  <td><div className="skeleton" style={{ width: '75%' }} /></td>
+                  <td><div className="skeleton" style={{ width: '65%' }} /></td>
+                  <td><div className="skeleton" style={{ width: '55%' }} /></td>
+                  <td><div className="skeleton" style={{ width: '70%' }} /></td>
+                  <td><div className="skeleton skeleton--block" style={{ width: '85%', height: 28, margin: '0 auto' }} /></td>
                 </tr>
               ))}
             </tbody>

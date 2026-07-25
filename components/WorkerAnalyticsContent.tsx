@@ -182,10 +182,10 @@ export default function WorkerAnalyticsContent() {
         { label: 'Download PDF', shortLabel: 'PDF', icon: <IconPdf size={14} />, loading: generatingPDF, loadingLabel: '…', disabled: filteredData.length === 0, onClick: () => { setGeneratingPDF(true); try { exportAnalyticsToPDF(exportParams); toast.showToast('PDF exported!', 'success') } catch (e: any) { toast.showToast('Error: ' + e.message, 'error') } finally { setGeneratingPDF(false) } } },
         { label: 'Download Excel', shortLabel: 'Excel', icon: <IconTable size={14} />, loading: generatingExcel, loadingLabel: '…', disabled: filteredData.length === 0, onClick: () => { setGeneratingExcel(true); try { exportAnalyticsToExcel(exportParams); toast.showToast('Excel exported!', 'success') } catch (e: any) { toast.showToast('Error: ' + e.message, 'error') } finally { setGeneratingExcel(false) } } },
       ]} />
-      <div className="dashboard-container">
+      <div className="dashboard-container px-3 sm:px-5 md:px-6 lg:px-8 xl:px-10">
         <div className="dashboard-header">
           <div className="header-title">
-            <h1>Worker Analytics</h1>
+            <h1 >Worker Analytics</h1>
             <p>Analyze worker performance and earnings</p>
           </div>
         </div>

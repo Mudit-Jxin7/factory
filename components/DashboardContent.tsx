@@ -19,6 +19,7 @@ import { exportLotToPDF, exportLotToExcel } from './dashboard/exportUtils'
 import { useSaveLot } from './dashboard/useSaveLot'
 import { todayISODateIST } from '@/lib/dateFormat'
 import { normalizeLotWorkerRates } from '@/lib/lotWorkerRates'
+import { PageSkeleton } from './Skeleton'
 import './dashboard.css'
 
 const BLANK_ROW = { serialNumber: 1, meter: '', layer: '1', pieces: 0, color: '', shade: '', zip_code: '', thread_code: '', tukda: '' }
@@ -238,8 +239,8 @@ export default function DashboardContent() {
   if (loadingLot) {
     return (
       <><NavigationBar />
-        <div className="dashboard-container">
-          <div className="loading-container"><div className="spinner" /><p>Loading lot data&hellip;</p></div>
+        <div className="dashboard-container px-3 sm:px-5 md:px-6 lg:px-8 xl:px-10">
+          <PageSkeleton cards={4} variant="form" />
         </div>
       </>
     )
@@ -261,10 +262,10 @@ export default function DashboardContent() {
         { label: 'Download PDF', shortLabel: 'PDF', icon: <IconPdf size={14} />, onClick: () => { setGeneratingPDF(true); try { exportLotToPDF(exportParams) } catch (e: any) { toast.showToast('Error: ' + e.message, 'error') } finally { setGeneratingPDF(false) } }, loading: generatingPDF, loadingLabel: '…' },
         { label: 'Download Excel', shortLabel: 'Excel', icon: <IconTable size={14} />, onClick: () => { setGeneratingExcel(true); try { exportLotToExcel(exportParams); toast.showToast('Excel exported!', 'success') } catch (e: any) { toast.showToast('Error: ' + e.message, 'error') } finally { setGeneratingExcel(false) } }, loading: generatingExcel, loadingLabel: '…' },
       ]} />
-      <div className="dashboard-container">
+      <div className="dashboard-container px-3 sm:px-5 md:px-6 lg:px-8 xl:px-10">
         <div className="dashboard-header">
           <div className="header-title">
-            <h1>{isEdit ? 'Edit Lot' : isTukdaFrom ? 'New Tukda Lot' : 'Lot Production Dashboard'}</h1>
+            <h1 >{isEdit ? 'Edit Lot' : isTukdaFrom ? 'New Tukda Lot' : 'Lot Production Dashboard'}</h1>
             <p>{isEdit ? 'Edit existing lot production data' : isTukdaFrom ? 'Create a tukda lot from an existing lot' : 'Track and manage production data'}</p>
           </div>
         </div>

@@ -1,53 +1,67 @@
-.job-card-page .card h2 { font-size: 22px; }
-.job-card-page .form-group label { font-size: 18px; letter-spacing: 0.04em; }
+.job-card-page .card h2 { font-size: var(--text-xl); }
+.job-card-page .form-group label {
+  font-size: var(--text-lg);
+  letter-spacing: var(--tracking-wide);
+}
 
 .job-card-page .form-group input,
 .job-card-page .form-group select {
-  font-size: 20px;
+  font-size: var(--text-xl);
   padding: 12px 14px;
 }
 
-.job-card-page .ratios-grid .form-group label { font-size: 16px; }
-.job-card-page .ratios-grid .form-group input { font-size: 18px; }
-.job-card-page .production-table th { font-size: 16px; padding: 12px 10px; letter-spacing: 0.04em; }
-.job-card-page .production-table td { font-size: 19px; padding: 10px 8px; }
+.job-card-page .ratios-grid .form-group label { font-size: var(--text-md); }
+.job-card-page .ratios-grid .form-group input { font-size: var(--text-lg); }
+.job-card-page .production-table th {
+  font-size: var(--text-md);
+  padding: 12px 10px;
+  letter-spacing: var(--tracking-wide);
+}
+.job-card-page .production-table td {
+  font-size: 19px;
+  padding: 10px 8px;
+}
 
 .job-card-page .production-table input,
 .job-card-page .production-table .tbd-input,
 .job-card-page .production-table button.tbd-input {
-  font-size: 18px !important;
+  font-size: var(--text-lg) !important;
 }
 
 .job-card-page .color-input,
 .job-card-page .tbd-input {
-  font-size: 18px;
+  font-size: var(--text-lg);
 }
 
 .job-card-page .job-card-production-table tbody tr:hover td.job-card-sticky-col {
   background: var(--color-accent-soft) !important;
 }
 
-@media (max-width: 1024px) {
-  .job-card-page .card h2 { font-size: 20px; }
-  .job-card-page .form-group label { font-size: 15px; }
+@media (min-width: 1280px) {
+  .job-card-page .card h2 { font-size: var(--text-2xl); }
+}
+
+@media (max-width: 1023px) {
+  .job-card-page .card h2 { font-size: var(--text-xl); }
+  .job-card-page .form-group label { font-size: var(--text-base); }
   .job-card-page .form-group input,
-  .job-card-page .form-group select { font-size: 16px; }
-  .job-card-page .ratios-grid .form-group label { font-size: 14px; }
-  .job-card-page .ratios-grid .form-group input { font-size: 15px; }
-  .job-card-page .production-table th { font-size: 13px; }
-  .job-card-page .production-table td { font-size: 15px; }
+  .job-card-page .form-group select { font-size: var(--text-md); }
+  .job-card-page .ratios-grid .form-group label { font-size: var(--text-sm); }
+  .job-card-page .ratios-grid .form-group input { font-size: var(--text-base); }
+  .job-card-page .production-table th { font-size: var(--text-sm); }
+  .job-card-page .production-table td { font-size: var(--text-base); }
   .job-card-page .production-table input,
   .job-card-page .production-table .tbd-input,
   .job-card-page .production-table button.tbd-input,
   .job-card-page .color-input,
   .job-card-page .tbd-input {
-    font-size: 15px !important;
+    font-size: var(--text-base) !important;
   }
 }
 
-@media (max-width: 768px) {
-  .job-card-page .card h2 { font-size: 18px; }
-  .job-card-page .form-group label { font-size: 13px; }
+@media (max-width: 767px) {
+  .job-card-page .card h2 { font-size: var(--text-lg); }
+  .job-card-page .form-group label { font-size: var(--text-sm); }
   .job-card-page .form-group input,
   .job-card-page .form-group select {
     font-size: 16px;

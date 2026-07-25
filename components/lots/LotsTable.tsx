@@ -66,13 +66,13 @@ export default function LotsTable({ lots, allCount, loading, deletingLot, bulkDe
             <tbody>
               {Array.from({ length: 6 }).map((_, i) => (
                 <tr key={i} className="skeleton-row">
-                  <td><div className="skeleton-cell" style={{ width: '20px', height: '20px' }} /></td>
-                  <td><div className="skeleton-cell" style={{ width: '80%' }} /></td>
-                  <td><div className="skeleton-cell" style={{ width: '70%' }} /></td>
-                  <td><div className="skeleton-cell" style={{ width: '60%' }} /></td>
-                  <td><div className="skeleton-cell" style={{ width: '65%' }} /></td>
-                  <td><div className="skeleton-cell" style={{ width: '55%' }} /></td>
-                  <td><div className="skeleton-cell" style={{ width: '90%', margin: '0 auto' }} /></td>
+                  <td><div className="skeleton skeleton--circle" style={{ width: 18, height: 18 }} /></td>
+                  <td><div className="skeleton" style={{ width: '80%' }} /></td>
+                  <td><div className="skeleton" style={{ width: '70%' }} /></td>
+                  <td><div className="skeleton" style={{ width: '60%' }} /></td>
+                  <td><div className="skeleton" style={{ width: '65%' }} /></td>
+                  <td><div className="skeleton" style={{ width: '55%' }} /></td>
+                  <td><div className="skeleton skeleton--block" style={{ width: '90%', height: 28, margin: '0 auto' }} /></td>
                 </tr>
               ))}
             </tbody>

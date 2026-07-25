@@ -19,25 +19,27 @@ export default function Login() {
     setError('')
     setLoading(true)
 
+    // Brief delay so the loading state is perceptible on fast auth
+    await new Promise((r) => setTimeout(r, 280))
+
     if (authenticate(username, password, loginRole)) {
       setAuthSession(loginRole)
       router.push(loginRole === 'worker' ? '/worker' : '/dashboard')
     } else {
       setError(`Invalid ${loginRole === 'worker' ? 'staff' : loginRole} username or password`)
+      setLoading(false)
     }
-
-    setLoading(false)
   }
 
   return (
-    <div className="login-container">
-      <div className="login-card">
+    <div className="login-container px-4 sm:px-6 md:px-8">
+      <div className="login-card w-full max-w-[420px]">
         <div className="login-header">
-          <div className="login-brand-mark">
+          <div className="login-brand-mark" aria-hidden>
             <IconFactory size={28} />
           </div>
           <h1>Factory</h1>
-          <p>Sign in to your production workspace</p>
+          <p >Sign in to your production workspace</p>
         </div>
 
         <div className="login-role-toggle" role="tablist" aria-label="Login role">
@@ -63,7 +65,7 @@ export default function Login() {
 
         <form onSubmit={handleSubmit} className="login-form">
           {error && (
-            <div className="error-message">
+            <div className="error-message" role="alert">
               {error}
             </div>
           )}
@@ -78,6 +80,8 @@ export default function Login() {
               placeholder="Enter username"
               required
               autoFocus
+              autoComplete="username"
+              disabled={loading}
             />
           </div>
 
@@ -90,6 +94,8 @@ export default function Login() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter password"
               required
+              autoComplete="current-password"
+              disabled={loading}
             />
           </div>
 
@@ -98,6 +104,7 @@ export default function Login() {
             disabled={loading}
             className="btn btn-primary login-button"
           >
+            {loading && <span className="spinner-sm" aria-hidden />}
             {loading ? 'Signing in…' : 'Sign in'}
           </button>
         </form>

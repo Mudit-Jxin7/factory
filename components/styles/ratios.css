@@ -3,26 +3,37 @@
 .ratios-grid {
   display: grid;
   grid-template-columns: repeat(9, 1fr);
-  gap: 12px;
-  margin-bottom: 24px;
+  gap: var(--space-3);
+  margin-bottom: var(--space-6);
 }
 
 .ratios-grid .form-group {
   min-width: 0;
-  padding: 12px;
+  padding: var(--space-3);
   border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-sm);
   background: var(--color-surface-muted);
   display: flex;
   flex-direction: column;
   gap: 8px;
-  transition: border-color var(--duration) var(--ease-out), background var(--duration) var(--ease-out), box-shadow var(--duration) var(--ease-out);
+  transition:
+    border-color var(--duration) var(--ease-out),
+    background var(--duration) var(--ease-out),
+    box-shadow var(--duration) var(--ease-out),
+    transform var(--duration) var(--ease-out);
+}
+
+.ratios-grid .form-group:hover {
+  border-color: var(--color-border-strong);
+  background: var(--color-surface);
+  transform: translateY(-1px);
 }
 
 .ratios-grid .form-group:focus-within {
   border-color: var(--color-accent);
   background: var(--color-surface);
-  box-shadow: 0 0 0 3px var(--color-focus-ring);
+  box-shadow: var(--shadow-focus);
+  transform: translateY(-1px);
 }
 
 .ratios-grid .form-group label {
@@ -32,8 +43,8 @@
 }
 
 .ratios-grid .form-group input {
-  padding: 10px 12px;
-  font-size: 15px;
+  padding: 9px 12px;
+  font-size: var(--text-base);
   width: 100%;
   text-align: center;
   box-sizing: border-box;
@@ -42,15 +53,16 @@
 }
 
 .ratios-summary {
-  padding: 18px 24px;
+  padding: 16px 22px;
   background: linear-gradient(135deg, var(--color-accent-soft) 0%, var(--color-accent-hover) 100%);
   border-radius: var(--radius-md);
   text-align: center;
   color: var(--color-ink);
-  font-size: 15px;
+  font-size: var(--text-base);
   font-weight: 600;
   border: 1px solid var(--color-accent-border);
-  letter-spacing: -0.01em;
+  letter-spacing: var(--tracking-tight);
+  box-shadow: var(--shadow-xs);
 }
 
 .pdf-export-clone .card {
@@ -91,13 +103,17 @@
   border-radius: 16px !important;
 }
 
+@media (min-width: 1280px) {
+  .ratios-grid { gap: var(--space-3); }
+}
+
 @media (max-width: 1400px) {
   .ratios-grid { gap: 10px; }
   .ratios-grid .form-group input { padding: 8px 10px; font-size: 14.5px; }
 }
 
 @media (max-width: 1200px) {
-  .ratios-grid { grid-template-columns: repeat(5, 1fr); gap: 12px; }
+  .ratios-grid { grid-template-columns: repeat(5, 1fr); gap: var(--space-3); }
 }
 
 @media (max-width: 900px) {
@@ -107,7 +123,8 @@
 @media (max-width: 600px) {
   .ratios-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
   .ratios-grid .form-group { padding: 10px; }
-  .ratios-summary { padding: 14px 16px; font-size: 14px; }
+  .ratios-grid .form-group:hover { transform: none; }
+  .ratios-summary { padding: 14px 16px; font-size: var(--text-sm); }
 }
 
 @media (max-width: 380px) {

@@ -51,7 +51,7 @@ export default function AnalyticsTable({ loading, filteredData, allCount, totals
               {Array.from({ length: 7 }).map((_, i) => (
                 <tr key={i} className="skeleton-row">
                   {Array.from({ length: SKELETON_COLS }).map((__, j) => (
-                    <td key={j}><div className="skeleton-cell" style={{ width: `${50 + (j * 7) % 40}%` }} /></td>
+                    <td key={j}><div className="skeleton" style={{ width: `${50 + (j * 7) % 40}%` }} /></td>
                   ))}
                 </tr>
               ))}

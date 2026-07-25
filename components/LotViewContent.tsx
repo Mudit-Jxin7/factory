@@ -19,6 +19,7 @@ import { DEFAULT_LOT_WORKER_RATES } from '@/lib/types'
 import { normalizeLotWorkerRates } from '@/lib/lotWorkerRates'
 import { normalizeAdditionalInfo } from '@/lib/additionalInfoExport'
 import { exportLotViewToPDF, exportLotViewToExcel } from './lotview/exportUtils'
+import { PageSkeleton } from './Skeleton'
 import './dashboard.css'
 
 interface LotViewContentProps {
@@ -91,8 +92,8 @@ export default function LotViewContent({ lotNumber }: LotViewContentProps) {
   if (loading) {
     return (
       <><NavigationBar />
-        <div className="dashboard-container">
-          <div className="loading-container"><div className="spinner" /><p>Loading lot data&hellip;</p></div>
+        <div className="dashboard-container px-3 sm:px-5 md:px-6 lg:px-8 xl:px-10">
+          <PageSkeleton cards={3} variant="detail" />
         </div>
       </>
     )
@@ -101,7 +102,7 @@ export default function LotViewContent({ lotNumber }: LotViewContentProps) {
   if (error || !lot) {
     return (
       <><NavigationBar />
-        <div className="dashboard-container">
+        <div className="dashboard-container px-3 sm:px-5 md:px-6 lg:px-8 xl:px-10">
           <div className="error-container">
             <h2>Error</h2><p>{error || 'Lot not found'}</p>
             <button className="btn btn-primary" onClick={() => router.push('/dashboard')}>Back to Dashboard</button>
@@ -121,10 +122,10 @@ export default function LotViewContent({ lotNumber }: LotViewContentProps) {
         { label: 'Download Excel', shortLabel: 'Excel', icon: <IconTable size={14} />, onClick: handleExportExcel, loading: generatingExcel, loadingLabel: '…' },
         { label: 'Back to Dashboard', shortLabel: 'Back', icon: <IconBack size={14} />, onClick: () => router.push('/dashboard'), variant: 'secondary' as const },
       ]} />
-      <div className="dashboard-container">
+      <div className="dashboard-container px-3 sm:px-5 md:px-6 lg:px-8 xl:px-10">
         <div className="dashboard-header">
           <div className="header-title">
-            <h1>Lot Details: {lot.lotNumber}</h1>
+            <h1 >Lot Details: {lot.lotNumber}</h1>
             <p>View saved lot production data</p>
           </div>
         </div>

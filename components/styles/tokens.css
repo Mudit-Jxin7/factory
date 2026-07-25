@@ -1,23 +1,26 @@
 :root {
   /* Surfaces — soft stone with clear hierarchy */
-  --color-bg: #f3f1ec;
+  --color-bg: #f2f0eb;
   --color-surface: #ffffff;
-  --color-surface-muted: #f8f7f4;
+  --color-surface-muted: #f7f6f3;
   --color-surface-elevated: #ffffff;
-  --color-ink: #121212;
-  --color-ink-soft: #3a3a3a;
-  --color-muted: #6b6a65;
-  --color-border: #ebe8e1;
-  --color-border-strong: #d8d4cb;
+  --color-surface-hover: #fafaf8;
+  --color-ink: #0f0f0f;
+  --color-ink-soft: #3d3d3a;
+  --color-muted: #6e6d68;
+  --color-muted-soft: #9a9892;
+  --color-border: #e9e6df;
+  --color-border-strong: #d4d0c7;
+  --color-border-subtle: rgba(18, 18, 18, 0.06);
 
   /* Brand accent — warm amber gold */
-  --color-accent: #d4a017;
-  --color-accent-soft: #fbf6e8;
-  --color-accent-mid: #f0d56a;
-  --color-accent-border: #ead89a;
-  --color-accent-hover: #f7efd4;
-  --color-focus-ring: rgba(212, 160, 23, 0.28);
-  --color-accent-glow: rgba(212, 160, 23, 0.14);
+  --color-accent: #c9950f;
+  --color-accent-soft: #fbf7ec;
+  --color-accent-mid: #e8c84a;
+  --color-accent-border: #e6d59a;
+  --color-accent-hover: #f5edd2;
+  --color-focus-ring: rgba(201, 149, 15, 0.28);
+  --color-accent-glow: rgba(201, 149, 15, 0.12);
 
   /* Semantic */
   --color-danger: #c0392b;
@@ -27,42 +30,73 @@
   --color-success-soft: #ecf8ef;
   --color-success-border: #b7e4c7;
   --color-success-text: #1b5e3b;
-  --color-warning-soft: #fbf6e8;
-  --color-warning-border: #ead89a;
+  --color-warning-soft: #fbf7ec;
+  --color-warning-border: #e6d59a;
   --color-warning-text: #7a5c00;
   --color-info-soft: #eef3f7;
   --color-info-border: #c5d4e0;
   --color-info-text: #2c4a5e;
 
-  /* Elevation — layered, soft, premium */
-  --shadow-xs: 0 1px 2px rgba(18, 18, 18, 0.04);
-  --shadow-sm: 0 1px 2px rgba(18, 18, 18, 0.04), 0 4px 12px rgba(18, 18, 18, 0.04);
-  --shadow-md: 0 2px 4px rgba(18, 18, 18, 0.03), 0 12px 28px rgba(18, 18, 18, 0.07);
-  --shadow-lg: 0 4px 8px rgba(18, 18, 18, 0.04), 0 24px 48px rgba(18, 18, 18, 0.1);
-  --shadow-xl: 0 8px 16px rgba(18, 18, 18, 0.05), 0 32px 64px rgba(18, 18, 18, 0.12);
-  --shadow-nav: 0 1px 0 rgba(18, 18, 18, 0.05), 0 8px 24px rgba(18, 18, 18, 0.04);
-  --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  /* Elevation — Linear/Vercel-style layered shadows */
+  --shadow-xs: 0 1px 2px rgba(15, 15, 15, 0.04);
+  --shadow-sm: 0 1px 2px rgba(15, 15, 15, 0.04), 0 2px 8px rgba(15, 15, 15, 0.04);
+  --shadow-md: 0 2px 4px rgba(15, 15, 15, 0.03), 0 8px 24px rgba(15, 15, 15, 0.06);
+  --shadow-lg: 0 4px 8px rgba(15, 15, 15, 0.03), 0 16px 40px rgba(15, 15, 15, 0.08);
+  --shadow-xl: 0 8px 16px rgba(15, 15, 15, 0.04), 0 24px 56px rgba(15, 15, 15, 0.1);
+  --shadow-nav: 0 1px 0 rgba(15, 15, 15, 0.05), 0 4px 16px rgba(15, 15, 15, 0.03);
+  --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  --shadow-lift: 0 4px 6px rgba(15, 15, 15, 0.02), 0 12px 28px rgba(15, 15, 15, 0.08);
+  --shadow-focus: 0 0 0 3px var(--color-focus-ring);
 
   /* Shape */
   --radius-xs: 6px;
-  --radius-sm: 10px;
-  --radius-md: 14px;
-  --radius-lg: 18px;
-  --radius-xl: 24px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 28px;
   --radius-full: 9999px;
 
-  /* Layout */
+  /* Layout & spacing */
   --max-width: 1600px;
-  --nav-height: 68px;
-  --nav-height-mobile: 58px;
-  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
-  --ease-spring: cubic-bezier(0.34, 1.2, 0.64, 1);
-  --duration: 200ms;
-  --duration-fast: 140ms;
-  --duration-slow: 320ms;
+  --nav-height: 64px;
+  --nav-height-mobile: 56px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
 
-  /* Type */
+  /* Motion */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.45, 0, 0.55, 1);
+  --ease-spring: cubic-bezier(0.34, 1.35, 0.64, 1);
+  --ease-snappy: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --duration: 180ms;
+  --duration-fast: 120ms;
+  --duration-slow: 280ms;
+  --duration-enter: 400ms;
+
+  /* Type scale */
   --font-sans: var(--font-jakarta), 'Plus Jakarta Sans', system-ui, sans-serif;
-  --tracking-tight: -0.025em;
-  --tracking-display: -0.035em;
+  --text-xs: 0.6875rem;   /* 11px */
+  --text-sm: 0.8125rem;   /* 13px */
+  --text-base: 0.9375rem; /* 15px */
+  --text-md: 1rem;        /* 16px */
+  --text-lg: 1.125rem;    /* 18px */
+  --text-xl: 1.375rem;    /* 22px */
+  --text-2xl: 1.625rem;   /* 26px */
+  --text-3xl: 1.875rem;   /* 30px */
+  --text-4xl: 2.25rem;    /* 36px */
+  --leading-tight: 1.15;
+  --leading-snug: 1.35;
+  --leading-normal: 1.5;
+  --tracking-tight: -0.022em;
+  --tracking-display: -0.04em;
+  --tracking-wide: 0.06em;
+  --tracking-label: 0.07em;
 }

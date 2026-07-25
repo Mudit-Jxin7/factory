@@ -96,10 +96,10 @@ export default function DeveloperContent() {
   return (
     <>
       <NavigationBar />
-      <div className="dashboard-container">
+      <div className="dashboard-container px-3 sm:px-5 md:px-6 lg:px-8 xl:px-10">
         <div className="dashboard-header">
           <div className="header-title">
-            <h1>Developer Settings</h1>
+            <h1 >Developer Settings</h1>
             <p>Manage colors, workers, processes, brand, pattern, and fabric</p>
           </div>
         </div>

@@ -1,29 +1,36 @@
 @import "tailwindcss";
 
 :root {
-  --background: var(--color-bg, #f3f1ec);
-  --foreground: var(--color-ink, #121212);
+  --background: var(--color-bg, #f2f0eb);
+  --foreground: var(--color-ink, #0f0f0f);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-surface: var(--color-surface, #ffffff);
+  --color-muted: var(--color-muted, #6e6d68);
+  --color-accent: var(--color-accent, #c9950f);
+  --color-border: var(--color-border, #e9e6df);
   --font-sans: var(--font-jakarta);
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --radius-lg: var(--radius-lg, 16px);
 }
 
 body {
-  background: var(--color-bg, #f3f1ec);
+  background: var(--color-bg, #f2f0eb);
   background-image:
-    radial-gradient(ellipse 90% 55% at 100% -10%, rgba(212, 160, 23, 0.16) 0%, transparent 55%),
-    radial-gradient(ellipse 55% 45% at -5% 110%, rgba(18, 18, 18, 0.04) 0%, transparent 50%),
-    radial-gradient(ellipse 40% 30% at 50% 50%, rgba(255, 255, 255, 0.5) 0%, transparent 70%);
+    radial-gradient(ellipse 90% 55% at 100% -10%, rgba(201, 149, 15, 0.14) 0%, transparent 55%),
+    radial-gradient(ellipse 55% 45% at -5% 110%, rgba(15, 15, 15, 0.035) 0%, transparent 50%),
+    radial-gradient(ellipse 40% 30% at 50% 50%, rgba(255, 255, 255, 0.45) 0%, transparent 70%);
   background-attachment: fixed;
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
   min-height: 100vh;
-  color: var(--color-ink, #121212);
+  color: var(--color-ink, #0f0f0f);
   letter-spacing: -0.011em;
 }
 
@@ -37,4 +44,29 @@ select:focus-visible,
 textarea:focus-visible,
 button:focus-visible {
   outline: none;
+}
+
+/* Selection */
+::selection {
+  background: rgba(201, 149, 15, 0.22);
+  color: var(--color-ink);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Smooth scrolling where supported */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
 }

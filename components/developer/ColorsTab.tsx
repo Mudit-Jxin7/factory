@@ -5,6 +5,7 @@ import { colorsAPI } from '@/lib/api'
 import { useToast } from '../ToastProvider'
 import { useConfirm } from '../ConfirmProvider'
 import Pagination from '../Pagination'
+import { CardSkeleton } from '../Skeleton'
 
 const PAGE_SIZE = 15
 
@@ -74,7 +75,7 @@ export default function ColorsTab({
         </div>
       </div>
       {loading ? (
-        <div className="card-loading"><div className="spinner" /><p>Loading colors&hellip;</p></div>
+        <CardSkeleton rows={5} />
       ) : (
         <>
           <div style={{ overflowX: 'auto' }}>

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { getUserRole, isStaffOnlyPath, isWorkerAllowedPath } from '@/lib/auth'
+import { PageSkeleton } from './Skeleton'
 import './dashboard.css'
 
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -33,10 +34,8 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
 
   if (loading) {
     return (
-      <div className="dashboard-container">
-        <div className="loading-container">
-          <p>Loading...</p>
-        </div>
+      <div className="dashboard-container px-3 sm:px-5 md:px-6 lg:px-8 xl:px-10">
+        <PageSkeleton cards={2} variant="form" />
       </div>
     )
   }

@@ -6,6 +6,7 @@ import { WORKER_ROLES } from '@/lib/types'
 import { useToast } from '../ToastProvider'
 import { useConfirm } from '../ConfirmProvider'
 import Pagination from '../Pagination'
+import { CardSkeleton } from '../Skeleton'
 
 const PAGE_SIZE = 15
 
@@ -113,7 +114,7 @@ export default function WorkersTab({
         <button className="btn btn-primary" onClick={handleCreate} style={{ marginTop: '10px' }}>Add Worker</button>
       </div>
       {loading ? (
-        <div className="card-loading"><div className="spinner" /><p>Loading workers&hellip;</p></div>
+        <CardSkeleton rows={5} />
       ) : (
         <>
         <div style={{ overflowX: 'auto' }}>

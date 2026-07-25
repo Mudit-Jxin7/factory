@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { workerProcessesAPI } from '@/lib/api'
 import { useToast } from '../ToastProvider'
 import Pagination from '../Pagination'
+import { CardSkeleton } from '../Skeleton'
 
 const PAGE_SIZE = 15
 
@@ -112,7 +113,7 @@ export default function ProcessesTab({ processes, loading, onRefresh }: Processe
       </div>
 
       {loading ? (
-        <div className="loading-container"><div className="spinner" /><p>Loading processes&hellip;</p></div>
+        <CardSkeleton rows={5} />
       ) : (
         <>
           <div style={{ overflowX: 'auto' }}>
