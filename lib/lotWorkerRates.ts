@@ -1,24 +1,32 @@
-import { JobCardProductionRow, LotWorkerRates, DEFAULT_LOT_WORKER_RATES } from '@/lib/types'
+import { JobCardProductionRow, LotWorkerRates, WorkerProcess, DEFAULT_LOT_WORKER_RATES } from '@/lib/types'
+import {
+  getProcessProductionKey,
+  resolveWorkerProcesses,
+} from '@/lib/workerProcesses'
 
-/** Maps job-card production field → lot workerRates key. */
-export const LOT_RATE_FIELD_MAP = {
+/** @deprecated Prefer process.productionKey from worker processes master. */
+export const LOT_RATE_FIELD_MAP: Record<string, string> = {
   front: 'front',
   back: 'back',
   zip: 'zip',
   astar: 'astar',
   beltProd: 'belt',
-} as const
+}
 
-export type LotRateProductionField = keyof typeof LOT_RATE_FIELD_MAP
-
-export const ALL_LOT_RATE_PRODUCTION_FIELDS = Object.keys(LOT_RATE_FIELD_MAP) as LotRateProductionField[]
+export type LotRateProductionField = string
 
 export const normalizeLotWorkerRates = (
   rates?: Partial<LotWorkerRates> | null,
-): LotWorkerRates => ({
-  ...DEFAULT_LOT_WORKER_RATES,
-  ...(rates || {}),
-})
+  processes?: WorkerProcess[] | null,
+): LotWorkerRates => {
+  const resolved = resolveWorkerProcesses(processes)
+  const base: LotWorkerRates = { ...DEFAULT_LOT_WORKER_RATES }
+  resolved.forEach((p) => { base[p.key] = '' })
+  Object.entries(rates || {}).forEach(([key, value]) => {
+    base[key] = String(value ?? '')
+  })
+  return base
+}
 
 export const isLotWorkerRateFilled = (value: unknown): boolean => {
   const trimmed = String(value ?? '').trim()
@@ -27,68 +35,88 @@ export const isLotWorkerRateFilled = (value: unknown): boolean => {
   return Number.isFinite(num) && num >= 0
 }
 
+export const getRateKeyForProductionField = (
+  field: string,
+  processes?: WorkerProcess[] | null,
+): string => {
+  const resolved = resolveWorkerProcesses(processes)
+  const match = resolved.find((p) => getProcessProductionKey(p) === field)
+  if (match) return match.key
+  return LOT_RATE_FIELD_MAP[field] || field
+}
+
 export const getLotRateForField = (
   rates: Partial<LotWorkerRates> | null | undefined,
   field: string,
+  processes?: WorkerProcess[] | null,
 ): string => {
-  const key = LOT_RATE_FIELD_MAP[field as LotRateProductionField]
-  if (!key) return ''
-  return String(normalizeLotWorkerRates(rates)[key] || '').trim()
+  const rateKey = getRateKeyForProductionField(field, processes)
+  const normalized = normalizeLotWorkerRates(rates, processes)
+  return String(normalized[rateKey] || '').trim()
 }
 
 /**
- * Production fields that have a rate set on the lot.
- * When `rates` is undefined/null (legacy), returns all fields.
+ * Production field keys that have a rate set on the lot.
+ * When `rates` is undefined/null (legacy), returns all process production keys.
  * When rates exist but are all empty, returns [].
  */
 export const getActiveWorkerFields = (
   rates?: Partial<LotWorkerRates> | null,
-): LotRateProductionField[] => {
-  if (rates === undefined || rates === null) return [...ALL_LOT_RATE_PRODUCTION_FIELDS]
-  const normalized = normalizeLotWorkerRates(rates)
-  return ALL_LOT_RATE_PRODUCTION_FIELDS.filter((field) =>
-    isLotWorkerRateFilled(normalized[LOT_RATE_FIELD_MAP[field]]),
-  )
+  processes?: WorkerProcess[] | null,
+): string[] => {
+  const resolved = resolveWorkerProcesses(processes)
+  if (rates === undefined || rates === null) {
+    return resolved.map((p) => getProcessProductionKey(p))
+  }
+  const normalized = normalizeLotWorkerRates(rates, processes)
+  return resolved
+    .filter((p) => isLotWorkerRateFilled(normalized[p.key]))
+    .map((p) => getProcessProductionKey(p))
+}
+
+export const getActiveProcessesForRates = (
+  rates?: Partial<LotWorkerRates> | null,
+  processes?: WorkerProcess[] | null,
+): WorkerProcess[] => {
+  const resolved = resolveWorkerProcesses(processes)
+  if (rates === undefined || rates === null) return resolved
+  const normalized = normalizeLotWorkerRates(rates, processes)
+  return resolved.filter((p) => isLotWorkerRateFilled(normalized[p.key]))
 }
 
 /** Stamp lot role rates onto production rows that have a worker assigned. */
 export const applyLotRatesToProduction = (
   productionData: JobCardProductionRow[] = [],
   rates?: Partial<LotWorkerRates> | null,
+  processes?: WorkerProcess[] | null,
 ): JobCardProductionRow[] => {
-  const normalized = normalizeLotWorkerRates(rates)
+  const resolved = resolveWorkerProcesses(processes)
+  const normalized = normalizeLotWorkerRates(rates, processes)
   return productionData.map((row) => {
-    const updated = { ...row }
-    ALL_LOT_RATE_PRODUCTION_FIELDS.forEach((field) => {
-      const workerKey = `${field}Worker` as keyof JobCardProductionRow
-      const rateKey = `${field}Rate` as keyof JobCardProductionRow
-      const hasWorker = String(row[workerKey] ?? '').trim() !== ''
-      ;(updated as any)[rateKey] = hasWorker
-        ? String(normalized[LOT_RATE_FIELD_MAP[field]] || '').trim()
-        : ''
+    const updated: any = { ...row }
+    resolved.forEach((process) => {
+      const field = getProcessProductionKey(process)
+      const workerKey = `${field}Worker`
+      const rateKey = `${field}Rate`
+      const hasWorker = String(row[workerKey as keyof JobCardProductionRow] ?? '').trim() !== ''
+      updated[rateKey] = hasWorker ? String(normalized[process.key] || '').trim() : ''
     })
-    return updated
+    return updated as JobCardProductionRow
   })
 }
 
-export const LOT_WORKER_RATE_LABELS: Record<keyof LotWorkerRates, string> = {
-  front: 'Front',
-  back: 'Back',
-  zip: 'Zip',
-  astar: 'Astar',
-  belt: 'Belt',
-}
-
-/** Returns missing rate field labels, or an empty array when all are filled. */
 export const getMissingLotWorkerRateLabels = (
   rates?: Partial<LotWorkerRates> | null,
+  processes?: WorkerProcess[] | null,
 ): string[] => {
-  const normalized = normalizeLotWorkerRates(rates)
-  return (Object.keys(LOT_WORKER_RATE_LABELS) as (keyof LotWorkerRates)[])
-    .filter((key) => !isLotWorkerRateFilled(normalized[key]))
-    .map((key) => LOT_WORKER_RATE_LABELS[key])
+  const resolved = resolveWorkerProcesses(processes)
+  const normalized = normalizeLotWorkerRates(rates, processes)
+  return resolved
+    .filter((p) => !isLotWorkerRateFilled(normalized[p.key]))
+    .map((p) => p.label)
 }
 
 export const areLotWorkerRatesComplete = (
   rates?: Partial<LotWorkerRates> | null,
-): boolean => getMissingLotWorkerRateLabels(rates).length === 0
+  processes?: WorkerProcess[] | null,
+): boolean => getMissingLotWorkerRateLabels(rates, processes).length === 0

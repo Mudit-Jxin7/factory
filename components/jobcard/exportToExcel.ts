@@ -1,8 +1,8 @@
-import { Ratios, AdditionalInfo, JobCardProductionRow, Worker, LotWorkerRates } from '@/lib/types'
+import { Ratios, AdditionalInfo, JobCardProductionRow, Worker, LotWorkerRates, WorkerProcess } from '@/lib/types'
 import { getAdditionalInfoExportRows } from '@/lib/additionalInfoExport'
 import { formatDisplayDate } from '@/lib/dateFormat'
 import { formatIndianAmount } from '@/lib/indianNumberFormat'
-import { WORKER_META, getActiveWorkerPairs } from './constants'
+import { buildWorkerMetaFromProcesses, getActiveWorkerPairs } from './constants'
 
 const getWorkerName = (workerId: string, workers: Worker[]) => {
   if (!workerId) return ''
@@ -20,9 +20,11 @@ export const exportJobCardToExcel = (params: {
   additionalInfo: AdditionalInfo
   workers: Worker[]
   workerRates?: LotWorkerRates | null
+  workerProcesses?: WorkerProcess[] | null
 }) => {
-  const { lotNumber, brand, date, ratios, productionData, flyWidth, additionalInfo, workers, workerRates } = params
-  const workerPairs = getActiveWorkerPairs(workerRates ?? {})
+  const { lotNumber, brand, date, ratios, productionData, flyWidth, additionalInfo, workers, workerRates, workerProcesses } = params
+  const workerPairs = getActiveWorkerPairs(workerRates ?? {}, workerProcesses)
+  const WORKER_META = buildWorkerMetaFromProcesses(workerProcesses)
   const displayDate = formatDisplayDate(date)
 
   const infoRows = [
@@ -48,6 +50,7 @@ export const exportJobCardToExcel = (params: {
     workerPairs.forEach(([w1, w2], pIdx) => {
       const m1 = WORKER_META[w1]
       const m2 = w2 ? WORKER_META[w2] : null
+      if (!m1) return
       prodRows.push([
         `${w1} Worker`, `${w1} Date`, `${w1} Rate`,
         w2 ? `${w2} Worker` : '', w2 ? `${w2} Date` : '', w2 ? `${w2} Rate` : '',

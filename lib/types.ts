@@ -69,10 +69,13 @@ export interface JobCardProductionRow {
   add2Worker: string
   add2Date: string
   add2Rate: string
+  /** Dynamic process fields: `{productionKey}Worker|Date|Rate` */
+  [key: string]: string | number | undefined
 }
 
 export const WORKER_ROLES = ['FRONT', 'BACK', 'ZIP', 'ASTAR', 'BELT'] as const
-export type WorkerRole = typeof WORKER_ROLES[number]
+/** @deprecated Prefer role codes from worker processes master. */
+export type WorkerRole = string
 
 export type { JobCardStatus } from './jobCardStatus'
 
@@ -99,14 +102,8 @@ export const DEFAULT_ADDITIONAL_INFO: AdditionalInfo = {
   addition1: '', addition2: '', addition3: '',
 }
 
-/** Role rates set on the lot; applied to job-card production columns. */
-export interface LotWorkerRates {
-  front: string
-  back: string
-  zip: string
-  astar: string
-  belt: string
-}
+/** Role rates set on the lot; keyed by process `key` (e.g. front, belt, pocket). */
+export type LotWorkerRates = Record<string, string>
 
 export const DEFAULT_LOT_WORKER_RATES: LotWorkerRates = {
   front: '',
@@ -114,5 +111,16 @@ export const DEFAULT_LOT_WORKER_RATES: LotWorkerRates = {
   zip: '',
   astar: '',
   belt: '',
+}
+
+/** Configurable worker process (developer master). */
+export interface WorkerProcess {
+  _id?: string
+  key: string
+  productionKey: string
+  label: string
+  roleCode: string
+  sortOrder: number
+  active: boolean
 }
 

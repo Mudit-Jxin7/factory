@@ -1,18 +1,23 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { colorsAPI, workersAPI } from '@/lib/api'
+import { colorsAPI, workersAPI, workerProcessesAPI } from '@/lib/api'
 import NavigationBar from './NavigationBar'
 import { useToast } from './ToastProvider'
 import ColorsTab from './developer/ColorsTab'
 import WorkersTab from './developer/WorkersTab'
+import ProcessesTab from './developer/ProcessesTab'
 import MasterTabComponent from './developer/MasterTab'
 import { TabType, MasterTab, MasterItem, MASTER_TAB_CONFIG } from './developer/types'
 import './dashboard.css'
 
 const TAB_LABELS: { key: TabType; label: string }[] = [
-  { key: 'colors', label: 'Colors' }, { key: 'workers', label: 'Workers' },
-  { key: 'brands', label: 'Brands' }, { key: 'patterns', label: 'Patterns' }, { key: 'fabrics', label: 'Fabrics' },
+  { key: 'colors', label: 'Colors' },
+  { key: 'workers', label: 'Workers' },
+  { key: 'processes', label: 'Processes' },
+  { key: 'brands', label: 'Brands' },
+  { key: 'patterns', label: 'Patterns' },
+  { key: 'fabrics', label: 'Fabrics' },
 ]
 
 export default function DeveloperContent() {
@@ -32,6 +37,9 @@ export default function DeveloperContent() {
   const [editingWorker, setEditingWorker] = useState<string | null>(null)
   const [editWorker, setEditWorker] = useState({ worker_full_name: '', role: '', tbd2: '', tbd3: '' })
   const [deletingWorker, setDeletingWorker] = useState<string | null>(null)
+
+  const [processes, setProcesses] = useState<any[]>([])
+  const [loadingProcesses, setLoadingProcesses] = useState(true)
 
   const [itemsByTab, setItemsByTab] = useState<Record<MasterTab, MasterItem[]>>({ brands: [], patterns: [], fabrics: [] })
   const [loadingByTab, setLoadingByTab] = useState<Record<MasterTab, boolean>>({ brands: true, patterns: true, fabrics: true })
@@ -56,6 +64,14 @@ export default function DeveloperContent() {
     setLoadingWorkers(false)
   }, [toast])
 
+  const fetchProcesses = useCallback(async () => {
+    setLoadingProcesses(true)
+    const result = await workerProcessesAPI.getAllProcesses()
+    if (result.success) setProcesses(result.processes || [])
+    else toast.showToast('Error fetching processes: ' + result.error, 'error')
+    setLoadingProcesses(false)
+  }, [toast])
+
   const fetchMasterTabItems = useCallback(async (tab: MasterTab) => {
     setLoadingByTab((prev) => ({ ...prev, [tab]: true }))
     const config = MASTER_TAB_CONFIG[tab]
@@ -67,9 +83,15 @@ export default function DeveloperContent() {
 
   useEffect(() => {
     if (activeTab === 'colors') fetchColors()
-    else if (activeTab === 'workers') fetchWorkers()
+    else if (activeTab === 'workers') { fetchWorkers(); fetchProcesses() }
+    else if (activeTab === 'processes') fetchProcesses()
     else fetchMasterTabItems(activeTab as MasterTab)
-  }, [activeTab, fetchColors, fetchWorkers, fetchMasterTabItems])
+  }, [activeTab, fetchColors, fetchWorkers, fetchProcesses, fetchMasterTabItems])
+
+  const roleOptions = processes
+    .filter((p) => p.active !== false)
+    .sort((a: any, b: any) => (a.sortOrder - b.sortOrder) || a.label.localeCompare(b.label))
+    .map((p: any) => p.roleCode as string)
 
   return (
     <>
@@ -78,7 +100,7 @@ export default function DeveloperContent() {
         <div className="dashboard-header">
           <div className="header-title">
             <h1>Developer Settings</h1>
-            <p>Manage colors, workers, brand, pattern, and fabric</p>
+            <p>Manage colors, workers, processes, brand, pattern, and fabric</p>
           </div>
         </div>
         <div className="dashboard-content">
@@ -111,9 +133,13 @@ export default function DeveloperContent() {
             <WorkersTab
               workers={workers} loading={loadingWorkers} newWorker={newWorker}
               editingWorker={editingWorker} editWorker={editWorker} deletingWorker={deletingWorker}
+              roleOptions={roleOptions}
               onNewWorkerChange={setNewWorker} onEditWorkerChange={setEditWorker}
               onSetEditingWorker={setEditingWorker} onRefresh={fetchWorkers} onSetDeletingWorker={setDeletingWorker}
             />
+          )}
+          {activeTab === 'processes' && (
+            <ProcessesTab processes={processes} loading={loadingProcesses} onRefresh={fetchProcesses} />
           )}
           {(activeTab === 'brands' || activeTab === 'patterns' || activeTab === 'fabrics') && (
             <MasterTabComponent

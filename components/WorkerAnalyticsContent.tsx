@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { jobCardsAPI, workersAPI } from '@/lib/api'
-import { WORKER_ROLES } from '@/lib/types'
+import { jobCardsAPI, workersAPI, workerProcessesAPI } from '@/lib/api'
+import { WorkerProcess } from '@/lib/types'
 import { getWorkerRole } from './jobcard/constants'
+import { getProcessProductionKey, resolveWorkerProcesses } from '@/lib/workerProcesses'
 import NavigationBar from './NavigationBar'
 import { useToast } from './ToastProvider'
 import ActionBar from './ActionBar'
@@ -15,20 +16,11 @@ import { aggregateAnalyticsRows } from '@/lib/analyticsAggregate'
 import { todayISODateIST, toISODateIST } from '@/lib/dateFormat'
 import './dashboard.css'
 
-type SectionType = 'Front' | 'Back' | 'Zip' | 'Astar' | 'Belt'
-
-const SECTIONS: { key: SectionType; workerKey: string; dateKey: string; rateKey: string }[] = [
-  { key: 'Front', workerKey: 'frontWorker', dateKey: 'frontDate', rateKey: 'frontRate' },
-  { key: 'Back',  workerKey: 'backWorker',  dateKey: 'backDate',  rateKey: 'backRate'  },
-  { key: 'Zip',   workerKey: 'zipWorker',   dateKey: 'zipDate',   rateKey: 'zipRate'   },
-  { key: 'Astar', workerKey: 'astarWorker', dateKey: 'astarDate', rateKey: 'astarRate' },
-  { key: 'Belt',  workerKey: 'beltProdWorker', dateKey: 'beltProdDate', rateKey: 'beltProdRate' },
-]
-
 export default function WorkerAnalyticsContent() {
   const toast = useToast()
   const [jobCards, setJobCards] = useState<any[]>([])
   const [workers, setWorkers] = useState<any[]>([])
+  const [processes, setProcesses] = useState<WorkerProcess[]>([])
   const [loading, setLoading] = useState(true)
   const [generatingPDF, setGeneratingPDF] = useState(false)
   const [generatingExcel, setGeneratingExcel] = useState(false)
@@ -47,11 +39,16 @@ export default function WorkerAnalyticsContent() {
     const fetchData = async () => {
       setLoading(true)
       try {
-        const [jcResult, wResult] = await Promise.all([jobCardsAPI.getAllJobCards(), workersAPI.getAllWorkers()])
+        const [jcResult, wResult, pResult] = await Promise.all([
+          jobCardsAPI.getAllJobCards(),
+          workersAPI.getAllWorkers(),
+          workerProcessesAPI.getAllProcesses(),
+        ])
         if (jcResult.success) setJobCards(jcResult.jobCards || [])
         else toast.showToast('Error fetching job cards: ' + jcResult.error, 'error')
         if (wResult.success) setWorkers(wResult.workers || [])
         else toast.showToast('Error fetching workers: ' + wResult.error, 'error')
+        if (pResult.success) setProcesses(pResult.processes || [])
       } catch (error: any) {
         toast.showToast('Error fetching data: ' + error.message, 'error')
       } finally { setLoading(false) }
@@ -59,9 +56,26 @@ export default function WorkerAnalyticsContent() {
     fetchData()
   }, [])
 
+  const resolvedProcesses = useMemo(() => resolveWorkerProcesses(processes), [processes])
+  const roleOptions = useMemo(() => resolvedProcesses.map((p) => p.label), [resolvedProcesses])
+  const roleCodes = useMemo(() => new Set(resolvedProcesses.map((p) => p.roleCode)), [resolvedProcesses])
+
+  const sections = useMemo(
+    () => resolvedProcesses.map((p) => {
+      const field = getProcessProductionKey(p)
+      return {
+        key: p.label,
+        workerKey: `${field}Worker`,
+        dateKey: `${field}Date`,
+        rateKey: `${field}Rate`,
+      }
+    }),
+    [resolvedProcesses],
+  )
+
   const eligibleWorkers = useMemo(
-    () => workers.filter((w) => WORKER_ROLES.includes(getWorkerRole(w) as typeof WORKER_ROLES[number])),
-    [workers],
+    () => workers.filter((w) => roleCodes.has(getWorkerRole(w))),
+    [workers, roleCodes],
   )
 
   const analyticsData = useMemo(() => {
@@ -71,7 +85,7 @@ export default function WorkerAnalyticsContent() {
       jobCard.productionData.forEach((row: any) => {
         const pieces = (Number(row.pieces) || 0) + (Number(row.tukda) || 0)
         const layer = Number(row.layer) || 0
-        SECTIONS.forEach(({ key, workerKey, dateKey, rateKey }) => {
+        sections.forEach(({ key, workerKey, dateKey, rateKey }) => {
           const workerId = row[workerKey]
           const date = row[dateKey]
           const rateVal = row[rateKey]
@@ -89,7 +103,7 @@ export default function WorkerAnalyticsContent() {
       })
     })
     return rows
-  }, [jobCards, workers])
+  }, [jobCards, workers, sections])
 
   const lotOptions = useMemo(() => {
     const lots = new Set<string>()
@@ -175,6 +189,7 @@ export default function WorkerAnalyticsContent() {
         <div className="dashboard-content">
           <AnalyticsFilters
             workers={eligibleWorkers} lotOptions={lotOptions}
+            roleOptions={roleOptions}
             fromDate={fromDate} toDate={toDate}
             selectedWorker={selectedWorker} selectedRole={selectedRole} lotNumber={lotNumber}
             onFromDateChange={setFromDate} onToDateChange={setToDate}

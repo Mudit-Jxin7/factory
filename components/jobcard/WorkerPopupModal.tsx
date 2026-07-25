@@ -1,12 +1,14 @@
 'use client'
 
-import { WorkerField, FIELD_LABELS, filterWorkersForField, getWorkerRole } from './constants'
-import { Worker } from '@/lib/types'
+import { WorkerField, filterWorkersForField, getWorkerRole } from './constants'
+import { Worker, WorkerProcess } from '@/lib/types'
 import { todayISODateIST } from '@/lib/dateFormat'
 
 interface WorkerPopupModalProps {
   field: WorkerField
   workers: Worker[]
+  processes?: WorkerProcess[] | null
+  fieldLabel?: string
   popupWorker: string
   popupDate: string
   popupRate: string
@@ -24,11 +26,11 @@ const inputStyle = {
 }
 
 export default function WorkerPopupModal({
-  field, workers, popupWorker, popupDate, popupRate,
+  field, workers, processes, fieldLabel, popupWorker, popupDate, popupRate,
   onWorkerChange, onDateChange, onRateChange, onSave, onCancel, hideRate = false,
 }: WorkerPopupModalProps) {
   const today = todayISODateIST()
-  const eligibleWorkers = filterWorkersForField(workers, field, popupWorker)
+  const eligibleWorkers = filterWorkersForField(workers, field, popupWorker, processes)
 
   const handleWorkerChange = (value: string) => {
     onWorkerChange(value)
@@ -47,7 +49,7 @@ export default function WorkerPopupModal({
         onClick={(e) => e.stopPropagation()}
       >
         <h3 style={{ margin: '0 0 20px', fontSize: '20px' }}>
-          {FIELD_LABELS[field]} — Worker / Date{hideRate ? '' : ' / Rate'}
+          {fieldLabel || field} — Worker / Date{hideRate ? '' : ' / Rate'}
         </h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div className="form-group" style={{ marginBottom: 0 }}>

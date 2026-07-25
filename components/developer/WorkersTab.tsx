@@ -18,6 +18,7 @@ interface WorkersTabProps {
   editingWorker: string | null
   editWorker: WorkerForm
   deletingWorker: string | null
+  roleOptions?: string[]
   onNewWorkerChange: (form: WorkerForm) => void
   onEditWorkerChange: (form: WorkerForm) => void
   onSetEditingWorker: (id: string | null) => void
@@ -31,11 +32,13 @@ const getWorkerRole = (worker: { role?: string; tbd1?: string }) => worker.role 
 
 export default function WorkersTab({
   workers, loading, newWorker, editingWorker, editWorker, deletingWorker,
+  roleOptions,
   onNewWorkerChange, onEditWorkerChange, onSetEditingWorker, onRefresh, onSetDeletingWorker,
 }: WorkersTabProps) {
   const toast = useToast()
   const { confirm: showConfirm } = useConfirm()
   const [page, setPage] = useState(1)
+  const roles = (roleOptions && roleOptions.length > 0) ? roleOptions : [...WORKER_ROLES]
 
   useEffect(() => { setPage(1) }, [workers.length])
 
@@ -80,7 +83,7 @@ export default function WorkersTab({
   const renderRoleSelect = (value: string, onChange: (role: string) => void, style?: CSSProperties) => (
     <select value={value} onChange={(e) => onChange(e.target.value)} style={style}>
       <option value="">Select role</option>
-      {WORKER_ROLES.map((role) => (
+      {roles.map((role) => (
         <option key={role} value={role}>{role}</option>
       ))}
     </select>

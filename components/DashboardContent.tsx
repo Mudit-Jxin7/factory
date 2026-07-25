@@ -2,8 +2,8 @@
 
 import { useState, useMemo, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { lotsAPI, colorsAPI, brandsAPI, patternsAPI, fabricsAPI, jobCardsAPI } from '@/lib/api'
-import { Ratios, AdditionalInfo, LotWorkerRates, DEFAULT_RATIOS, DEFAULT_ADDITIONAL_INFO, DEFAULT_LOT_WORKER_RATES } from '@/lib/types'
+import { lotsAPI, colorsAPI, brandsAPI, patternsAPI, fabricsAPI, jobCardsAPI, workerProcessesAPI } from '@/lib/api'
+import { Ratios, AdditionalInfo, LotWorkerRates, WorkerProcess, DEFAULT_RATIOS, DEFAULT_ADDITIONAL_INFO, DEFAULT_LOT_WORKER_RATES } from '@/lib/types'
 import NavigationBar from './NavigationBar'
 import ActionBar from './ActionBar'
 import { IconSave, IconPdf, IconTable } from './Icons'
@@ -18,6 +18,7 @@ import { isAdditionalInfoEmpty, normalizeAdditionalInfo } from '@/lib/additional
 import { exportLotToPDF, exportLotToExcel } from './dashboard/exportUtils'
 import { useSaveLot } from './dashboard/useSaveLot'
 import { todayISODateIST } from '@/lib/dateFormat'
+import { normalizeLotWorkerRates } from '@/lib/lotWorkerRates'
 import './dashboard.css'
 
 const BLANK_ROW = { serialNumber: 1, meter: '', layer: '1', pieces: 0, color: '', shade: '', zip_code: '', thread_code: '', tukda: '' }
@@ -46,15 +47,21 @@ export default function DashboardContent() {
   const [tukdaSize, setTukdaSize] = useState('28')
   const [additionalInfo, setAdditionalInfo] = useState<AdditionalInfo>(DEFAULT_ADDITIONAL_INFO)
   const [workerRates, setWorkerRates] = useState<LotWorkerRates>(DEFAULT_LOT_WORKER_RATES)
+  const [workerProcesses, setWorkerProcesses] = useState<WorkerProcess[]>([])
 
   useEffect(() => {
     colorsAPI.getAllColors().then(r => { if (r.success) setColors(r.colors || []) })
-    Promise.all([fabricsAPI.getAllFabrics(), patternsAPI.getAllPatterns(), brandsAPI.getAllBrands()])
-      .then(([fr, pr, br]) => {
-        if (fr.success) setFabrics(fr.fabrics || [])
-        if (pr.success) setPatterns(pr.patterns || [])
-        if (br.success) setBrands(br.brands || [])
-      })
+    Promise.all([
+      fabricsAPI.getAllFabrics(),
+      patternsAPI.getAllPatterns(),
+      brandsAPI.getAllBrands(),
+      workerProcessesAPI.getAllProcesses(),
+    ]).then(([fr, pr, br, proc]) => {
+      if (fr.success) setFabrics(fr.fabrics || [])
+      if (pr.success) setPatterns(pr.patterns || [])
+      if (br.success) setBrands(br.brands || [])
+      if (proc.success) setWorkerProcesses(proc.processes || [])
+    })
   }, [])
 
   useEffect(() => {
@@ -84,7 +91,7 @@ export default function DashboardContent() {
           : [BLANK_ROW])
         setTukdaSize(lot.tukda?.size || '28')
         setAdditionalInfo(normalizeAdditionalInfo(lot.additionalInfo, lot.flyWidth))
-        setWorkerRates({ ...DEFAULT_LOT_WORKER_RATES, ...(lot.workerRates || {}) })
+        setWorkerRates(normalizeLotWorkerRates(lot.workerRates || {}, workerProcesses.length ? workerProcesses : undefined))
         if (isAdditionalInfoEmpty(lot.additionalInfo, lot.flyWidth)) {
           const jcResult = await jobCardsAPI.getJobCardByLotNumber(lot.lotNumber)
           if (jcResult.success && jcResult.jobCard && !isAdditionalInfoEmpty(jcResult.jobCard.additionalInfo, jcResult.jobCard.flyWidth)) {
@@ -116,7 +123,7 @@ export default function DashboardContent() {
         setRatios(DEFAULT_RATIOS)
         setProductionData([{ ...BLANK_ROW }])
         setTukdaSize('28')
-        setWorkerRates({ ...DEFAULT_LOT_WORKER_RATES, ...(lot.workerRates || {}) })
+        setWorkerRates(normalizeLotWorkerRates(lot.workerRates || {}, workerProcesses.length ? workerProcesses : undefined))
         let info = normalizeAdditionalInfo(lot.additionalInfo, lot.flyWidth)
         if (isAdditionalInfoEmpty(lot.additionalInfo, lot.flyWidth)) {
           const jcResult = await jobCardsAPI.getJobCardByLotNumber(lot.lotNumber)
@@ -277,6 +284,7 @@ export default function DashboardContent() {
           />
           <LotRatesForm
             workerRates={workerRates}
+            processes={workerProcesses}
             onRateChange={(key, value) => setWorkerRates((prev) => ({ ...prev, [key]: value }))}
           />
           <JobCardAdditionalInfo

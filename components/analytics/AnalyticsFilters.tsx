@@ -7,6 +7,7 @@ const ROLE_OPTIONS = ['Front', 'Back', 'Zip', 'Astar', 'Belt'] as const
 interface AnalyticsFiltersProps {
   workers: any[]
   lotOptions: string[]
+  roleOptions?: string[]
   fromDate: string
   toDate: string
   selectedWorker: string
@@ -25,10 +26,11 @@ interface AnalyticsFiltersProps {
 const workerLabel = (w: any) => `${w.worker_id} - ${w.worker_full_name}`
 
 export default function AnalyticsFilters({
-  workers, lotOptions, fromDate, toDate, selectedWorker, selectedRole, lotNumber,
+  workers, lotOptions, roleOptions, fromDate, toDate, selectedWorker, selectedRole, lotNumber,
   onFromDateChange, onToDateChange, onWorkerChange, onRoleChange, onLotNumberChange,
   onApplyFilters, onClearFilters, onDateRangePreset,
 }: AnalyticsFiltersProps) {
+  const roles = roleOptions && roleOptions.length > 0 ? roleOptions : [...ROLE_OPTIONS]
   const [workerOpen, setWorkerOpen] = useState(false)
   const [workerQuery, setWorkerQuery] = useState('')
   const workerWrapRef = useRef<HTMLDivElement>(null)
@@ -223,7 +225,7 @@ export default function AnalyticsFilters({
           <label>Role</label>
           <select value={selectedRole} onChange={(e) => onRoleChange(e.target.value)}>
             <option value="">All Roles</option>
-            {ROLE_OPTIONS.map((role) => (
+            {roles.map((role) => (
               <option key={role} value={role}>{role}</option>
             ))}
           </select>

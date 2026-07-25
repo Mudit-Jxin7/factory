@@ -2,10 +2,11 @@
 
 import { CSSProperties, useMemo } from 'react'
 import { getColorForShade } from '@/lib/colorUtils'
-import { JobCardProductionRow, LotWorkerRates, Worker } from '@/lib/types'
-import { getActiveWorkerFields, getLotRateForField } from '@/lib/lotWorkerRates'
+import { JobCardProductionRow, LotWorkerRates, Worker, WorkerProcess } from '@/lib/types'
+import { getActiveProcessesForRates, getLotRateForField } from '@/lib/lotWorkerRates'
 import { formatDisplayDate } from '@/lib/dateFormat'
 import { formatIndianAmount } from '@/lib/indianNumberFormat'
+import { getProcessProductionKey } from '@/lib/workerProcesses'
 import { WorkerField } from './constants'
 
 interface JobCardProductionTableProps {
@@ -15,14 +16,9 @@ interface JobCardProductionTableProps {
   onOpenWorkerPopup: (rowIndex: number, field: WorkerField) => void
   hideRate?: boolean
   workerRates?: LotWorkerRates | null
+  processes?: import('@/lib/types').WorkerProcess[] | null
   /** When true for a cell, it stays read-only even in edit mode (already saved by worker). */
   isCellLocked?: (rowIndex: number, field: WorkerField) => boolean
-}
-
-const ALL_WORKER_FIELDS: WorkerField[] = ['front', 'back', 'zip', 'astar', 'beltProd']
-const WORKER_COL_LABELS: Record<WorkerField, string> = {
-  front: 'Front', back: 'Back', zip: 'Zip', astar: 'Astar',
-  beltProd: 'Belt',
 }
 
 const COL = {
@@ -63,12 +59,21 @@ const workerBtnStyle = (editable: boolean, locked: boolean) => ({
 })
 
 export default function JobCardProductionTable({
-  productionData, workers, isEditMode, onOpenWorkerPopup, workerRates, isCellLocked,
+  productionData, workers, isEditMode, onOpenWorkerPopup, workerRates, processes, isCellLocked,
 }: JobCardProductionTableProps) {
-  const workerFields = useMemo(() => {
-    const active = new Set(getActiveWorkerFields(workerRates ?? {}))
-    return ALL_WORKER_FIELDS.filter((f) => active.has(f))
-  }, [workerRates])
+  const activeProcesses = useMemo(
+    () => getActiveProcessesForRates(workerRates ?? {}, processes),
+    [workerRates, processes],
+  )
+  const workerFields = useMemo(
+    () => activeProcesses.map((p) => getProcessProductionKey(p)),
+    [activeProcesses],
+  )
+  const labelByField = useMemo(() => {
+    const map: Record<string, string> = {}
+    activeProcesses.forEach((p) => { map[getProcessProductionKey(p)] = p.label })
+    return map
+  }, [activeProcesses])
 
   const getWorkerName = (workerId: string) => {
     if (!workerId) return ''
@@ -77,8 +82,8 @@ export default function JobCardProductionTable({
   }
 
   const getColumnLabel = (field: WorkerField) => {
-    const base = WORKER_COL_LABELS[field]
-    const rate = getLotRateForField(workerRates, field)
+    const base = labelByField[field] || field
+    const rate = getLotRateForField(workerRates, field, processes)
     if (!rate) return base
     return `${base} (Rs ${formatIndianAmount(rate)})`
   }

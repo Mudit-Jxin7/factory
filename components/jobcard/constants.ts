@@ -1,20 +1,20 @@
-import { JobCardProductionRow, LotWorkerRates, Worker, WorkerRole } from '@/lib/types'
-import { getActiveWorkerFields } from '@/lib/lotWorkerRates'
+import { JobCardProductionRow, LotWorkerRates, Worker, WorkerProcess } from '@/lib/types'
+import { getActiveProcessesForRates, getActiveWorkerFields } from '@/lib/lotWorkerRates'
+import { getProcessProductionKey, resolveWorkerProcesses } from '@/lib/workerProcesses'
 
-export type WorkerField = 'front' | 'back' | 'zip' | 'astar' | 'beltProd'
-
-export const FIELD_TO_ROLE: Partial<Record<WorkerField, WorkerRole>> = {
-  front: 'FRONT',
-  back: 'BACK',
-  zip: 'ZIP',
-  astar: 'ASTAR',
-  beltProd: 'BELT',
-}
+export type WorkerField = string
 
 export const getWorkerRole = (worker: Pick<Worker, 'role' | 'tbd1'>) => worker.role || worker.tbd1 || ''
 
-export const filterWorkersForField = (workers: Worker[], field: WorkerField, selectedWorkerId = '') => {
-  const requiredRole = FIELD_TO_ROLE[field]
+export const filterWorkersForField = (
+  workers: Worker[],
+  field: WorkerField,
+  selectedWorkerId = '',
+  processes?: WorkerProcess[] | null,
+) => {
+  const resolved = resolveWorkerProcesses(processes)
+  const process = resolved.find((p) => getProcessProductionKey(p) === field)
+  const requiredRole = process?.roleCode
   const filtered = requiredRole
     ? workers.filter((w) => getWorkerRole(w) === requiredRole)
     : workers
@@ -25,39 +25,48 @@ export const filterWorkersForField = (workers: Worker[], field: WorkerField, sel
   return filtered
 }
 
-export const WORKER_PAIRS: [string, string | null][] = [
-  ['Front', 'Back'],
-  ['Zip',   'Astar'],
-  ['Belt',  null],
-]
-
-export const WORKER_META: Record<string, { workerKey: string; dateKey: string; rateKey: string; field: WorkerField }> = {
-  Front: { workerKey: 'frontWorker',    dateKey: 'frontDate',    rateKey: 'frontRate',    field: 'front' },
-  Back:  { workerKey: 'backWorker',     dateKey: 'backDate',     rateKey: 'backRate',     field: 'back' },
-  Zip:   { workerKey: 'zipWorker',      dateKey: 'zipDate',      rateKey: 'zipRate',      field: 'zip' },
-  Astar: { workerKey: 'astarWorker',    dateKey: 'astarDate',    rateKey: 'astarRate',    field: 'astar' },
-  Belt:  { workerKey: 'beltProdWorker', dateKey: 'beltProdDate', rateKey: 'beltProdRate', field: 'beltProd' },
+export const buildWorkerMetaFromProcesses = (processes?: WorkerProcess[] | null) => {
+  const resolved = resolveWorkerProcesses(processes)
+  const meta: Record<string, { workerKey: string; dateKey: string; rateKey: string; field: string; label: string }> = {}
+  resolved.forEach((p) => {
+    const field = getProcessProductionKey(p)
+    meta[p.label] = {
+      workerKey: `${field}Worker`,
+      dateKey: `${field}Date`,
+      rateKey: `${field}Rate`,
+      field,
+      label: p.label,
+    }
+  })
+  return meta
 }
 
-/** Worker pairs limited to roles that have a lot rate set. */
+/** Pair active processes (by rate) into twos for PDF/Excel layout. */
 export const getActiveWorkerPairs = (
   workerRates?: Partial<LotWorkerRates> | null,
+  processes?: WorkerProcess[] | null,
 ): [string, string | null][] => {
-  const active = new Set(getActiveWorkerFields(workerRates ?? {}))
+  const active = getActiveProcessesForRates(workerRates ?? {}, processes)
   const pairs: [string, string | null][] = []
-  for (const [w1, w2] of WORKER_PAIRS) {
-    const a1 = active.has(WORKER_META[w1].field)
-    const a2 = w2 ? active.has(WORKER_META[w2].field) : false
-    if (a1 && a2) pairs.push([w1, w2])
-    else if (a1) pairs.push([w1, null])
-    else if (a2 && w2) pairs.push([w2, null])
+  for (let i = 0; i < active.length; i += 2) {
+    const a = active[i]
+    const b = active[i + 1]
+    pairs.push([a.label, b ? b.label : null])
   }
   return pairs
 }
 
-export const FIELD_LABELS: Record<WorkerField, string> = {
-  front: 'Front', back: 'Back', zip: 'Zip', astar: 'Astar',
-  beltProd: 'Belt',
+export const FIELD_LABELS_FROM_PROCESSES = (processes?: WorkerProcess[] | null): Record<string, string> => {
+  const labels: Record<string, string> = {}
+  resolveWorkerProcesses(processes).forEach((p) => {
+    labels[getProcessProductionKey(p)] = p.label
+  })
+  return labels
+}
+
+/** @deprecated Static labels — prefer FIELD_LABELS_FROM_PROCESSES */
+export const FIELD_LABELS: Record<string, string> = {
+  front: 'Front', back: 'Back', zip: 'Zip', astar: 'Astar', beltProd: 'Belt',
 }
 
 export const DEFAULT_PRODUCTION_ROW: Omit<JobCardProductionRow, 'serialNumber'> = {
@@ -71,3 +80,7 @@ export const DEFAULT_PRODUCTION_ROW: Omit<JobCardProductionRow, 'serialNumber'> 
   add1: '', add1Worker: '', add1Date: '', add1Rate: '',
   add2: '', add2Worker: '', add2Date: '', add2Rate: '',
 }
+
+// Re-export for callers that still import WORKER_META / WORKER_PAIRS
+export const WORKER_META = buildWorkerMetaFromProcesses()
+export const WORKER_PAIRS: [string, string | null][] = getActiveWorkerPairs(undefined)

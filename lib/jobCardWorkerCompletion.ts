@@ -1,30 +1,26 @@
-import { JobCardProductionRow, LotWorkerRates } from '@/lib/types'
-import { getActiveWorkerFields, LotRateProductionField } from '@/lib/lotWorkerRates'
+import { JobCardProductionRow, LotWorkerRates, WorkerProcess } from '@/lib/types'
+import { getActiveWorkerFields } from '@/lib/lotWorkerRates'
 
-export const WORKER_REQUIRED_FIELDS = ['front', 'back', 'zip', 'astar', 'beltProd'] as const
-export const WORKER_EDITABLE_FIELDS = [
-  'front', 'back', 'zip', 'astar', 'beltProd',
-] as const
-
-type RequiredWorkerField = typeof WORKER_REQUIRED_FIELDS[number]
-export type WorkerEditableField = typeof WORKER_EDITABLE_FIELDS[number]
+export type WorkerEditableField = string
 
 const normalizeValue = (value: unknown) => String(value ?? '').trim()
 
 export const isWorkerProductionFieldFilled = (
   row: JobCardProductionRow,
-  field: WorkerEditableField | RequiredWorkerField | LotRateProductionField,
-): boolean => normalizeValue(row[`${field}Worker` as keyof JobCardProductionRow]) !== ''
+  field: string,
+): boolean => normalizeValue((row as any)[`${field}Worker`]) !== ''
 
 const resolveRequiredFields = (
   workerRates?: Partial<LotWorkerRates> | null,
-): LotRateProductionField[] => getActiveWorkerFields(workerRates)
+  processes?: WorkerProcess[] | null,
+): string[] => getActiveWorkerFields(workerRates, processes)
 
 export const isProductionRowWorkerComplete = (
   row: JobCardProductionRow,
   workerRates?: Partial<LotWorkerRates> | null,
+  processes?: WorkerProcess[] | null,
 ): boolean => {
-  const fields = resolveRequiredFields(workerRates)
+  const fields = resolveRequiredFields(workerRates, processes)
   if (fields.length === 0) return true
   return fields.every((field) => isWorkerProductionFieldFilled(row, field))
 }
@@ -32,17 +28,19 @@ export const isProductionRowWorkerComplete = (
 export const hasAllRequiredWorkerFields = (
   productionData: JobCardProductionRow[] = [],
   workerRates?: Partial<LotWorkerRates> | null,
+  processes?: WorkerProcess[] | null,
 ): boolean => {
-  const fields = resolveRequiredFields(workerRates)
+  const fields = resolveRequiredFields(workerRates, processes)
   if (fields.length === 0) return true
-  return productionData.length > 0 && productionData.every((row) => isProductionRowWorkerComplete(row, workerRates))
+  return productionData.length > 0 && productionData.every((row) => isProductionRowWorkerComplete(row, workerRates, processes))
 }
 
 export const hasAnyRequiredWorkerFields = (
   productionData: JobCardProductionRow[] = [],
   workerRates?: Partial<LotWorkerRates> | null,
+  processes?: WorkerProcess[] | null,
 ): boolean => {
-  const fields = resolveRequiredFields(workerRates)
+  const fields = resolveRequiredFields(workerRates, processes)
   if (fields.length === 0) return false
   return productionData.some((row) =>
     fields.some((field) => isWorkerProductionFieldFilled(row, field)),
@@ -53,9 +51,10 @@ export const hasAnyRequiredWorkerFields = (
 export const buildLockedWorkerCellKeys = (
   productionData: JobCardProductionRow[] = [],
   workerRates?: Partial<LotWorkerRates> | null,
+  processes?: WorkerProcess[] | null,
 ): Set<string> => {
   const locked = new Set<string>()
-  const fields = resolveRequiredFields(workerRates)
+  const fields = resolveRequiredFields(workerRates, processes)
   productionData.forEach((row, rowIndex) => {
     fields.forEach((field) => {
       if (isWorkerProductionFieldFilled(row, field)) {

@@ -1,1 +1,1 @@
-export { lotsAPI, jobCardsAPI, colorsAPI, workersAPI, brandsAPI, patternsAPI, fabricsAPI } from './api/index'
+export { lotsAPI, jobCardsAPI, colorsAPI, workersAPI, brandsAPI, patternsAPI, fabricsAPI, workerProcessesAPI } from './api/index'

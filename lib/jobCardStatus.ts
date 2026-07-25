@@ -1,4 +1,4 @@
-import { JobCardProductionRow, LotWorkerRates } from '@/lib/types'
+import { JobCardProductionRow, LotWorkerRates, WorkerProcess } from '@/lib/types'
 import {
   hasAllRequiredWorkerFields,
   hasAnyRequiredWorkerFields,
@@ -39,15 +39,17 @@ type JobCardForDisplay = {
   status?: string
   productionData?: JobCardProductionRow[]
   workerRates?: Partial<LotWorkerRates> | null
+  workerProcesses?: WorkerProcess[] | null
 }
 
 /** Derive status from whether required worker fields (with rates) are filled. */
 export const deriveJobCardStatus = (
   productionData: JobCardProductionRow[] = [],
   workerRates?: Partial<LotWorkerRates> | null,
+  processes?: WorkerProcess[] | null,
 ): JobCardStatus => {
-  if (hasAllRequiredWorkerFields(productionData, workerRates)) return 'complete'
-  if (hasAnyRequiredWorkerFields(productionData, workerRates)) return 'in_progress'
+  if (hasAllRequiredWorkerFields(productionData, workerRates, processes)) return 'complete'
+  if (hasAnyRequiredWorkerFields(productionData, workerRates, processes)) return 'in_progress'
   return 'incomplete'
 }
 
@@ -67,7 +69,7 @@ export const getJobCardDisplayStatus = (
 ): JobCardDisplayStatus => {
   const stored = normalizeJobCardStatus(jobCard.status)
   if (stored === 'complete') return 'complete'
-  return deriveJobCardStatus(jobCard.productionData, jobCard.workerRates)
+  return deriveJobCardStatus(jobCard.productionData, jobCard.workerRates, jobCard.workerProcesses)
 }
 
 /** True when the stored status is complete (or legacy pending_approval). */

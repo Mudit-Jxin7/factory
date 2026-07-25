@@ -2,7 +2,7 @@ import { brandsAPI } from '@/lib/api/brands'
 import { patternsAPI } from '@/lib/api/patterns'
 import { fabricsAPI } from '@/lib/api/fabrics'
 
-export type TabType = 'colors' | 'workers' | 'brands' | 'patterns' | 'fabrics'
+export type TabType = 'colors' | 'workers' | 'processes' | 'brands' | 'patterns' | 'fabrics'
 export type MasterTab = 'brands' | 'patterns' | 'fabrics'
 export type MasterItem = { _id: string; name: string }
 
