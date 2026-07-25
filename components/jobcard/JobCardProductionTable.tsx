@@ -31,7 +31,7 @@ const COL = {
   pieces: 180,
   color: 120,
   shade: 72,
-  worker: 220,
+  worker: 240,
   zip: 100,
   thread: 110,
 } as const
@@ -63,7 +63,7 @@ const workerBtnStyle = (editable: boolean, locked: boolean) => ({
 })
 
 export default function JobCardProductionTable({
-  productionData, workers, isEditMode, onOpenWorkerPopup, hideRate = false, workerRates, isCellLocked,
+  productionData, workers, isEditMode, onOpenWorkerPopup, workerRates, isCellLocked,
 }: JobCardProductionTableProps) {
   const getWorkerName = (workerId: string) => {
     if (!workerId) return ''
@@ -73,9 +73,9 @@ export default function JobCardProductionTable({
 
   const getColumnLabel = (field: WorkerField) => {
     const base = WORKER_COL_LABELS[field]
-    if (hideRate) return base
     const rate = getLotRateForField(workerRates, field)
-    return rate ? `${base} (Rs - ${formatIndianAmount(rate)})` : base
+    if (!rate) return base
+    return `${base} (Rs ${formatIndianAmount(rate)})`
   }
 
   const formatTotalPieces = (row: JobCardProductionRow) => {
