@@ -2,7 +2,7 @@
 
 import { LotWorkerRates, WorkerProcess } from '@/lib/types'
 import { formatIndianAmount } from '@/lib/indianNumberFormat'
-import { resolveWorkerProcesses } from '@/lib/workerProcesses'
+import { resolveWorkerProcessesForLot } from '@/lib/workerProcesses'
 
 interface LotRatesFormProps {
   workerRates: LotWorkerRates
@@ -17,7 +17,7 @@ export default function LotRatesForm({
   isEditMode = true,
   onRateChange,
 }: LotRatesFormProps) {
-  const fields = resolveWorkerProcesses(processes)
+  const fields = resolveWorkerProcessesForLot(processes, workerRates)
 
   return (
     <div className="card">

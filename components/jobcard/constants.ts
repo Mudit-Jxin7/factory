@@ -1,6 +1,6 @@
 import { JobCardProductionRow, LotWorkerRates, Worker, WorkerProcess } from '@/lib/types'
 import { getActiveProcessesForRates, getActiveWorkerFields } from '@/lib/lotWorkerRates'
-import { getProcessProductionKey, resolveWorkerProcesses } from '@/lib/workerProcesses'
+import { getProcessProductionKey, resolveWorkerProcessesForLot, allWorkerProcesses } from '@/lib/workerProcesses'
 
 export type WorkerField = string
 
@@ -12,8 +12,10 @@ export const filterWorkersForField = (
   selectedWorkerId = '',
   processes?: WorkerProcess[] | null,
 ) => {
-  const resolved = resolveWorkerProcesses(processes)
-  const process = resolved.find((p) => getProcessProductionKey(p) === field)
+  const source = (processes && processes.length > 0)
+    ? allWorkerProcesses(processes)
+    : resolveWorkerProcessesForLot(processes)
+  const process = source.find((p) => getProcessProductionKey(p) === field)
   const requiredRole = process?.roleCode
   const filtered = requiredRole
     ? workers.filter((w) => getWorkerRole(w) === requiredRole)
@@ -25,8 +27,11 @@ export const filterWorkersForField = (
   return filtered
 }
 
-export const buildWorkerMetaFromProcesses = (processes?: WorkerProcess[] | null) => {
-  const resolved = resolveWorkerProcesses(processes)
+export const buildWorkerMetaFromProcesses = (
+  processes?: WorkerProcess[] | null,
+  rates?: Partial<LotWorkerRates> | null,
+) => {
+  const resolved = resolveWorkerProcessesForLot(processes, rates)
   const meta: Record<string, { workerKey: string; dateKey: string; rateKey: string; field: string; label: string }> = {}
   resolved.forEach((p) => {
     const field = getProcessProductionKey(p)
@@ -58,7 +63,7 @@ export const getActiveWorkerPairs = (
 
 export const FIELD_LABELS_FROM_PROCESSES = (processes?: WorkerProcess[] | null): Record<string, string> => {
   const labels: Record<string, string> = {}
-  resolveWorkerProcesses(processes).forEach((p) => {
+  resolveWorkerProcessesForLot(processes).forEach((p) => {
     labels[getProcessProductionKey(p)] = p.label
   })
   return labels

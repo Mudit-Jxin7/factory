@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { jobCardsAPI, workersAPI, workerProcessesAPI } from '@/lib/api'
 import { WorkerProcess } from '@/lib/types'
 import { getWorkerRole } from './jobcard/constants'
-import { getProcessProductionKey, resolveWorkerProcesses } from '@/lib/workerProcesses'
+import { getProcessProductionKey, resolveWorkerProcesses, allWorkerProcesses } from '@/lib/workerProcesses'
 import NavigationBar from './NavigationBar'
 import { useToast } from './ToastProvider'
 import ActionBar from './ActionBar'
@@ -56,7 +56,10 @@ export default function WorkerAnalyticsContent() {
     fetchData()
   }, [])
 
-  const resolvedProcesses = useMemo(() => resolveWorkerProcesses(processes), [processes])
+  const resolvedProcesses = useMemo(
+    () => (processes.length > 0 ? allWorkerProcesses(processes) : resolveWorkerProcesses(processes)),
+    [processes],
+  )
   const roleOptions = useMemo(() => resolvedProcesses.map((p) => p.label), [resolvedProcesses])
   const roleCodes = useMemo(() => new Set(resolvedProcesses.map((p) => p.roleCode)), [resolvedProcesses])
 

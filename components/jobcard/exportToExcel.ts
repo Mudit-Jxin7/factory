@@ -24,7 +24,7 @@ export const exportJobCardToExcel = (params: {
 }) => {
   const { lotNumber, brand, date, ratios, productionData, flyWidth, additionalInfo, workers, workerRates, workerProcesses } = params
   const workerPairs = getActiveWorkerPairs(workerRates ?? {}, workerProcesses)
-  const WORKER_META = buildWorkerMetaFromProcesses(workerProcesses)
+  const WORKER_META = buildWorkerMetaFromProcesses(workerProcesses, workerRates)
   const displayDate = formatDisplayDate(date)
 
   const infoRows = [

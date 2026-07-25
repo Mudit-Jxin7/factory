@@ -34,7 +34,38 @@ export const sortWorkerProcesses = <T extends Pick<WorkerProcess, 'sortOrder' | 
 export const activeWorkerProcesses = (processes: WorkerProcess[] = []): WorkerProcess[] =>
   sortWorkerProcesses(processes.filter((p) => p.active !== false))
 
+export const allWorkerProcesses = (processes: WorkerProcess[] = []): WorkerProcess[] =>
+  sortWorkerProcesses(processes)
+
+/** Active processes for new lots / catalogs. Falls back to seeded defaults. */
 export const resolveWorkerProcesses = (processes?: WorkerProcess[] | null): WorkerProcess[] => {
   if (processes && processes.length > 0) return activeWorkerProcesses(processes)
   return activeWorkerProcesses(DEFAULT_WORKER_PROCESSES as WorkerProcess[])
+}
+
+/**
+ * Processes to show for a lot's rates/job card:
+ * all active processes, plus any inactive process that already has a rate on this lot
+ * so older lots keep their data after deactivation.
+ */
+export const resolveWorkerProcessesForLot = (
+  processes?: WorkerProcess[] | null,
+  rates?: Record<string, string> | null,
+): WorkerProcess[] => {
+  const source = (processes && processes.length > 0)
+    ? processes
+    : (DEFAULT_WORKER_PROCESSES as WorkerProcess[])
+  const active = activeWorkerProcesses(source)
+  const activeKeys = new Set(active.map((p) => p.key))
+  const retained = sortWorkerProcesses(
+    source.filter((p) => {
+      if (activeKeys.has(p.key)) return false
+      if (p.active !== false) return false
+      const value = String(rates?.[p.key] ?? '').trim()
+      if (!value) return false
+      const num = Number(value)
+      return Number.isFinite(num) && num >= 0
+    }),
+  )
+  return sortWorkerProcesses([...active, ...retained])
 }

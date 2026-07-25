@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { workerProcessesAPI } from '@/lib/api'
 import { useToast } from '../ToastProvider'
-import { useConfirm } from '../ConfirmProvider'
 import Pagination from '../Pagination'
 
 const PAGE_SIZE = 15
@@ -26,14 +25,12 @@ interface ProcessesTabProps {
 
 export default function ProcessesTab({ processes, loading, onRefresh }: ProcessesTabProps) {
   const toast = useToast()
-  const { confirm: showConfirm } = useConfirm()
   const [page, setPage] = useState(1)
   const [newLabel, setNewLabel] = useState('')
   const [saving, setSaving] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editLabel, setEditLabel] = useState('')
   const [editSortOrder, setEditSortOrder] = useState('')
-  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   useEffect(() => { setPage(1) }, [processes.length])
 
@@ -76,26 +73,6 @@ export default function ProcessesTab({ processes, loading, onRefresh }: Processe
     }
   }
 
-  const handleDelete = async (item: ProcessItem) => {
-    const ok = await showConfirm({
-      title: 'Delete Process',
-      message: `Delete process "${item.label}"? Existing lots that already have a rate for it will keep their data, but new lots will not show this role.`,
-      confirmText: 'Delete',
-      cancelText: 'Cancel',
-      type: 'danger',
-    })
-    if (!ok) return
-    setDeletingId(item._id)
-    const result = await workerProcessesAPI.deleteProcess(item._id)
-    setDeletingId(null)
-    if (result.success) {
-      onRefresh()
-      toast.showToast('Process deleted', 'success')
-    } else {
-      toast.showToast('Error deleting process: ' + result.error, 'error')
-    }
-  }
-
   const handleToggleActive = async (item: ProcessItem) => {
     const result = await workerProcessesAPI.updateProcess(item._id, { active: !item.active })
     if (result.success) {
@@ -111,6 +88,7 @@ export default function ProcessesTab({ processes, loading, onRefresh }: Processe
       <h2>Worker Processes</h2>
       <p style={{ margin: '0 0 16px', color: '#6c757d', fontSize: 14 }}>
         These roles appear on the lot Worker Rates form. If a rate is set for a process, that column shows on the job card.
+        Deactivate to hide a process from new lots — older lots keep their existing rates and job-card columns.
       </p>
       <div className="card" style={{ marginBottom: 20, padding: 20, background: '#fff9e6' }}>
         <h3 style={{ marginTop: 0, marginBottom: 15, fontSize: 18, fontWeight: 600 }}>Add Process</h3>
@@ -178,15 +156,6 @@ export default function ProcessesTab({ processes, loading, onRefresh }: Processe
                             <button type="button" className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: 13 }} onClick={() => startEdit(item)}>Edit</button>
                             <button type="button" className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: 13 }} onClick={() => handleToggleActive(item)}>
                               {item.active ? 'Deactivate' : 'Activate'}
-                            </button>
-                            <button
-                              type="button"
-                              className="btn btn-logout"
-                              style={{ padding: '6px 12px', fontSize: 13 }}
-                              disabled={deletingId === item._id}
-                              onClick={() => handleDelete(item)}
-                            >
-                              {deletingId === item._id ? 'Deleting…' : 'Delete'}
                             </button>
                           </div>
                         </td>
