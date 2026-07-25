@@ -59,7 +59,9 @@ export default function DashboardContent() {
 
   useEffect(() => {
     const editLotNumber = searchParams?.get('edit')
+    const tukdaFrom = searchParams?.get('tukdaFrom')
     if (editLotNumber) loadLotForEdit(editLotNumber)
+    else if (tukdaFrom) loadLotForTukda(tukdaFrom)
   }, [searchParams])
 
   const loadLotForEdit = async (lotNumberParam: string) => {
@@ -88,6 +90,46 @@ export default function DashboardContent() {
           if (jcResult.success && jcResult.jobCard && !isAdditionalInfoEmpty(jcResult.jobCard.additionalInfo, jcResult.jobCard.flyWidth)) {
             setAdditionalInfo(normalizeAdditionalInfo(jcResult.jobCard.additionalInfo, jcResult.jobCard.flyWidth))
           }
+        }
+      } else {
+        toast.showToast('Error loading lot: ' + (result.error || 'Lot not found'), 'error')
+      }
+    } catch (error: any) {
+      toast.showToast('Error loading lot: ' + error.message, 'error')
+    } finally { setLoadingLot(false) }
+  }
+
+  /** Prefill a new tukda lot from an existing lot: `{lotNumber}_lot`, today, ratios/table/summary zeroed; carry worker rates + additional info. */
+  const loadLotForTukda = async (sourceLotNumber: string) => {
+    setLoadingLot(true)
+    try {
+      const decoded = decodeURIComponent(sourceLotNumber)
+      const result = await lotsAPI.getLotByNumber(decoded)
+      if (result.success && result.lot) {
+        const lot = result.lot
+        setLotNumber(`${lot.lotNumber}_lot`)
+        setDate(todayISODateIST())
+        setFabric(lot.fabric || '')
+        setPattern(lot.pattern || '')
+        setBrand(lot.brand || '')
+        setRatios(DEFAULT_RATIOS)
+        setProductionData([{ ...BLANK_ROW }])
+        setTukdaSize('28')
+        setWorkerRates({ ...DEFAULT_LOT_WORKER_RATES, ...(lot.workerRates || {}) })
+        let info = normalizeAdditionalInfo(lot.additionalInfo, lot.flyWidth)
+        if (isAdditionalInfoEmpty(lot.additionalInfo, lot.flyWidth)) {
+          const jcResult = await jobCardsAPI.getJobCardByLotNumber(lot.lotNumber)
+          if (jcResult.success && jcResult.jobCard && !isAdditionalInfoEmpty(jcResult.jobCard.additionalInfo, jcResult.jobCard.flyWidth)) {
+            info = normalizeAdditionalInfo(jcResult.jobCard.additionalInfo, jcResult.jobCard.flyWidth)
+          }
+        }
+        setAdditionalInfo(info)
+        setLotNumberError(null)
+        // Check uniqueness of the new tukda lot number
+        const newLotNumber = `${lot.lotNumber}_lot`
+        const exists = await lotsAPI.getLotByNumber(newLotNumber)
+        if (exists.success && exists.lot) {
+          setLotNumberError(`Lot number "${newLotNumber}" already exists`)
         }
       } else {
         toast.showToast('Error loading lot: ' + (result.error || 'Lot not found'), 'error')
@@ -167,6 +209,7 @@ export default function DashboardContent() {
   }
 
   const isEdit = !!searchParams?.get('edit')
+  const isTukdaFrom = !!searchParams?.get('tukdaFrom')
 
   const handleLotNumberBlur = async () => {
     if (isEdit || !lotNumber.trim()) { setLotNumberError(null); return }
@@ -206,8 +249,8 @@ export default function DashboardContent() {
       <div className="dashboard-container">
         <div className="dashboard-header">
           <div className="header-title">
-            <h1>{isEdit ? 'Edit Lot' : 'Lot Production Dashboard'}</h1>
-            <p>{isEdit ? 'Edit existing lot production data' : 'Track and manage production data'}</p>
+            <h1>{isEdit ? 'Edit Lot' : isTukdaFrom ? 'New Tukda Lot' : 'Lot Production Dashboard'}</h1>
+            <p>{isEdit ? 'Edit existing lot production data' : isTukdaFrom ? 'Create a tukda lot from an existing lot' : 'Track and manage production data'}</p>
           </div>
         </div>
         <div className="dashboard-content">

@@ -8,7 +8,7 @@ import NavigationBar from './NavigationBar'
 import { useToast } from './ToastProvider'
 import { useConfirm } from './ConfirmProvider'
 import ActionBar from './ActionBar'
-import { IconEdit, IconPdf, IconTable, IconBack } from './Icons'
+import { IconEdit, IconPdf, IconTable, IconBack, IconLayers } from './Icons'
 import LotInfoSection from './lotview/LotInfoSection'
 import LotRatiosSection from './lotview/LotRatiosSection'
 import LotProductionTable from './lotview/LotProductionTable'
@@ -116,6 +116,7 @@ export default function LotViewContent({ lotNumber }: LotViewContentProps) {
       <NavigationBar />
       <ActionBar actions={[
         { label: 'Edit Lot', shortLabel: 'Edit', icon: <IconEdit size={14} />, onClick: () => router.push(`/dashboard?edit=${encodeURIComponent(lot.lotNumber)}`) },
+        { label: 'Tukda Lot', shortLabel: 'Tukda', icon: <IconLayers size={14} />, onClick: () => router.push(`/dashboard?tukdaFrom=${encodeURIComponent(lot.lotNumber)}`) },
         { label: 'Download PDF', shortLabel: 'PDF', icon: <IconPdf size={14} />, onClick: handleExportPDF, loading: generatingPDF, loadingLabel: '…' },
         { label: 'Download Excel', shortLabel: 'Excel', icon: <IconTable size={14} />, onClick: handleExportExcel, loading: generatingExcel, loadingLabel: '…' },
         { label: 'Back to Dashboard', shortLabel: 'Back', icon: <IconBack size={14} />, onClick: () => router.push('/dashboard'), variant: 'secondary' as const },
