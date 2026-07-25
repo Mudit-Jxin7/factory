@@ -1,7 +1,8 @@
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
-import { Ratios, AdditionalInfo } from '@/lib/types'
+import { Ratios, AdditionalInfo, DEFAULT_RATIOS } from '@/lib/types'
 import { buildAdditionalInfoPdfBody, getAdditionalInfoExportRows } from '@/lib/additionalInfoExport'
+import { aggregatePiecesByColor } from '@/lib/colorPieces'
 import { formatDisplayDate } from '@/lib/dateFormat'
 
 interface ExportParams {
@@ -22,8 +23,13 @@ interface ExportParams {
   additionalInfo?: AdditionalInfo
 }
 
+const ratioKeys = Object.keys(DEFAULT_RATIOS) as (keyof Ratios)[]
+
 export const exportLotToPDF = (params: ExportParams) => {
-  const { lotNumber, date, fabric, pattern, brand, productionData, flyWidth, additionalInfo } = params
+  const {
+    lotNumber, date, fabric, pattern, brand, ratios, sumOfRatios, productionData,
+    tukda, totalMeter, totalPieces, totalPiecesWithTukda, average, flyWidth, additionalInfo,
+  } = params
   const displayDate = formatDisplayDate(date, '—')
   const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
   const pageW = pdf.internal.pageSize.getWidth()
@@ -46,11 +52,23 @@ export const exportLotToPDF = (params: ExportParams) => {
     theme: 'grid',
   })
 
-  const afterInfo = (pdf as any).lastAutoTable.finalY + 6
+  let y = (pdf as any).lastAutoTable.finalY + 6
   pdf.setFontSize(11); pdf.setFont('helvetica', 'bold')
-  pdf.text('Production Data', margin, afterInfo)
+  pdf.text('Ratios', margin, y)
   autoTable(pdf, {
-    startY: afterInfo + 2, margin: { left: margin, right: margin },
+    startY: y + 2, margin: { left: margin, right: margin },
+    head: [[...ratioKeys.map(k => k.toUpperCase()), 'SUM']],
+    body: [[...ratioKeys.map(k => String(ratios?.[k] ?? 0)), sumOfRatios.toFixed(2)]],
+    styles: { fontSize: 8, cellPadding: 2, halign: 'center' },
+    headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
+    theme: 'grid',
+  })
+
+  y = (pdf as any).lastAutoTable.finalY + 6
+  pdf.setFontSize(11); pdf.setFont('helvetica', 'bold')
+  pdf.text('Production Data', margin, y)
+  autoTable(pdf, {
+    startY: y + 2, margin: { left: margin, right: margin },
     head: [['S.No', 'Meter', 'Layer', 'Pieces', 'Tukda', 'Total Pieces', 'Color', 'Zip Code', 'Thread Code']],
     body: productionData.map(row => {
       const rowTotalPieces = (Number(row.pieces) || 0) + (Number(row.tukda) || 0)
@@ -65,13 +83,44 @@ export const exportLotToPDF = (params: ExportParams) => {
     alternateRowStyles: { fillColor: [240, 247, 255] }, theme: 'grid',
   })
 
-  const afterProd = (pdf as any).lastAutoTable.finalY + 6
+  y = (pdf as any).lastAutoTable.finalY + 6
+  pdf.setFontSize(11); pdf.setFont('helvetica', 'bold')
+  pdf.text('Summary & Calculations', margin, y)
+  autoTable(pdf, {
+    startY: y + 2, margin: { left: margin, right: margin },
+    body: [
+      ['# Tukda', String(tukda.count), 'Tukda Size', tukda.size || '—'],
+      ['Total Meter', totalMeter.toFixed(2), 'Total Pieces', totalPieces.toFixed(2)],
+      ['Grand Total Pieces', totalPiecesWithTukda.toFixed(2), 'Average', average.toFixed(4)],
+    ],
+    styles: { fontSize: 9, cellPadding: 2 },
+    columnStyles: { 0: { fontStyle: 'bold', cellWidth: 40 }, 1: { cellWidth: 45 }, 2: { fontStyle: 'bold', cellWidth: 40 }, 3: { cellWidth: 45 } },
+    theme: 'grid',
+  })
+
+  const colorRows = aggregatePiecesByColor(productionData)
+  if (colorRows.length > 0) {
+    y = (pdf as any).lastAutoTable.finalY + 4
+    pdf.setFontSize(10); pdf.setFont('helvetica', 'bold')
+    pdf.text('Pieces by Color', margin, y)
+    autoTable(pdf, {
+      startY: y + 2, margin: { left: margin, right: margin },
+      head: [['Color', 'Total Pieces']],
+      body: colorRows.map(({ color, totalPieces: tp }) => [color, tp.toFixed(2)]),
+      styles: { fontSize: 9, cellPadding: 2 },
+      headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
+      columnStyles: { 0: { cellWidth: 60 }, 1: { cellWidth: 40, halign: 'center' } },
+      theme: 'grid',
+    })
+  }
+
+  y = (pdf as any).lastAutoTable.finalY + 6
   const addlRows = getAdditionalInfoExportRows(flyWidth, additionalInfo)
   if (addlRows.length > 0) {
     pdf.setFontSize(11); pdf.setFont('helvetica', 'bold')
-    pdf.text('Additional Information', margin, afterProd)
+    pdf.text('Additional Information', margin, y)
     autoTable(pdf, {
-      startY: afterProd + 2, margin: { left: margin, right: margin },
+      startY: y + 2, margin: { left: margin, right: margin },
       head: [['Field', 'Value', 'Field', 'Value', 'Field', 'Value']],
       body: buildAdditionalInfoPdfBody(addlRows),
       styles: { fontSize: 10, cellPadding: 2 },
