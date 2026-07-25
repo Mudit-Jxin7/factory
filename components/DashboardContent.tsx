@@ -1,12 +1,12 @@
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { lotsAPI, colorsAPI, brandsAPI, patternsAPI, fabricsAPI, jobCardsAPI, workerProcessesAPI } from '@/lib/api'
 import { Ratios, AdditionalInfo, LotWorkerRates, WorkerProcess, DEFAULT_RATIOS, DEFAULT_ADDITIONAL_INFO, DEFAULT_LOT_WORKER_RATES } from '@/lib/types'
 import NavigationBar from './NavigationBar'
 import ActionBar from './ActionBar'
-import { IconSave, IconPdf, IconTable } from './Icons'
+import { IconSave, IconPdf, IconTable, IconLayers } from './Icons'
 import { useToast } from './ToastProvider'
 import LotInfoForm from './dashboard/LotInfoForm'
 import RatiosForm from './dashboard/RatiosForm'
@@ -25,6 +25,7 @@ const BLANK_ROW = { serialNumber: 1, meter: '', layer: '1', pieces: 0, color: ''
 
 export default function DashboardContent() {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const toast = useToast()
   const saveLotFn = useSaveLot()
 
@@ -249,6 +250,14 @@ export default function DashboardContent() {
       <NavigationBar />
       <ActionBar actions={[
         { label: isEdit ? 'Update Lot' : 'Save Lot', shortLabel: isEdit ? 'Update' : 'Save', icon: <IconSave size={14} />, onClick: handleSave, disabled: saving || loadingLot || !!lotNumberError, loading: saving || loadingLot, loadingLabel: loadingLot ? '…' : 'Saving…' },
+        ...(isEdit && lotNumber
+          ? [{
+              label: 'Tukda Lot',
+              shortLabel: 'Tukda',
+              icon: <IconLayers size={14} />,
+              onClick: () => router.push(`/dashboard?tukdaFrom=${encodeURIComponent(lotNumber)}`),
+            }]
+          : []),
         { label: 'Download PDF', shortLabel: 'PDF', icon: <IconPdf size={14} />, onClick: () => { setGeneratingPDF(true); try { exportLotToPDF(exportParams) } catch (e: any) { toast.showToast('Error: ' + e.message, 'error') } finally { setGeneratingPDF(false) } }, loading: generatingPDF, loadingLabel: '…' },
         { label: 'Download Excel', shortLabel: 'Excel', icon: <IconTable size={14} />, onClick: () => { setGeneratingExcel(true); try { exportLotToExcel(exportParams); toast.showToast('Excel exported!', 'success') } catch (e: any) { toast.showToast('Error: ' + e.message, 'error') } finally { setGeneratingExcel(false) } }, loading: generatingExcel, loadingLabel: '…' },
       ]} />
