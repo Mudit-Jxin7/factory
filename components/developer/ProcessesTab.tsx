@@ -32,7 +32,6 @@ export default function ProcessesTab({ processes, loading, onRefresh }: Processe
   const [saving, setSaving] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editLabel, setEditLabel] = useState('')
-  const [editRoleCode, setEditRoleCode] = useState('')
   const [editSortOrder, setEditSortOrder] = useState('')
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
@@ -59,7 +58,6 @@ export default function ProcessesTab({ processes, loading, onRefresh }: Processe
   const startEdit = (item: ProcessItem) => {
     setEditingId(item._id)
     setEditLabel(item.label)
-    setEditRoleCode(item.roleCode)
     setEditSortOrder(String(item.sortOrder))
   }
 
@@ -67,7 +65,6 @@ export default function ProcessesTab({ processes, loading, onRefresh }: Processe
     if (!editLabel.trim()) { toast.showToast('Please enter a process name', 'warning'); return }
     const result = await workerProcessesAPI.updateProcess(id, {
       label: editLabel.trim(),
-      roleCode: editRoleCode.trim().toUpperCase(),
       sortOrder: Number(editSortOrder) || 1,
     })
     if (result.success) {
@@ -146,15 +143,13 @@ export default function ProcessesTab({ processes, loading, onRefresh }: Processe
                 <tr>
                   <th>Order</th>
                   <th>Label</th>
-                  <th>Key</th>
-                  <th>Role Code</th>
                   <th>Status</th>
                   <th style={{ textAlign: 'center' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {pageItems.length === 0 ? (
-                  <tr><td colSpan={6} style={{ textAlign: 'center', padding: 32, color: '#6c757d' }}>No processes</td></tr>
+                  <tr><td colSpan={4} style={{ textAlign: 'center', padding: 32, color: '#6c757d' }}>No processes</td></tr>
                 ) : pageItems.map((item) => (
                   <tr key={item._id} style={!item.active ? { opacity: 0.55 } : undefined}>
                     {editingId === item._id ? (
@@ -164,10 +159,6 @@ export default function ProcessesTab({ processes, loading, onRefresh }: Processe
                         </td>
                         <td>
                           <input type="text" value={editLabel} onChange={(e) => setEditLabel(e.target.value)} />
-                        </td>
-                        <td style={{ fontFamily: 'monospace', fontSize: 13 }}>{item.key}</td>
-                        <td>
-                          <input type="text" value={editRoleCode} onChange={(e) => setEditRoleCode(e.target.value.toUpperCase())} />
                         </td>
                         <td>{item.active ? 'Active' : 'Inactive'}</td>
                         <td style={{ textAlign: 'center' }}>
@@ -181,8 +172,6 @@ export default function ProcessesTab({ processes, loading, onRefresh }: Processe
                       <>
                         <td>{item.sortOrder}</td>
                         <td style={{ fontWeight: 600 }}>{item.label}</td>
-                        <td style={{ fontFamily: 'monospace', fontSize: 13 }}>{item.key}</td>
-                        <td>{item.roleCode}</td>
                         <td>{item.active ? 'Active' : 'Inactive'}</td>
                         <td style={{ textAlign: 'center' }}>
                           <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
