@@ -91,6 +91,15 @@ export default function WorkerAnalyticsContent() {
     return rows
   }, [jobCards, workers])
 
+  const lotOptions = useMemo(() => {
+    const lots = new Set<string>()
+    analyticsData.forEach((row) => {
+      const lot = String(row.lotNumber || '').trim()
+      if (lot) lots.add(lot)
+    })
+    return Array.from(lots).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base', numeric: true }))
+  }, [analyticsData])
+
   const filteredData = useMemo(() => {
     let filtered = [...analyticsData]
     if (appliedFromDate) filtered = filtered.filter((row) => row.date >= appliedFromDate)
@@ -165,7 +174,8 @@ export default function WorkerAnalyticsContent() {
         </div>
         <div className="dashboard-content">
           <AnalyticsFilters
-            workers={eligibleWorkers} fromDate={fromDate} toDate={toDate}
+            workers={eligibleWorkers} lotOptions={lotOptions}
+            fromDate={fromDate} toDate={toDate}
             selectedWorker={selectedWorker} selectedRole={selectedRole} lotNumber={lotNumber}
             onFromDateChange={setFromDate} onToDateChange={setToDate}
             onWorkerChange={setSelectedWorker} onRoleChange={setSelectedRole}

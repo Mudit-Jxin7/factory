@@ -6,6 +6,7 @@ const ROLE_OPTIONS = ['Front', 'Back', 'Zip', 'Astar', 'Belt'] as const
 
 interface AnalyticsFiltersProps {
   workers: any[]
+  lotOptions: string[]
   fromDate: string
   toDate: string
   selectedWorker: string
@@ -24,13 +25,17 @@ interface AnalyticsFiltersProps {
 const workerLabel = (w: any) => `${w.worker_id} - ${w.worker_full_name}`
 
 export default function AnalyticsFilters({
-  workers, fromDate, toDate, selectedWorker, selectedRole, lotNumber,
+  workers, lotOptions, fromDate, toDate, selectedWorker, selectedRole, lotNumber,
   onFromDateChange, onToDateChange, onWorkerChange, onRoleChange, onLotNumberChange,
   onApplyFilters, onClearFilters, onDateRangePreset,
 }: AnalyticsFiltersProps) {
-  const [open, setOpen] = useState(false)
-  const [query, setQuery] = useState('')
-  const wrapRef = useRef<HTMLDivElement>(null)
+  const [workerOpen, setWorkerOpen] = useState(false)
+  const [workerQuery, setWorkerQuery] = useState('')
+  const workerWrapRef = useRef<HTMLDivElement>(null)
+
+  const [lotOpen, setLotOpen] = useState(false)
+  const [lotQuery, setLotQuery] = useState('')
+  const lotWrapRef = useRef<HTMLDivElement>(null)
 
   const selected = useMemo(
     () => workers.find((w: any) => w._id === selectedWorker) || null,
@@ -38,22 +43,34 @@ export default function AnalyticsFilters({
   )
 
   useEffect(() => {
-    if (!open) setQuery(selected ? workerLabel(selected) : '')
-  }, [selected, open])
+    if (!workerOpen) setWorkerQuery(selected ? workerLabel(selected) : '')
+  }, [selected, workerOpen])
+
+  useEffect(() => {
+    if (!lotOpen) setLotQuery(lotNumber || '')
+  }, [lotNumber, lotOpen])
 
   const filteredWorkers = useMemo(() => {
-    const q = query.trim().toLowerCase()
-    if (selected && query === workerLabel(selected)) return workers
+    const q = workerQuery.trim().toLowerCase()
+    if (selected && workerQuery === workerLabel(selected)) return workers
     if (!q) return workers
     return workers.filter((w: any) =>
       String(w.worker_id ?? '').toLowerCase().includes(q)
       || String(w.worker_full_name ?? '').toLowerCase().includes(q)
     )
-  }, [workers, query, selected])
+  }, [workers, workerQuery, selected])
+
+  const filteredLots = useMemo(() => {
+    const q = lotQuery.trim().toLowerCase()
+    if (lotNumber && lotQuery === lotNumber) return lotOptions
+    if (!q) return lotOptions
+    return lotOptions.filter((lot) => lot.toLowerCase().includes(q))
+  }, [lotOptions, lotQuery, lotNumber])
 
   useEffect(() => {
     const onDocClick = (e: MouseEvent) => {
-      if (!wrapRef.current?.contains(e.target as Node)) setOpen(false)
+      if (!workerWrapRef.current?.contains(e.target as Node)) setWorkerOpen(false)
+      if (!lotWrapRef.current?.contains(e.target as Node)) setLotOpen(false)
     }
     document.addEventListener('mousedown', onDocClick)
     return () => document.removeEventListener('mousedown', onDocClick)
@@ -62,25 +79,45 @@ export default function AnalyticsFilters({
   const pickWorker = (id: string) => {
     onWorkerChange(id)
     const w = workers.find((x: any) => x._id === id)
-    setQuery(w ? workerLabel(w) : '')
-    setOpen(false)
+    setWorkerQuery(w ? workerLabel(w) : '')
+    setWorkerOpen(false)
   }
 
-  const pickAll = () => {
+  const pickAllWorkers = () => {
     onWorkerChange('')
-    setQuery('')
-    setOpen(false)
+    setWorkerQuery('')
+    setWorkerOpen(false)
   }
 
-  const handleInputChange = (value: string) => {
-    setQuery(value)
-    setOpen(true)
+  const handleWorkerInputChange = (value: string) => {
+    setWorkerQuery(value)
+    setWorkerOpen(true)
     if (!value.trim()) onWorkerChange('')
   }
 
+  const pickLot = (lot: string) => {
+    onLotNumberChange(lot)
+    setLotQuery(lot)
+    setLotOpen(false)
+  }
+
+  const pickAllLots = () => {
+    onLotNumberChange('')
+    setLotQuery('')
+    setLotOpen(false)
+  }
+
+  const handleLotInputChange = (value: string) => {
+    setLotQuery(value)
+    setLotOpen(true)
+    onLotNumberChange(value)
+  }
+
   const handleClear = () => {
-    setQuery('')
-    setOpen(false)
+    setWorkerQuery('')
+    setWorkerOpen(false)
+    setLotQuery('')
+    setLotOpen(false)
     onClearFilters()
   }
 
@@ -104,24 +141,24 @@ export default function AnalyticsFilters({
           <label>To Date</label>
           <input type="date" value={toDate} onChange={(e) => onToDateChange(e.target.value)} />
         </div>
-        <div className="form-group" ref={wrapRef}>
+        <div className="form-group" ref={workerWrapRef}>
           <label>Worker</label>
           <div className="filters-dropdown">
             <input
               type="text"
-              value={query}
-              onChange={(e) => handleInputChange(e.target.value)}
-              onFocus={() => setOpen(true)}
+              value={workerQuery}
+              onChange={(e) => handleWorkerInputChange(e.target.value)}
+              onFocus={() => setWorkerOpen(true)}
               placeholder="All Workers — search name or ID…"
               autoComplete="off"
             />
-            {open && (
+            {workerOpen && (
               <ul className="filters-dropdown-list">
                 <li>
                   <button
                     type="button"
                     className={`filters-dropdown-item${!selectedWorker ? ' active' : ''}`}
-                    onClick={pickAll}
+                    onClick={pickAllWorkers}
                   >
                     All Workers
                   </button>
@@ -143,14 +180,44 @@ export default function AnalyticsFilters({
             )}
           </div>
         </div>
-        <div className="form-group">
+        <div className="form-group" ref={lotWrapRef}>
           <label>Lot Number</label>
-          <input
-            type="text"
-            value={lotNumber}
-            onChange={(e) => onLotNumberChange(e.target.value)}
-            placeholder="Search lot number…"
-          />
+          <div className="filters-dropdown">
+            <input
+              type="text"
+              value={lotQuery}
+              onChange={(e) => handleLotInputChange(e.target.value)}
+              onFocus={() => setLotOpen(true)}
+              placeholder="All Lots — search lot number…"
+              autoComplete="off"
+            />
+            {lotOpen && (
+              <ul className="filters-dropdown-list">
+                <li>
+                  <button
+                    type="button"
+                    className={`filters-dropdown-item${!lotNumber ? ' active' : ''}`}
+                    onClick={pickAllLots}
+                  >
+                    All Lots
+                  </button>
+                </li>
+                {filteredLots.length === 0 ? (
+                  <li className="filters-dropdown-empty">No lots found</li>
+                ) : filteredLots.map((lot) => (
+                  <li key={lot}>
+                    <button
+                      type="button"
+                      className={`filters-dropdown-item${lotNumber === lot ? ' active' : ''}`}
+                      onClick={() => pickLot(lot)}
+                    >
+                      {lot}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </div>
         <div className="form-group">
           <label>Role</label>
