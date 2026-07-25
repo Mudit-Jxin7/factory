@@ -139,6 +139,7 @@ describe('exportAnalyticsToExcel', () => {
     expect(blobContent).toContain('"From Date"')
     expect(blobContent).toContain('"To Date"')
     expect(blobContent).toContain('"Worker"')
+    expect(blobContent).toContain('"Lot Number"')
   })
 
   it('CSV contains correct header columns', () => {

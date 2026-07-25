@@ -22,6 +22,7 @@ interface ExportParams {
   toDate: string
   selectedWorker: string
   selectedRole?: string
+  lotNumber?: string
   totals: { totalPieces: number; totalAmount: number }
 }
 
@@ -35,11 +36,12 @@ interface WorkerGroup {
 
 const TABLE_HEAD = [['Section', 'Date', 'Rate', 'Lot Number', 'Layer', 'Total Pieces', 'Total Amount']]
 
-const getFilename = (base: string, { fromDate, toDate, selectedWorker, selectedRole, workers }: Pick<ExportParams, 'fromDate' | 'toDate' | 'selectedWorker' | 'selectedRole' | 'workers'>) => {
+const getFilename = (base: string, { fromDate, toDate, selectedWorker, selectedRole, lotNumber, workers }: Pick<ExportParams, 'fromDate' | 'toDate' | 'selectedWorker' | 'selectedRole' | 'lotNumber' | 'workers'>) => {
   const dateRange = fromDate && toDate ? `_${formatDisplayDate(fromDate)}_to_${formatDisplayDate(toDate)}` : ''
   const workerSuffix = selectedWorker ? `_${workers.find((w: any) => w._id === selectedWorker)?.worker_full_name || 'worker'}` : ''
   const roleSuffix = selectedRole ? `_${selectedRole}` : ''
-  return `${base}${dateRange}${workerSuffix}${roleSuffix}`
+  const lotSuffix = lotNumber?.trim() ? `_${lotNumber.trim()}` : ''
+  return `${base}${dateRange}${workerSuffix}${roleSuffix}${lotSuffix}`
 }
 
 const groupRowsByWorker = (filteredData: AnalyticsRow[]): WorkerGroup[] => {
@@ -78,7 +80,7 @@ const buildWorkerTableBody = (group: WorkerGroup) => {
 }
 
 export const exportAnalyticsToPDF = (params: ExportParams) => {
-  const { filteredData, workers, fromDate, toDate, selectedWorker, selectedRole, totals } = params
+  const { filteredData, workers, fromDate, toDate, selectedWorker, selectedRole, lotNumber, totals } = params
   const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
   const pageW = pdf.internal.pageSize.getWidth()
   const pageH = pdf.internal.pageSize.getHeight()
@@ -94,6 +96,7 @@ export const exportAnalyticsToPDF = (params: ExportParams) => {
   const selectedWorkerObj = selectedWorker ? workers.find((w: any) => w._id === selectedWorker) : null
   if (selectedWorkerObj) filterParts.push(`Worker: ${selectedWorkerObj.worker_full_name}`)
   if (selectedRole) filterParts.push(`Role: ${selectedRole}`)
+  if (lotNumber?.trim()) filterParts.push(`Lot: ${lotNumber.trim()}`)
   if (filterParts.length > 0) pdf.text(filterParts.join('   |   '), pageW / 2, 20, { align: 'center' })
 
   let cursorY = filterParts.length > 0 ? 26 : 20
@@ -151,7 +154,7 @@ export const exportAnalyticsToPDF = (params: ExportParams) => {
 }
 
 export const exportAnalyticsToExcel = (params: ExportParams) => {
-  const { filteredData, workers, fromDate, toDate, selectedWorker, selectedRole, totals } = params
+  const { filteredData, workers, fromDate, toDate, selectedWorker, selectedRole, lotNumber, totals } = params
   const selectedWorkerObj = selectedWorker ? workers.find((w: any) => w._id === selectedWorker) : null
   const selectedWorkerName = selectedWorkerObj?.worker_full_name || 'All Workers'
 
@@ -160,6 +163,7 @@ export const exportAnalyticsToExcel = (params: ExportParams) => {
     ['To Date', toDate ? formatDisplayDate(toDate) : 'All'],
     ['Worker', selectedWorkerName],
     ['Role', selectedRole || 'All'],
+    ['Lot Number', lotNumber?.trim() || 'All'],
     [],
   ]
 

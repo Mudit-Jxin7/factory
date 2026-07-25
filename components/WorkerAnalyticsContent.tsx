@@ -36,10 +36,12 @@ export default function WorkerAnalyticsContent() {
   const [toDate, setToDate] = useState('')
   const [selectedWorker, setSelectedWorker] = useState('')
   const [selectedRole, setSelectedRole] = useState('')
+  const [lotNumber, setLotNumber] = useState('')
   const [appliedFromDate, setAppliedFromDate] = useState('')
   const [appliedToDate, setAppliedToDate] = useState('')
   const [appliedWorker, setAppliedWorker] = useState('')
   const [appliedRole, setAppliedRole] = useState('')
+  const [appliedLotNumber, setAppliedLotNumber] = useState('')
 
   useEffect(() => {
     const fetchData = async () => {
@@ -98,15 +100,20 @@ export default function WorkerAnalyticsContent() {
       if (worker) filtered = filtered.filter((row) => row.worker_id === worker.worker_id)
     }
     if (appliedRole) filtered = filtered.filter((row) => row.section === appliedRole)
+    if (appliedLotNumber.trim()) {
+      const q = appliedLotNumber.trim().toLowerCase()
+      filtered = filtered.filter((row) => row.lotNumber?.toLowerCase().includes(q))
+    }
     const aggregated = aggregateAnalyticsRows(filtered)
     return aggregated.sort((a, b) => a.date !== b.date ? b.date.localeCompare(a.date) : a.worker_id - b.worker_id)
-  }, [analyticsData, appliedFromDate, appliedToDate, appliedWorker, appliedRole, workers])
+  }, [analyticsData, appliedFromDate, appliedToDate, appliedWorker, appliedRole, appliedLotNumber, workers])
 
   const handleApplyFilters = () => {
     setAppliedFromDate(fromDate)
     setAppliedToDate(toDate)
     setAppliedWorker(selectedWorker)
     setAppliedRole(selectedRole)
+    setAppliedLotNumber(lotNumber)
   }
 
   const handleDateRangePreset = (days: number) => {
@@ -122,10 +129,12 @@ export default function WorkerAnalyticsContent() {
     setToDate('')
     setSelectedWorker('')
     setSelectedRole('')
+    setLotNumber('')
     setAppliedFromDate('')
     setAppliedToDate('')
     setAppliedWorker('')
     setAppliedRole('')
+    setAppliedLotNumber('')
   }
 
   const totals = useMemo(() => filteredData.reduce(
@@ -136,7 +145,8 @@ export default function WorkerAnalyticsContent() {
   const exportParams = {
     filteredData, workers,
     fromDate: appliedFromDate, toDate: appliedToDate,
-    selectedWorker: appliedWorker, selectedRole: appliedRole, totals,
+    selectedWorker: appliedWorker, selectedRole: appliedRole,
+    lotNumber: appliedLotNumber, totals,
   }
 
   return (
@@ -156,9 +166,10 @@ export default function WorkerAnalyticsContent() {
         <div className="dashboard-content">
           <AnalyticsFilters
             workers={eligibleWorkers} fromDate={fromDate} toDate={toDate}
-            selectedWorker={selectedWorker} selectedRole={selectedRole}
+            selectedWorker={selectedWorker} selectedRole={selectedRole} lotNumber={lotNumber}
             onFromDateChange={setFromDate} onToDateChange={setToDate}
             onWorkerChange={setSelectedWorker} onRoleChange={setSelectedRole}
+            onLotNumberChange={setLotNumber}
             onApplyFilters={handleApplyFilters}
             onClearFilters={handleClearFilters}
             onDateRangePreset={handleDateRangePreset}

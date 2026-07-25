@@ -10,10 +10,12 @@ interface AnalyticsFiltersProps {
   toDate: string
   selectedWorker: string
   selectedRole: string
+  lotNumber: string
   onFromDateChange: (v: string) => void
   onToDateChange: (v: string) => void
   onWorkerChange: (v: string) => void
   onRoleChange: (v: string) => void
+  onLotNumberChange: (v: string) => void
   onApplyFilters: () => void
   onClearFilters: () => void
   onDateRangePreset: (days: number) => void
@@ -22,8 +24,8 @@ interface AnalyticsFiltersProps {
 const workerLabel = (w: any) => `${w.worker_id} - ${w.worker_full_name}`
 
 export default function AnalyticsFilters({
-  workers, fromDate, toDate, selectedWorker, selectedRole,
-  onFromDateChange, onToDateChange, onWorkerChange, onRoleChange,
+  workers, fromDate, toDate, selectedWorker, selectedRole, lotNumber,
+  onFromDateChange, onToDateChange, onWorkerChange, onRoleChange, onLotNumberChange,
   onApplyFilters, onClearFilters, onDateRangePreset,
 }: AnalyticsFiltersProps) {
   const [open, setOpen] = useState(false)
@@ -140,6 +142,15 @@ export default function AnalyticsFilters({
               </ul>
             )}
           </div>
+        </div>
+        <div className="form-group">
+          <label>Lot Number</label>
+          <input
+            type="text"
+            value={lotNumber}
+            onChange={(e) => onLotNumberChange(e.target.value)}
+            placeholder="Search lot number…"
+          />
         </div>
         <div className="form-group">
           <label>Role</label>
