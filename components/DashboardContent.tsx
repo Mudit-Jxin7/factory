@@ -265,7 +265,7 @@ export default function DashboardContent() {
       <div className="dashboard-container px-3 sm:px-5 md:px-6 lg:px-8 xl:px-10">
         <div className="dashboard-header">
           <div className="header-title">
-            <h1 >{isEdit ? 'Edit Lot' : isTukdaFrom ? 'New Tukda Lot' : 'Lot Production Dashboard'}</h1>
+            <h1>{isEdit ? 'Edit Lot' : isTukdaFrom ? 'New Tukda Lot' : 'Lot Production Dashboard'}</h1>
             <p>{isEdit ? 'Edit existing lot production data' : isTukdaFrom ? 'Create a tukda lot from an existing lot' : 'Track and manage production data'}</p>
           </div>
         </div>

@@ -128,7 +128,7 @@ export default function AllJobCardsContent() {
       <NavigationBar />
       <div className="dashboard-container px-3 sm:px-5 md:px-6 lg:px-8 xl:px-10">
         <div className="dashboard-header">
-          <div className="header-title"><h1 >All Job Cards</h1><p >View and manage all job cards</p></div>
+          <div className="header-title"><h1>All Job Cards</h1><p>View and manage all job cards</p></div>
           <div className="header-actions">
             {selectedCount > 0 && (
               <button

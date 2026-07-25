@@ -125,7 +125,7 @@ export default function LotViewContent({ lotNumber }: LotViewContentProps) {
       <div className="dashboard-container px-3 sm:px-5 md:px-6 lg:px-8 xl:px-10">
         <div className="dashboard-header">
           <div className="header-title">
-            <h1 >Lot Details: {lot.lotNumber}</h1>
+            <h1>Lot Details: {lot.lotNumber}</h1>
             <p>View saved lot production data</p>
           </div>
         </div>

@@ -185,7 +185,7 @@ export default function WorkerAnalyticsContent() {
       <div className="dashboard-container px-3 sm:px-5 md:px-6 lg:px-8 xl:px-10">
         <div className="dashboard-header">
           <div className="header-title">
-            <h1 >Worker Analytics</h1>
+            <h1>Worker Analytics</h1>
             <p>Analyze worker performance and earnings</p>
           </div>
         </div>
