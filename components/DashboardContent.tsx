@@ -99,7 +99,7 @@ export default function DashboardContent() {
     } finally { setLoadingLot(false) }
   }
 
-  /** Prefill a new tukda lot from an existing lot: `{lotNumber}_lot`, today, ratios/table/summary zeroed; carry worker rates + additional info. */
+  /** Prefill a new tukda lot from an existing lot: `{lotNumber}_tukda`, today, ratios/table/summary zeroed; carry worker rates + additional info. */
   const loadLotForTukda = async (sourceLotNumber: string) => {
     setLoadingLot(true)
     try {
@@ -107,7 +107,8 @@ export default function DashboardContent() {
       const result = await lotsAPI.getLotByNumber(decoded)
       if (result.success && result.lot) {
         const lot = result.lot
-        setLotNumber(`${lot.lotNumber}_lot`)
+        const newLotNumber = `${lot.lotNumber}_tukda`
+        setLotNumber(newLotNumber)
         setDate(todayISODateIST())
         setFabric(lot.fabric || '')
         setPattern(lot.pattern || '')
@@ -125,8 +126,6 @@ export default function DashboardContent() {
         }
         setAdditionalInfo(info)
         setLotNumberError(null)
-        // Check uniqueness of the new tukda lot number
-        const newLotNumber = `${lot.lotNumber}_lot`
         const exists = await lotsAPI.getLotByNumber(newLotNumber)
         if (exists.success && exists.lot) {
           setLotNumberError(`Lot number "${newLotNumber}" already exists`)
